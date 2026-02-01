@@ -1,0 +1,40 @@
+# Vivado / Xilinx temporary build and simulation files
+*.jou
+*.pb
+*.wdb
+*.backup.log
+*.backup.jou
+xsim.dir/
+xelab.log
+xsim.log
+xsim_*.log
+xvlog.log
+xvlog_test.log
+.Xil/
+
+# Antigravity policy/internal
+.tofollow/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+
+# LaTeX auxiliary files
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+architectural_diagrams/*.aux
+architectural_diagrams/*.log
+
+# User test build artifacts
+usertest/build/
+usertest/sim_logs/
+usertest/c_ref/test_keygen_*
+!usertest/c_ref/test_keygen_*.c
+usertest/c_ref/test_encap_*
+!usertest/c_ref/test_encap_*.c
+usertest/c_ref/test_decap_*
+!usertest/c_ref/test_decap_*.c
+usertest/c_ref/traces/
