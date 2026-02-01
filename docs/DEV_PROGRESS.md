@@ -316,3 +316,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-01 13:20:10**: `docs: detail NTT twiddle factor storage in distributed ROM / SRL`
 - **2026-02-01 14:05:25**: `docs: specify Kyber-512 parameter set (k=2, eta1=3, eta2=2, du=10, dv=4)`
 - **2026-02-01 14:50:40**: `docs: specify Kyber-768 parameter set (k=3, eta1=2, eta2=2, du=10, dv=4)`
+- **2026-02-01 15:35:15**: `docs: specify Kyber-1024 parameter set (k=4, eta1=2, eta2=2, du=11, dv=5)`
