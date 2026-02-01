@@ -311,3 +311,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-31 16:30:00**: `chore: finalize ML-KEM HPKA hardware accelerator release`
 - **2026-02-01 10:15:40**: `docs: add NIST SP 800-208 and FIPS 203 algorithm compliance notes`
 - **2026-02-01 11:05:15**: `docs: define target hardware interface specifications (AXI4-Stream / MMIO)`
+- **2026-02-01 11:50:30**: `docs: establish zero-BRAM memory subsystem constraints`
