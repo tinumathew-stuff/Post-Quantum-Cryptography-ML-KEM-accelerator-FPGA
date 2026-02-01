@@ -312,3 +312,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-01 10:15:40**: `docs: add NIST SP 800-208 and FIPS 203 algorithm compliance notes`
 - **2026-02-01 11:05:15**: `docs: define target hardware interface specifications (AXI4-Stream / MMIO)`
 - **2026-02-01 11:50:30**: `docs: establish zero-BRAM memory subsystem constraints`
+- **2026-02-01 12:35:45**: `docs: define 8-DSP allocation boundary for Karatsuba multiplier`
