@@ -319,3 +319,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-01 15:35:15**: `docs: specify Kyber-1024 parameter set (k=4, eta1=2, eta2=2, du=11, dv=5)`
 - **2026-02-01 16:20:30**: `docs: outline modular arithmetic pipeline requirements for 450 MHz clock`
 - **2026-02-01 17:05:45**: `docs: specify Keccak-f[1600] state mapping and absorption handshake`
+- **2026-02-01 17:50:10**: `docs: draft top-level controller FSM state diagram and mode definitions`
