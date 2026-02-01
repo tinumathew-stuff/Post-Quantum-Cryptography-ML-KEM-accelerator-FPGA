@@ -313,3 +313,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-01 11:05:15**: `docs: define target hardware interface specifications (AXI4-Stream / MMIO)`
 - **2026-02-01 11:50:30**: `docs: establish zero-BRAM memory subsystem constraints`
 - **2026-02-01 12:35:45**: `docs: define 8-DSP allocation boundary for Karatsuba multiplier`
+- **2026-02-01 13:20:10**: `docs: detail NTT twiddle factor storage in distributed ROM / SRL`
