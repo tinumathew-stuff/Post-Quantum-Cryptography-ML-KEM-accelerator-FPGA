@@ -320,3 +320,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-01 16:20:30**: `docs: outline modular arithmetic pipeline requirements for 450 MHz clock`
 - **2026-02-01 17:05:45**: `docs: specify Keccak-f[1600] state mapping and absorption handshake`
 - **2026-02-01 17:50:10**: `docs: draft top-level controller FSM state diagram and mode definitions`
+- **2026-02-01 18:35:25**: `docs: define verification strategy with C reference models and NIST KATs`
