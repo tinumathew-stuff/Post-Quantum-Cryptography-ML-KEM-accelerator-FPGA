@@ -314,3 +314,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-01 11:50:30**: `docs: establish zero-BRAM memory subsystem constraints`
 - **2026-02-01 12:35:45**: `docs: define 8-DSP allocation boundary for Karatsuba multiplier`
 - **2026-02-01 13:20:10**: `docs: detail NTT twiddle factor storage in distributed ROM / SRL`
+- **2026-02-01 14:05:25**: `docs: specify Kyber-512 parameter set (k=2, eta1=3, eta2=2, du=10, dv=4)`
