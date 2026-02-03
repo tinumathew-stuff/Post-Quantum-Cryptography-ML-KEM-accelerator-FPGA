@@ -327,3 +327,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-02 16:15:30**: `docs: add mathematical specifications for Kyber / ML-KEM parameters`
 - **2026-02-03 10:05:12**: `chore: setup HDL directory conventions and naming guidelines`
 - **2026-02-03 13:40:55**: `docs: add table of polynomial degrees and modulus q=3329`
+- **2026-02-03 17:22:10**: `chore: update simulation artifact filtering in .gitignore`
