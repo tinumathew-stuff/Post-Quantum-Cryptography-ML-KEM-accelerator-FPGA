@@ -325,3 +325,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-02 09:45:18**: `docs: document Kintex UltraScale target device constraints and clock goals`
 - **2026-02-02 11:30:44**: `chore: define top-level directory layout for accelerator subsystems`
 - **2026-02-02 16:15:30**: `docs: add mathematical specifications for Kyber / ML-KEM parameters`
+- **2026-02-03 10:05:12**: `chore: setup HDL directory conventions and naming guidelines`
