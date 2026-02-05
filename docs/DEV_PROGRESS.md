@@ -331,3 +331,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-04 09:50:33**: `docs: define latency budget targets for KeyGen, Encap, Decap`
 - **2026-02-04 14:12:47**: `docs: outline zero-BRAM distributed RAM allocation strategy`
 - **2026-02-04 18:04:19**: `docs: specify 8-DSP allocation boundary for Karatsuba multiplier core`
+- **2026-02-05 11:25:02**: `chore: add Vivado xsim temporary file exclusions`
