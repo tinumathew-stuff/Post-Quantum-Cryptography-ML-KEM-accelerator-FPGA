@@ -333,3 +333,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-04 18:04:19**: `docs: specify 8-DSP allocation boundary for Karatsuba multiplier core`
 - **2026-02-05 11:25:02**: `chore: add Vivado xsim temporary file exclusions`
 - **2026-02-05 15:48:36**: `docs: draft block diagram interconnect interface specifications`
+- **2026-02-06 10:35:14**: `docs: add security level parameters for ML-KEM 512, 768, 1024`
