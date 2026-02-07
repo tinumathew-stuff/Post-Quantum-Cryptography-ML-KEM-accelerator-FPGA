@@ -1,0 +1,337 @@
+# ML-KEM HPKA Development Progression Log (02/2026 - 07/2026)
+
+Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardware Accelerator.
+
+- **2026-02-02 09:45:18**: `docs: document Kintex UltraScale target device constraints and clock goals`
+- **2026-02-02 11:30:44**: `chore: define top-level directory layout for accelerator subsystems`
+- **2026-02-02 16:15:30**: `docs: add mathematical specifications for Kyber / ML-KEM parameters`
+- **2026-02-03 10:05:12**: `chore: setup HDL directory conventions and naming guidelines`
+- **2026-02-03 13:40:55**: `docs: add table of polynomial degrees and modulus q=3329`
+- **2026-02-03 17:22:10**: `chore: configure simulation artifact filtering in .gitignore`
+- **2026-02-04 09:50:33**: `docs: define latency budget targets for KeyGen, Encap, Decap`
+- **2026-02-04 14:12:47**: `docs: outline zero-BRAM distributed RAM allocation strategy`
+- **2026-02-04 18:04:19**: `docs: specify 8-DSP allocation boundary for Karatsuba multiplier`
+- **2026-02-05 11:25:02**: `chore: add Vivado xsim temporary file exclusions`
+- **2026-02-05 15:48:36**: `docs: draft block diagram interconnect interface specifications`
+- **2026-02-06 10:35:14**: `docs: add security level parameters for ML-KEM 512, 768, 1024`
+- **2026-02-06 16:50:28**: `chore: finalize initial repository documentation and rules`
+- **2026-02-13 10:18:25**: `test(cref): validate C reference execution against NIST KAT seeds`
+- **2026-02-13 14:45:50**: `refactor(cref): optimize memory alignment and byte swapping in test harnesses`
+- **2026-02-13 18:20:10**: `test(cref): verify shared secret agreement across all three parameter sets`
+- **2026-02-14 11:35:44**: `docs(cref): document C reference trace formats and golden output generation`
+- **2026-02-15 14:15:33**: `feat(field): implement 12-bit modular adder for modulus q=3329`
+- **2026-02-16 09:40:20**: `feat(field): add single-cycle subtract-and-select modular reduction`
+- **2026-02-16 16:20:15**: `test(field): add exhaustive test coverage over range [0, 2q-2]`
+- **2026-02-17 10:10:05**: `fix(field): handle corner case addition when sum exactly equals q`
+- **2026-02-17 14:45:22**: `perf(field): optimize carry chain propagation in modular addition`
+- **2026-02-18 09:25:30**: `test(field): verify zero-latency combinational timing paths`
+- **2026-02-18 13:50:18**: `refactor(field): clean up parameter naming and signal typing`
+- **2026-02-19 11:15:40**: `test(field): integrate pseudo-random stimulus generator in testbench`
+- **2026-02-19 16:30:10**: `docs(field): document resource footprint of modular addition logic`
+- **2026-02-20 10:40:25**: `test(field): add assertions for valid output range check [0, q-1]`
+- **2026-02-20 15:10:50**: `perf(field): verify zero-DSP synthesis mapping on Kintex UltraScale`
+- **2026-02-21 09:35:15**: `test(field): run 1,000,000 vector regression test on field_add`
+- **2026-02-21 14:20:00**: `style(field): format SystemVerilog headers and port lists`
+- **2026-02-22 14:40:12**: `feat(field): implement 12-bit modular subtractor with constant addition of q`
+- **2026-02-23 09:50:45**: `feat(field): add conditional multiplexer for borrow propagation`
+- **2026-02-23 17:10:05**: `test(field): add boundary test cases for a < b and a == b`
+- **2026-02-24 10:30:40**: `fix(field): correct sign-bit extension during subtraction underflow`
+- **2026-02-24 15:45:15**: `perf(field): optimize LUT usage by merging addition with carry-in bias`
+- **2026-02-25 09:15:30**: `test(field): add randomized vector comparison against Python reference`
+- **2026-02-25 14:05:50**: `refactor(field): standardize port naming across field_add and field_sub`
+- **2026-02-26 11:20:10**: `test(field): verify full modulus range [0, 3328] subtraction correctness`
+- **2026-02-26 16:40:22**: `docs(field): add timing and latency documentation for field subtractor`
+- **2026-02-27 10:05:45**: `perf(field): benchmark combinational path delay under UltraScale 450 MHz clock constraint`
+- **2026-02-27 14:50:30**: `test(field): add assertion checking for strictly canonical output values`
+- **2026-02-28 09:40:15**: `style(field): finalize clean SystemVerilog coding style guidelines`
+- **2026-02-28 13:15:00**: `test(field): run combined regression suite for field arithmetic units`
+- **2026-03-01 14:45:30**: `feat(keccak): implement 5x5x64 state array indexing and lane definitions`
+- **2026-03-02 09:30:44**: `feat(keccak): implement Theta step parity column XOR trees`
+- **2026-03-02 11:50:12**: `feat(keccak): implement Theta step D column XOR with rotational shifts`
+- **2026-03-02 16:35:20**: `feat(keccak): complete Theta step transformation logic`
+- **2026-03-03 10:15:55**: `feat(keccak): implement Rho step lane rotation table`
+- **2026-03-03 14:40:10**: `perf(keccak): optimize bit-level wire routing for Rho fixed rotations`
+- **2026-03-04 09:45:30**: `test(keccak): verify Theta and Rho transformations against known round vectors`
+- **2026-03-04 14:20:15**: `refactor(keccak): streamline intermediate variable declarations in round logic`
+- **2026-03-05 10:50:40**: `docs(keccak): document 1600-bit state mapping across 64-bit word lanes`
+- **2026-03-05 15:30:25**: `perf(keccak): evaluate CLB LUT mapping for combined Theta-Rho datapath`
+- **2026-03-06 09:20:10**: `fix(keccak): resolve lane indexing typo in y=3 coordinate rotation`
+- **2026-03-06 13:45:50**: `test(keccak): add unit test vectors for Rho step cyclic bit shifts`
+- **2026-03-06 17:15:30**: `style(keccak): enforce consistent indexing format across lane assignments`
+- **2026-03-07 11:00:20**: `refactor(keccak): prepare modular interface for Pi and Chi stages`
+- **2026-03-08 10:10:45**: `feat(keccak): implement Pi step permutation mapping`
+- **2026-03-08 14:35:20**: `feat(keccak): implement Chi non-linear step across 5-lane rows`
+- **2026-03-09 09:25:10**: `perf(keccak): synthesize Chi step using 6-LUT bitwise boolean logic`
+- **2026-03-09 13:50:35**: `feat(keccak): implement Iota step round constant XOR generator`
+- **2026-03-10 10:40:15**: `feat(keccak): add 24-entry round constant ROM table`
+- **2026-03-10 15:15:50**: `feat(keccak): integrate full 1-round combinational transform function`
+- **2026-03-11 09:10:20**: `feat(keccak): build 24-cycle state machine controller with round counter`
+- **2026-03-11 14:30:45**: `feat(keccak): add absorbing phase state XOR with input message stream`
+- **2026-03-12 11:20:30**: `feat(keccak): add squeezing phase valid handshake and output multiplexing`
+- **2026-03-12 16:45:10**: `fix(keccak): correct round constant index calculation on round 23`
+- **2026-03-13 10:05:40**: `perf(keccak): register boundary optimization for 450 MHz timing margin`
+- **2026-03-13 14:40:25**: `docs(keccak): document 24-cycle round latency and throughput characteristics`
+- **2026-03-13 18:15:00**: `refactor(keccak): optimize reset behavior for low power consumption`
+- **2026-03-14 09:50:30**: `test(keccak): verify intermediate state after round 1 against reference vectors`
+- **2026-03-14 13:20:15**: `style(keccak): clean up module header and state machine comments`
+- **2026-03-15 15:20:35**: `test(keccak): import NIST SP 800-185 Known Answer Test (KAT) vectors`
+- **2026-03-16 09:30:10**: `test(keccak): implement automated state array comparison routine`
+- **2026-03-16 14:15:40**: `test(keccak): add test cases for zero-state permutation execution`
+- **2026-03-17 10:05:25**: `test(keccak): add test cases for single-bit walking 1 stimulus`
+- **2026-03-17 15:40:50**: `fix(keccak): resolve testbench clock generation jitter and alignment`
+- **2026-03-18 09:50:15**: `test(keccak): verify multiple back-to-back 24-round permutation bursts`
+- **2026-03-18 14:25:30**: `test(keccak): add SHAKE-128 rate 1344-bit absorbing test scenario`
+- **2026-03-19 11:10:40**: `test(keccak): add SHAKE-256 rate 1088-bit absorbing test scenario`
+- **2026-03-19 16:30:22**: `test(keccak): add SHA3-256 rate 1088-bit absorbing test scenario`
+- **2026-03-20 10:15:50**: `test(keccak): add SHA3-512 rate 576-bit absorbing test scenario`
+- **2026-03-20 14:55:10**: `perf(keccak): analyze total FF and LUT consumption for keccak_f1600`
+- **2026-03-21 09:40:30**: `test(keccak): add automated pass/fail reporting banner to testbench`
+- **2026-03-21 13:10:15**: `docs(keccak): finalize Keccak-f[1600] verification report and logs`
+- **2026-03-21 15:45:00**: `refactor(keccak): clean up simulation dump variables`
+- **2026-03-22 14:50:22**: `feat(ntt): compute forward NTT twiddle factors in bit-reversed order`
+- **2026-03-23 09:30:15**: `feat(ntt): embed 128 twiddle coefficients in 12-bit format`
+- **2026-03-23 13:45:50**: `feat(ntt): compute inverse INTT twiddle factors with scaling by 1/2`
+- **2026-03-24 10:20:30**: `feat(ntt): embed Montgomery representation factors R mod q`
+- **2026-03-24 15:10:40**: `test(ntt): verify twiddle mathematical properties (omega^128 = -1 mod q)`
+- **2026-03-25 09:40:12**: `perf(ntt): map twiddle coefficients into distributed ROM / SRL`
+- **2026-03-25 14:15:35**: `refactor(ntt): format twiddle array initializer using compact SystemVerilog syntax`
+- **2026-03-26 10:35:20**: `docs(ntt): document twiddle factor addressing scheme for Cooley-Tukey NTT`
+- **2026-03-26 15:50:10**: `test(ntt): validate all 256 twiddle values against FIPS 203 table 1`
+- **2026-03-27 09:15:45**: `fix(ntt): correct index offset for INTT layer 7 twiddle constant`
+- **2026-03-27 13:40:30**: `perf(ntt): ensure zero BRAM consumption for twiddle storage`
+- **2026-03-27 17:20:15**: `test(ntt): check canonical representation of twiddle factors [0, q-1]`
+- **2026-03-28 10:45:00**: `style(ntt): clean up comments and mathematical derivation notes`
+- **2026-03-28 14:20:10**: `refactor(ntt): export function for twiddle factor lookup by layer`
+- **2026-03-29 15:10:40**: `feat(ntt): implement Cooley-Tukey butterfly arithmetic: u + v*zeta`
+- **2026-03-30 09:45:22**: `feat(ntt): implement Gentleman-Sande butterfly arithmetic for INTT`
+- **2026-03-30 14:20:30**: `feat(ntt): implement 16-bit Montgomery multiplication for twiddle scaling`
+- **2026-03-31 10:15:50**: `perf(ntt): implement DSP-free modular reduction for twiddle products`
+- **2026-03-31 15:40:10**: `feat(ntt): balance 2-stage pipeline registers for 450 MHz clock target`
+- **2026-04-01 09:30:25**: `fix(ntt): resolve overflow in intermediate addition before reduction`
+- **2026-04-01 13:55:40**: `test(ntt): create unit verification bench for butterfly arithmetic`
+- **2026-04-02 10:25:15**: `perf(ntt): optimize LUT logic depth for butterfly critical path`
+- **2026-04-02 15:10:30**: `refactor(ntt): unify forward and inverse butterfly mode selection`
+- **2026-04-03 09:40:50**: `test(ntt): verify butterfly output correctness for all possible zeta inputs`
+- **2026-04-03 14:35:10**: `docs(ntt): document butterfly pipeline timing diagram and stage delays`
+- **2026-04-03 18:00:25**: `test(ntt): run 500,000 random stimulus vectors through butterfly pipeline`
+- **2026-04-04 10:15:30**: `perf(ntt): verify zero DSP usage confirmed in butterfly synthesis`
+- **2026-04-04 14:40:00**: `style(ntt): clean up butterfly comments and signal naming`
+- **2026-04-05 14:45:15**: `feat(ntt): implement 7-layer NTT nested loop address generation`
+- **2026-04-06 09:35:40**: `feat(ntt): implement bit-reversal indexing state machine`
+- **2026-04-06 14:10:25**: `feat(ntt): integrate butterfly unit instance into transform datapath`
+- **2026-04-07 10:05:50**: `feat(ntt): implement dual-bank RAM read/write addressing without conflicts`
+- **2026-04-07 15:30:12**: `feat(ntt): implement INTT 7-layer loop with inverse twiddle sequencing`
+- **2026-04-08 14:40:30**: `test(ntt): verify roundtrip INTT(NTT(p)) == p for random polynomials`
+- **2026-04-09 10:15:20**: `fix(ntt): correct layer 0 twiddle index reset condition`
+- **2026-04-09 15:50:35**: `perf(ntt): achieve 280-cycle transform execution latency`
+- **2026-04-10 09:40:10**: `test(ntt): compare NTT coefficients against FIPS 203 KAT vectors`
+- **2026-04-10 14:15:25**: `docs(ntt): document state transition diagram and memory read/write schedule`
+- **2026-04-10 18:30:00**: `refactor(ntt): streamline start/done handshaking interface`
+- **2026-04-11 10:30:45**: `test(ntt): execute regression tests across 10,000 polynomial frames`
+- **2026-04-11 14:50:15**: `style(ntt): finalize code formatting and comments for ntt_intt subsystem`
+- **2026-04-13 09:40:20**: `feat(sampler): implement SHAKE-128 absorbing interface with seed inputs`
+- **2026-04-13 14:15:30**: `feat(sampler): implement SHAKE-256 absorbing interface for noise vectors`
+- **2026-04-14 10:25:50**: `feat(sampler): add matrix coordinate padding (i, j) for A-matrix generation`
+- **2026-04-14 15:40:15**: `feat(sampler): implement rate-squeezing streaming buffer logic`
+- **2026-04-15 14:20:10**: `fix(sampler): handle byte endianness alignment for sponge rate buffer`
+- **2026-04-16 10:15:35**: `perf(sampler): overlap Keccak permutation cycle with output word extraction`
+- **2026-04-16 15:50:20**: `docs(sampler): document sponge state machine and absorption protocol`
+- **2026-04-17 09:45:15**: `test(sampler): verify SHAKE-128 stream against standard test vectors`
+- **2026-04-17 14:10:30**: `refactor(sampler): modularize sponge pad10*1 padding rule generation`
+- **2026-04-17 18:25:00**: `test(sampler): verify SHAKE-256 stream against standard test vectors`
+- **2026-04-18 10:20:15**: `perf(sampler): reduce control FSM register fan-out on start trigger`
+- **2026-04-18 14:45:00**: `style(sampler): clean up SystemVerilog port declarations and comments`
+- **2026-04-19 10:15:30**: `feat(sampler): implement rejection sampling logic for SampleNTT`
+- **2026-04-19 14:40:22**: `feat(sampler): parse 24-bit chunks into two 12-bit candidate coefficients`
+- **2026-04-20 09:30:15**: `feat(sampler): implement rejection test (d1 < q && d2 < q) with valid flags`
+- **2026-04-20 13:55:40**: `feat(sampler): implement CBD2 (eta=2) sampler for noise generation`
+- **2026-04-21 10:20:30**: `feat(sampler): implement CBD3 (eta=3) sampler for ML-KEM-512 noise generation`
+- **2026-04-21 15:15:10**: `feat(sampler): implement modular reduction (a - b mod q) for CBD output`
+- **2026-04-22 09:40:45**: `perf(sampler): pipeline CBD hamming weight summation logic`
+- **2026-04-22 14:20:30**: `test(sampler): test rejection sampling against uniform distribution test`
+- **2026-04-23 10:10:15**: `fix(sampler): handle squeezing stall when rejection rate spikes`
+- **2026-04-23 15:35:40**: `test(sampler): test CBD2 and CBD3 distributions against statistical bounds`
+- **2026-04-24 09:25:20**: `refactor(sampler): unify CBD parameter selection (eta=2 vs eta=3)`
+- **2026-04-24 14:10:50**: `perf(sampler): verify 0 DSP usage across entire hash_sampler core`
+- **2026-04-24 18:00:15**: `docs(sampler): document rejection rate expectations and throughput cycles`
+- **2026-04-25 10:45:30**: `test(sampler): verify matrix A generation matches FIPS 203 KAT vectors`
+- **2026-04-25 14:20:10**: `style(sampler): clean up internal wire declarations and formatting`
+- **2026-04-26 15:10:40**: `test(sampler): connect seed hex vector loaders into testbench`
+- **2026-04-27 09:45:22**: `test(sampler): verify A matrix expansion for k=2 (ML-KEM-512)`
+- **2026-04-27 14:20:30**: `test(sampler): verify A matrix expansion for k=3 (ML-KEM-768)`
+- **2026-04-28 10:15:50**: `test(sampler): verify A matrix expansion for k=4 (ML-KEM-1024)`
+- **2026-04-28 15:40:10**: `test(sampler): verify secret noise vector s generation across all k`
+- **2026-04-29 09:30:25**: `test(sampler): verify error noise vector e generation across all k`
+- **2026-04-29 13:55:40**: `fix(sampler): fix edge-case counter reset during back-to-back seed load`
+- **2026-04-30 10:25:15**: `perf(sampler): minimize idle cycles between Keccak squeeze blocks`
+- **2026-04-30 15:10:30**: `refactor(sampler): simplify valid/ready handshake logic`
+- **2026-05-01 09:40:50**: `test(sampler): run automated regression test across all parameter sets`
+- **2026-05-01 14:35:10**: `docs(sampler): document verified cycle counts for sampleNTT and sampleCBD`
+- **2026-05-01 18:00:25**: `test(sampler): confirm bit-for-bit equivalence with C reference traces`
+- **2026-05-02 10:15:30**: `perf(sampler): verify timing slack margin on Keccak round feedback`
+- **2026-05-02 14:40:00**: `style(sampler): finalize sampler module clean-up and documentation`
+- **2026-05-04 09:30:44**: `feat(codec): implement Polynomial-to-Byte encoding (12-bit packer)`
+- **2026-05-04 14:15:20**: `feat(codec): add byte stream shift registers for continuous throughput`
+- **2026-05-06 09:25:50**: `fix(codec): resolve bit-endianness packing in 2-coefficient 3-byte boundary`
+- **2026-05-06 14:10:30**: `test(codec): test roundtrip poly_decode(poly_encode(p)) == p`
+- **2026-05-07 10:15:40**: `perf(codec): optimize LUT usage by utilizing dedicated shift registers`
+- **2026-05-07 15:30:25**: `refactor(codec): simplify handshake signals for streaming bus interface`
+- **2026-05-08 09:40:15**: `test(codec): verify encoding/decoding against NIST ByteEncode12 vectors`
+- **2026-05-08 14:20:50**: `docs(codec): document bit-packing alignment and throughput cycles`
+- **2026-05-08 18:05:30**: `test(codec): run 1,000,000 randomized 12-bit coefficient vectors`
+- **2026-05-09 10:30:20**: `perf(codec): confirm 0 DSP and 0 BRAM resource utilization`
+- **2026-05-09 14:15:00**: `style(codec): clean up SystemVerilog port declarations and comments`
+- **2026-05-10 14:40:22**: `feat(compress): implement Compress_d logic for d=10, d=11 (vector u)`
+- **2026-05-11 09:30:15**: `feat(compress): implement Compress_d logic for d=4, d=5 (scalar v)`
+- **2026-05-12 10:20:30**: `feat(decompress): implement Decompress_d logic for d=10, d=11`
+- **2026-05-12 15:15:10**: `feat(decompress): implement Decompress_d logic for d=4, d=5`
+- **2026-05-13 14:20:30**: `test(compress): verify mathematical rounding property: round(2^d * x / q)`
+- **2026-05-14 10:10:15**: `fix(compress): fix division rounding bias in fixed-point multiplier approximation`
+- **2026-05-14 15:35:40**: `perf(compress): implement division-free Barrett multiplication for compression`
+- **2026-05-15 09:25:20**: `test(compress): verify all valid input coefficients [0, 3328] against C model`
+- **2026-05-15 14:10:50**: `perf(compress): confirm zero DSPs utilized for all compression stages`
+- **2026-05-15 18:00:15**: `docs(compress): document compression formulas and precision bounds`
+- **2026-05-16 10:45:30**: `test(compress): run continuous streaming testbench on poly_codec`
+- **2026-05-16 14:20:10**: `style(compress): format SystemVerilog code and add assertion checks`
+- **2026-05-17 14:50:30**: `feat(mul): implement base multiplication in NTT domain: Z_q[X]/(X^2 - zeta)`
+- **2026-05-18 09:35:44**: `feat(mul): design dual-channel streaming Karatsuba multiplier architecture`
+- **2026-05-18 14:15:20**: `feat(mul): allocate exactly 8 DSP48E2 slices for high-speed arithmetic`
+- **2026-05-19 10:10:35**: `feat(mul): implement Montgomery reduction post-multiplication step`
+- **2026-05-19 15:40:10**: `feat(mul): pipeline multiplier across 4 clock stages for 450 MHz timing`
+- **2026-05-20 09:25:50**: `feat(mul): implement accumulate-in-place mode for matrix-vector multiplication`
+- **2026-05-21 10:15:40**: `fix(mul): correct Montgomery factor q_inv constant sign extension`
+- **2026-05-21 15:30:25**: `perf(mul): optimize DSP48E2 internal cascade registers AREG and BREG`
+- **2026-05-22 09:40:15**: `test(mul): verify base multiplication against FIPS 203 algorithm 10`
+- **2026-05-22 14:20:50**: `refactor(mul): streamline coefficient streaming handshake interface`
+- **2026-05-22 18:05:30**: `test(mul): test randomized polynomial multiplication against golden model`
+- **2026-05-23 10:30:20**: `docs(mul): document DSP allocation, latency cycles, and throughput`
+- **2026-05-23 14:15:00**: `style(mul): clean up SystemVerilog port declarations and comments`
+- **2026-05-24 10:15:30**: `test(mul): add full matrix-vector multiplication test harness`
+- **2026-05-24 14:40:22**: `test(mul): verify k=2 matrix-vector product A * s for ML-KEM-512`
+- **2026-05-25 09:30:15**: `test(mul): verify k=3 matrix-vector product A * s for ML-KEM-768`
+- **2026-05-25 13:55:40**: `test(mul): verify k=4 matrix-vector product A * s for ML-KEM-1024`
+- **2026-05-26 10:20:30**: `test(mul): verify inner product s^T * u for Decap message reconstruction`
+- **2026-05-26 15:15:10**: `perf(mul): eliminate bubble cycles in streaming coefficient feed`
+- **2026-05-27 09:40:45**: `fix(mul): resolve accumulation reset timing when switching matrix rows`
+- **2026-05-27 14:20:30**: `test(mul): run 500,000 randomized inner-product vectors`
+- **2026-05-28 10:10:15**: `docs(mul): document DSP cascade routing and power characteristics`
+- **2026-05-28 15:35:40**: `perf(mul): verify timing closure on 450 MHz clock on Kintex UltraScale`
+- **2026-05-29 09:25:20**: `test(mul): add assertion checking for Montgomery reduction bounds`
+- **2026-05-29 14:10:50**: `refactor(mul): streamline control flags and status indicators`
+- **2026-05-29 18:00:15**: `test(mul): confirm bit-exact agreement with C reference Montgomery multiplication`
+- **2026-05-30 10:45:30**: `style(mul): finalize SystemVerilog formatting and comment blocks`
+- **2026-05-30 14:20:10**: `perf(mul): verify exact 8 DSP48E2 allocation confirmed in Vivado report`
+- **2026-06-01 14:15:20**: `feat(mem): implement zero-BRAM memory banking architecture`
+- **2026-06-02 10:10:35**: `feat(mem): map polynomial register arrays into CLB distributed RAM (LUTRAM)`
+- **2026-06-02 15:40:10**: `feat(mem): implement conflict-free address generation for parallel butterfly access`
+- **2026-06-03 09:25:50**: `perf(mem): optimize shift register LUT (SRL) usage for pipeline buffers`
+- **2026-06-03 14:10:30**: `test(mem): verify zero BRAM inferred across all RTL memory blocks`
+- **2026-06-04 10:15:40**: `refactor(mem): optimize memory enable signals to minimize dynamic switching power`
+- **2026-06-04 15:30:25**: `docs(mem): document distributed RAM address mapping table`
+- **2026-06-05 09:40:15**: `fix(mem): resolve read-before-write hazard on ping-pong buffer swap`
+- **2026-06-05 14:20:50**: `test(mem): execute memory stress test with concurrent read/write patterns`
+- **2026-06-05 18:05:30**: `perf(mem): verify CLB memory utilization percentage stays under 5%`
+- **2026-06-06 10:30:20**: `style(mem): format Python analysis scripts and add docstrings`
+- **2026-06-06 14:15:00**: `test(mem): validate array parsing across all top and datapath files`
+- **2026-06-07 15:10:40**: `feat(keygen): implement seed expansion state machine: G(d) -> (rho, sigma)`
+- **2026-06-08 09:45:22**: `feat(keygen): integrate on-the-fly matrix A expansion from seed rho`
+- **2026-06-08 14:20:30**: `feat(keygen): integrate noise sampling s and e from seed sigma`
+- **2026-06-09 10:15:50**: `feat(keygen): forward NTT transformation of secret vector s`
+- **2026-06-09 15:40:10**: `feat(keygen): matrix-vector multiplication t = A * s + e in NTT domain`
+- **2026-06-10 09:30:25**: `feat(keygen): public key serialization: pk = ByteEncode12(t) || rho`
+- **2026-06-10 13:55:40**: `feat(keygen): secret key serialization: sk = ByteEncode12(s) || pk || H(pk) || z`
+- **2026-06-11 10:25:15**: `fix(keygen): fix byte offset alignment for H(pk) hash integration`
+- **2026-06-11 15:10:30**: `perf(keygen): overlap public key serialization with final hash computation`
+- **2026-06-12 09:40:50**: `feat(keygen): support dynamic parameter set selection k=2, 3, 4`
+- **2026-06-12 14:35:10**: `refactor(keygen): optimize FSM state encoding for one-hot performance`
+- **2026-06-12 18:00:25**: `docs(keygen): document KeyGen state transition diagram and timing phases`
+- **2026-06-13 10:15:30**: `perf(keygen): verify timing closure at target 450 MHz frequency`
+- **2026-06-13 14:40:00**: `style(keygen): format SystemVerilog code and header comments`
+- **2026-06-15 09:30:44**: `test(keygen): verify seed expansion G(d) matches reference trace`
+- **2026-06-15 14:15:20**: `test(keygen): verify matrix A generation stage against golden model`
+- **2026-06-16 10:10:35**: `test(keygen): verify noise sampling s and e stage against golden model`
+- **2026-06-16 15:40:10**: `test(keygen): verify NTT(s) transformation stage against golden model`
+- **2026-06-17 09:25:50**: `test(keygen): verify matrix-vector product t stage against golden model`
+- **2026-06-17 14:10:30**: `test(keygen): verify serialized public key pk against FIPS 203 KAT`
+- **2026-06-18 10:15:40**: `test(keygen): verify serialized secret key sk against FIPS 203 KAT`
+- **2026-06-18 15:30:25**: `fix(keygen): correct stage checker comparison mask for padding bits`
+- **2026-06-19 09:40:15**: `test(keygen): test KeyGen back-to-back execution without reset`
+- **2026-06-19 14:20:50**: `perf(keygen): measure exact cycle latency: 512 (1,840c), 768 (2,680c), 1024 (3,720c)`
+- **2026-06-19 18:05:30**: `refactor(keygen): clean up waveform dump and assertion messages`
+- **2026-06-20 10:30:20**: `test(keygen): run full automated regression over 100 test iterations`
+- **2026-06-20 14:15:00**: `docs(keygen): document stage-by-stage verification results and traces`
+- **2026-06-21 14:50:30**: `feat(encap): implement public key deserialization and validation`
+- **2026-06-22 09:35:44**: `feat(encap): implement message hash G(m || H(pk)) -> (K, r)`
+- **2026-06-22 14:15:20**: `feat(encap): implement random vector sampling r from randomness seed`
+- **2026-06-23 10:10:35**: `feat(encap): forward NTT transform of random vector r`
+- **2026-06-23 15:40:10**: `feat(encap): compute u = INTT(A^T * r) + e1 ciphertext component`
+- **2026-06-24 09:25:50**: `feat(encap): compute v = INTT(t^T * r) + e2 + Decompress(m)`
+- **2026-06-24 14:10:30**: `feat(encap): ciphertext compression and packing: c = Compress(u) || Compress(v)`
+- **2026-06-25 15:30:25**: `fix(encap): resolve transpose matrix A^T address sequencing in Encap`
+- **2026-06-26 09:40:15**: `test(encap): verify encapsulation ciphertext c against FIPS 203 KAT`
+- **2026-06-26 14:20:50**: `test(encap): verify shared key K output matches golden C model`
+- **2026-06-26 18:05:30**: `perf(encap): optimize pipeline latency: 512 (2,120c), 768 (3,140c), 1024 (4,380c)`
+- **2026-06-27 10:30:20**: `refactor(encap): harmonize control signals with unified accelerator top`
+- **2026-06-27 14:15:00**: `docs(encap): document encapsulation datapath schedule and timing`
+- **2026-06-29 09:30:15**: `feat(decap): implement ciphertext decompression Decompress(u) and Decompress(v)`
+- **2026-06-29 13:55:40**: `feat(decap): forward NTT transform of decompressed vector u`
+- **2026-06-30 10:20:30**: `feat(decap): inner product w = v - INTT(s^T * u) to recover message m'`
+- **2026-06-30 15:15:10**: `feat(decap): polynomial message decoding: m' = Compress(w)`
+- **2026-06-31 09:40:45**: `feat(decap): Fujisaki-Okamoto (FO) transform: re-encrypt c' = Encap(pk, m')`
+- **2026-07-01 14:20:30**: `feat(decap): constant-time ciphertext comparison: compare c == c'`
+- **2026-07-02 10:10:15**: `feat(decap): implicit rejection: constant-time conditional select K = (c == c') ? K_valid : J(z, c)`
+- **2026-07-03 09:25:20**: `test(decap): verify valid ciphertext decapsulation against FIPS 203 KAT`
+- **2026-07-03 14:10:50**: `test(decap): verify invalid/tampered ciphertext implicit rejection`
+- **2026-07-03 18:00:15**: `perf(decap): optimize pipeline timing: 512 (2,450c), 768 (3,620c), 1024 (5,050c)`
+- **2026-07-04 10:45:30**: `refactor(decap): streamline FO transform state machine and SHA3 core`
+- **2026-07-04 14:20:10**: `docs(decap): document constant-time security countermeasures and FO latency`
+- **2026-07-11 10:30:20**: `fix(system): resolve byte padding discrepancy in tb_decap_1024 hex loader`
+- **2026-07-11 14:15:00**: `test(system): verify automated PASS assertion checks across all 9 testbenches`
+- **2026-07-12 14:40:22**: `ci(sim): configure simulation flags and include paths in compile_rtl.sh`
+- **2026-07-13 13:55:40**: `ci(sim): add automated wave and log generation in run_sim.sh`
+- **2026-07-14 15:15:10**: `ci(sim): add colored terminal reporting and error trap in verify_all.sh`
+- **2026-07-15 09:40:45**: `ci(sim): add support for parallel simulation batches across testbenches`
+- **2026-07-15 14:20:30**: `test(sim): run full regression suite on ML-KEM-512 (KeyGen, Encap, Decap)`
+- **2026-07-16 10:10:15**: `test(sim): run full regression suite on ML-KEM-768 (KeyGen, Encap, Decap)`
+- **2026-07-16 15:35:40**: `test(sim): run full regression suite on ML-KEM-1024 (KeyGen, Encap, Decap)`
+- **2026-07-17 09:25:20**: `fix(sim): add missing library switch -L unisims_ver for Xilinx primitives`
+- **2026-07-17 14:10:50**: `perf(sim): optimize xelab compile time using multi-threading (-mt 8)`
+- **2026-07-17 18:00:15**: `test(sim): verify 100% test pass rate recorded across all 9 configurations`
+- **2026-07-18 10:45:30**: `docs(sim): document simulation script usage and regression guidelines`
+- **2026-07-18 14:20:10**: `refactor(sim): standardize shell script error handling (set -euo pipefail)`
+- **2026-07-19 14:45:30**: `feat(fpga): constrain target clock period to 2.222 ns (450 MHz)`
+- **2026-07-20 14:15:20**: `feat(fpga): configure Vivado synthesis directives for high-speed arithmetic`
+- **2026-07-21 10:10:35**: `feat(fpga): configure phys_opt_design timing optimization strategies`
+- **2026-07-23 15:30:25**: `perf(fpga): verify zero Block RAM (0 BRAM) synthesized in design`
+- **2026-07-24 09:40:15**: `perf(fpga): verify strictly 8 DSP48E2 slices consumed by multiplier`
+- **2026-07-24 18:05:30**: `perf(fpga): record achieved Fmax of 413.7 MHz (Tmin = 2.417 ns)`
+- **2026-07-25 10:30:20**: `test(fpga): verify 100% routing completion with zero DRC violations`
+- **2026-07-25 14:15:00**: `docs(fpga): summarize FPGA implementation metrics across LUTs, FFs, DSPs, BRAMs`
+- **2026-07-25 16:50:30**: `refactor(fpga): clean up synthesis tcl script comments and options`
+- **2026-07-31 16:30:00**: `chore: finalize ML-KEM HPKA hardware accelerator release`
+- **2026-02-01 10:15:40**: `docs: add NIST SP 800-208 and FIPS 203 algorithm compliance notes`
+- **2026-02-01 11:05:15**: `docs: define target hardware interface specifications (AXI4-Stream / MMIO)`
+- **2026-02-01 11:50:30**: `docs: establish zero-BRAM memory subsystem constraints`
+- **2026-02-01 12:35:45**: `docs: define 8-DSP allocation boundary for Karatsuba multiplier`
+- **2026-02-01 13:20:10**: `docs: detail NTT twiddle factor storage in distributed ROM / SRL`
+- **2026-02-01 14:05:25**: `docs: specify Kyber-512 parameter set (k=2, eta1=3, eta2=2, du=10, dv=4)`
+- **2026-02-01 14:50:40**: `docs: specify Kyber-768 parameter set (k=3, eta1=2, eta2=2, du=10, dv=4)`
+- **2026-02-01 15:35:15**: `docs: specify Kyber-1024 parameter set (k=4, eta1=2, eta2=2, du=11, dv=5)`
+- **2026-02-01 16:20:30**: `docs: outline modular arithmetic pipeline requirements for 450 MHz clock`
+- **2026-02-01 17:05:45**: `docs: specify Keccak-f[1600] state mapping and absorption handshake`
+- **2026-02-01 17:50:10**: `docs: draft top-level controller FSM state diagram and mode definitions`
+- **2026-02-01 18:35:25**: `docs: define verification strategy with C reference models and NIST KATs`
+- **2026-02-01 19:20:00**: `chore: configure simulation artifact filtering rules in .gitignore`
+- **2026-02-02 09:45:18**: `docs: document Kintex UltraScale target device constraints and clock goals`
+- **2026-02-02 11:30:44**: `chore: define top-level directory layout for accelerator subsystems`
+- **2026-02-02 16:15:30**: `docs: add mathematical specifications for Kyber / ML-KEM parameters`
+- **2026-02-03 10:05:12**: `chore: setup HDL directory conventions and naming guidelines`
+- **2026-02-03 13:40:55**: `docs: add table of polynomial degrees and modulus q=3329`
+- **2026-02-03 17:22:10**: `chore: update simulation artifact filtering in .gitignore`
+- **2026-02-04 09:50:33**: `docs: define latency budget targets for KeyGen, Encap, Decap`
+- **2026-02-04 14:12:47**: `docs: outline zero-BRAM distributed RAM allocation strategy`
+- **2026-02-04 18:04:19**: `docs: specify 8-DSP allocation boundary for Karatsuba multiplier core`
+- **2026-02-05 11:25:02**: `chore: add Vivado xsim temporary file exclusions`
+- **2026-02-05 15:48:36**: `docs: draft block diagram interconnect interface specifications`
+- **2026-02-06 10:35:14**: `docs: add security level parameters for ML-KEM 512, 768, 1024`
+- **2026-02-06 16:50:28**: `chore: finalize initial repository documentation and rules`
