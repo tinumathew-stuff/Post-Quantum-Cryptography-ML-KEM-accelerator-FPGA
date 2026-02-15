@@ -339,3 +339,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-13 14:45:50**: `refactor(cref): optimize memory alignment and byte swapping in test harnesses`
 - **2026-02-13 18:20:10**: `test(cref): verify shared secret agreement across all three parameter sets`
 - **2026-02-14 11:35:44**: `docs(cref): document C reference trace formats and golden output generation`
+- **2026-02-15 14:15:33**: `feat(field): implement 12-bit modular adder for modulus q=3329`
