@@ -347,3 +347,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-18 09:25:30**: `test(field): verify zero-latency combinational timing paths`
 - **2026-02-18 13:50:18**: `refactor(field): clean up parameter naming and signal typing`
 - **2026-02-19 11:15:40**: `test(field): integrate pseudo-random stimulus generator in testbench`
+- **2026-02-19 16:30:10**: `docs(field): document resource footprint of modular addition logic`
