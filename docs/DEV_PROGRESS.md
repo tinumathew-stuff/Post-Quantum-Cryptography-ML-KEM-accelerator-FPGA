@@ -349,3 +349,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-19 11:15:40**: `test(field): integrate pseudo-random stimulus generator in testbench`
 - **2026-02-19 16:30:10**: `docs(field): document resource footprint of modular addition logic`
 - **2026-02-20 10:40:25**: `test(field): add assertions for valid output range check [0, q-1]`
+- **2026-02-20 15:10:50**: `perf(field): verify zero-DSP synthesis mapping on Kintex UltraScale`
