@@ -350,3 +350,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-19 16:30:10**: `docs(field): document resource footprint of modular addition logic`
 - **2026-02-20 10:40:25**: `test(field): add assertions for valid output range check [0, q-1]`
 - **2026-02-20 15:10:50**: `perf(field): verify zero-DSP synthesis mapping on Kintex UltraScale`
+- **2026-02-21 09:35:15**: `test(field): run 1,000,000 vector regression test on field_add`
