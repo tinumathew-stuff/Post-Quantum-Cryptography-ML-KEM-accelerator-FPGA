@@ -339,3 +339,16 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-13 14:45:50**: `refactor(cref): optimize memory alignment and byte swapping in test harnesses`
 - **2026-02-13 18:20:10**: `test(cref): verify shared secret agreement across all three parameter sets`
 - **2026-02-14 11:35:44**: `docs(cref): document C reference trace formats and golden output generation`
+- **2026-02-15 14:15:33**: `feat(field): implement 12-bit modular adder for modulus q=3329`
+- **2026-02-16 09:40:20**: `feat(field): add single-cycle subtract-and-select modular reduction`
+- **2026-02-16 16:20:15**: `test(field): add exhaustive test coverage over range [0, 2q-2]`
+- **2026-02-17 10:10:05**: `fix(field): handle corner case addition when sum exactly equals q`
+- **2026-02-17 14:45:22**: `perf(field): optimize carry chain propagation in modular addition`
+- **2026-02-18 09:25:30**: `test(field): verify zero-latency combinational timing paths`
+- **2026-02-18 13:50:18**: `refactor(field): clean up parameter naming and signal typing`
+- **2026-02-19 11:15:40**: `test(field): integrate pseudo-random stimulus generator in testbench`
+- **2026-02-19 16:30:10**: `docs(field): document resource footprint of modular addition logic`
+- **2026-02-20 10:40:25**: `test(field): add assertions for valid output range check [0, q-1]`
+- **2026-02-20 15:10:50**: `perf(field): verify zero-DSP synthesis mapping on Kintex UltraScale`
+- **2026-02-21 09:35:15**: `test(field): run 1,000,000 vector regression test on field_add`
+- **2026-02-21 14:20:00**: `style(field): format SystemVerilog headers and port lists`
