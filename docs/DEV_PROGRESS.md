@@ -352,3 +352,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-20 15:10:50**: `perf(field): verify zero-DSP synthesis mapping on Kintex UltraScale`
 - **2026-02-21 09:35:15**: `test(field): run 1,000,000 vector regression test on field_add`
 - **2026-02-21 14:20:00**: `style(field): format SystemVerilog headers and port lists`
+- **2026-02-22 14:40:12**: `feat(field): implement 12-bit modular subtractor with constant addition of q`
