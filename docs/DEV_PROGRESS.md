@@ -355,3 +355,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-22 14:40:12**: `feat(field): implement 12-bit modular subtractor with constant addition of q`
 - **2026-02-23 09:50:45**: `feat(field): add conditional multiplexer for borrow propagation`
 - **2026-02-23 17:10:05**: `test(field): add boundary test cases for a < b and a == b`
+- **2026-02-24 10:30:40**: `fix(field): correct sign-bit extension during subtraction underflow`
