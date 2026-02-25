@@ -358,3 +358,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-24 10:30:40**: `fix(field): correct sign-bit extension during subtraction underflow`
 - **2026-02-24 15:45:15**: `perf(field): optimize LUT usage by merging addition with carry-in bias`
 - **2026-02-25 09:15:30**: `test(field): add randomized vector comparison against Python reference`
+- **2026-02-25 14:05:50**: `refactor(field): standardize port naming across field_add and field_sub`
