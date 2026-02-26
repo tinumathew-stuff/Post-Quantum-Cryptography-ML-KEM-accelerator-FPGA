@@ -360,3 +360,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-25 09:15:30**: `test(field): add randomized vector comparison against Python reference`
 - **2026-02-25 14:05:50**: `refactor(field): standardize port naming across field_add and field_sub`
 - **2026-02-26 11:20:10**: `test(field): verify full modulus range [0, 3328] subtraction correctness`
+- **2026-02-26 16:40:22**: `docs(field): add timing and latency documentation for field subtractor`
