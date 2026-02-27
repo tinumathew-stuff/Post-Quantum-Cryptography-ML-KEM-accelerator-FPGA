@@ -362,3 +362,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-26 11:20:10**: `test(field): verify full modulus range [0, 3328] subtraction correctness`
 - **2026-02-26 16:40:22**: `docs(field): add timing and latency documentation for field subtractor`
 - **2026-02-27 10:05:45**: `perf(field): benchmark combinational path delay under UltraScale 450 MHz clock constraint`
+- **2026-02-27 14:50:30**: `test(field): add assertion checking for strictly canonical output values`
