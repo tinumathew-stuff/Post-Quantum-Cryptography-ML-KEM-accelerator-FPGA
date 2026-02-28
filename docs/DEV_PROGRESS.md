@@ -352,3 +352,16 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-20 15:10:50**: `perf(field): verify zero-DSP synthesis mapping on Kintex UltraScale`
 - **2026-02-21 09:35:15**: `test(field): run 1,000,000 vector regression test on field_add`
 - **2026-02-21 14:20:00**: `style(field): format SystemVerilog headers and port lists`
+- **2026-02-22 14:40:12**: `feat(field): implement 12-bit modular subtractor with constant addition of q`
+- **2026-02-23 09:50:45**: `feat(field): add conditional multiplexer for borrow propagation`
+- **2026-02-23 17:10:05**: `test(field): add boundary test cases for a < b and a == b`
+- **2026-02-24 10:30:40**: `fix(field): correct sign-bit extension during subtraction underflow`
+- **2026-02-24 15:45:15**: `perf(field): optimize LUT usage by merging addition with carry-in bias`
+- **2026-02-25 09:15:30**: `test(field): add randomized vector comparison against Python reference`
+- **2026-02-25 14:05:50**: `refactor(field): standardize port naming across field_add and field_sub`
+- **2026-02-26 11:20:10**: `test(field): verify full modulus range [0, 3328] subtraction correctness`
+- **2026-02-26 16:40:22**: `docs(field): add timing and latency documentation for field subtractor`
+- **2026-02-27 10:05:45**: `perf(field): benchmark combinational path delay under UltraScale 450 MHz clock constraint`
+- **2026-02-27 14:50:30**: `test(field): add assertion checking for strictly canonical output values`
+- **2026-02-28 09:40:15**: `style(field): finalize clean SystemVerilog coding style guidelines`
+- **2026-02-28 13:15:00**: `test(field): run combined regression suite for field arithmetic units`
