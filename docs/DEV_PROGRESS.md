@@ -367,3 +367,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-28 13:15:00**: `test(field): run combined regression suite for field arithmetic units`
 - **2026-03-01 14:45:30**: `feat(keccak): implement 5x5x64 state array indexing and lane definitions`
 - **2026-03-02 09:30:44**: `feat(keccak): implement Theta step parity column XOR trees`
+- **2026-03-02 11:50:12**: `feat(keccak): implement Theta step D column XOR with rotational shifts`
