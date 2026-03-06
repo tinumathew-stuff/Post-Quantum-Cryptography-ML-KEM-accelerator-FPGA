@@ -376,3 +376,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-05 10:50:40**: `docs(keccak): document 1600-bit state mapping across 64-bit word lanes`
 - **2026-03-05 15:30:25**: `perf(keccak): evaluate CLB LUT mapping for combined Theta-Rho datapath`
 - **2026-03-06 09:20:10**: `fix(keccak): resolve lane indexing typo in y=3 coordinate rotation`
+- **2026-03-06 13:45:50**: `test(keccak): add unit test vectors for Rho step cyclic bit shifts`
