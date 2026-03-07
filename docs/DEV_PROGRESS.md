@@ -365,3 +365,17 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-02-27 14:50:30**: `test(field): add assertion checking for strictly canonical output values`
 - **2026-02-28 09:40:15**: `style(field): finalize clean SystemVerilog coding style guidelines`
 - **2026-02-28 13:15:00**: `test(field): run combined regression suite for field arithmetic units`
+- **2026-03-01 14:45:30**: `feat(keccak): implement 5x5x64 state array indexing and lane definitions`
+- **2026-03-02 09:30:44**: `feat(keccak): implement Theta step parity column XOR trees`
+- **2026-03-02 11:50:12**: `feat(keccak): implement Theta step D column XOR with rotational shifts`
+- **2026-03-02 16:35:20**: `feat(keccak): complete Theta step transformation logic`
+- **2026-03-03 10:15:55**: `feat(keccak): implement Rho step lane rotation table`
+- **2026-03-03 14:40:10**: `perf(keccak): optimize bit-level wire routing for Rho fixed rotations`
+- **2026-03-04 09:45:30**: `test(keccak): verify Theta and Rho transformations against known round vectors`
+- **2026-03-04 14:20:15**: `refactor(keccak): streamline intermediate variable declarations in round logic`
+- **2026-03-05 10:50:40**: `docs(keccak): document 1600-bit state mapping across 64-bit word lanes`
+- **2026-03-05 15:30:25**: `perf(keccak): evaluate CLB LUT mapping for combined Theta-Rho datapath`
+- **2026-03-06 09:20:10**: `fix(keccak): resolve lane indexing typo in y=3 coordinate rotation`
+- **2026-03-06 13:45:50**: `test(keccak): add unit test vectors for Rho step cyclic bit shifts`
+- **2026-03-06 17:15:30**: `style(keccak): enforce consistent indexing format across lane assignments`
+- **2026-03-07 11:00:20**: `refactor(keccak): prepare modular interface for Pi and Chi stages`
