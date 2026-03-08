@@ -379,3 +379,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-06 13:45:50**: `test(keccak): add unit test vectors for Rho step cyclic bit shifts`
 - **2026-03-06 17:15:30**: `style(keccak): enforce consistent indexing format across lane assignments`
 - **2026-03-07 11:00:20**: `refactor(keccak): prepare modular interface for Pi and Chi stages`
+- **2026-03-08 10:10:45**: `feat(keccak): implement Pi step permutation mapping`
