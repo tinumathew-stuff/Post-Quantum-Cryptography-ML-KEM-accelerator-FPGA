@@ -382,3 +382,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-08 10:10:45**: `feat(keccak): implement Pi step permutation mapping`
 - **2026-03-08 14:35:20**: `feat(keccak): implement Chi non-linear step across 5-lane rows`
 - **2026-03-09 09:25:10**: `perf(keccak): synthesize Chi step using 6-LUT bitwise boolean logic`
+- **2026-03-09 13:50:35**: `feat(keccak): implement Iota step round constant XOR generator`
