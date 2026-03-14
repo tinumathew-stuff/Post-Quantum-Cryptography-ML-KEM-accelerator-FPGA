@@ -379,3 +379,18 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-06 13:45:50**: `test(keccak): add unit test vectors for Rho step cyclic bit shifts`
 - **2026-03-06 17:15:30**: `style(keccak): enforce consistent indexing format across lane assignments`
 - **2026-03-07 11:00:20**: `refactor(keccak): prepare modular interface for Pi and Chi stages`
+- **2026-03-08 10:10:45**: `feat(keccak): implement Pi step permutation mapping`
+- **2026-03-08 14:35:20**: `feat(keccak): implement Chi non-linear step across 5-lane rows`
+- **2026-03-09 09:25:10**: `perf(keccak): synthesize Chi step using 6-LUT bitwise boolean logic`
+- **2026-03-09 13:50:35**: `feat(keccak): implement Iota step round constant XOR generator`
+- **2026-03-10 10:40:15**: `feat(keccak): add 24-entry round constant ROM table`
+- **2026-03-10 15:15:50**: `feat(keccak): integrate full 1-round combinational transform function`
+- **2026-03-11 09:10:20**: `feat(keccak): build 24-cycle state machine controller with round counter`
+- **2026-03-11 14:30:45**: `feat(keccak): add absorbing phase state XOR with input message stream`
+- **2026-03-12 11:20:30**: `feat(keccak): add squeezing phase valid handshake and output multiplexing`
+- **2026-03-12 16:45:10**: `fix(keccak): correct round constant index calculation on round 23`
+- **2026-03-13 10:05:40**: `perf(keccak): register boundary optimization for 450 MHz timing margin`
+- **2026-03-13 14:40:25**: `docs(keccak): document 24-cycle round latency and throughput characteristics`
+- **2026-03-13 18:15:00**: `refactor(keccak): optimize reset behavior for low power consumption`
+- **2026-03-14 09:50:30**: `test(keccak): verify intermediate state after round 1 against reference vectors`
+- **2026-03-14 13:20:15**: `style(keccak): clean up module header and state machine comments`
