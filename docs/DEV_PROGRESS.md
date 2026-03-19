@@ -402,3 +402,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-18 09:50:15**: `test(keccak): verify multiple back-to-back 24-round permutation bursts`
 - **2026-03-18 14:25:30**: `test(keccak): add SHAKE-128 rate 1344-bit absorbing test scenario`
 - **2026-03-19 11:10:40**: `test(keccak): add SHAKE-256 rate 1088-bit absorbing test scenario`
+- **2026-03-19 16:30:22**: `test(keccak): add SHA3-256 rate 1088-bit absorbing test scenario`
