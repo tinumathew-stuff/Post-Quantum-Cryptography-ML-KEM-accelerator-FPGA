@@ -409,3 +409,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-21 13:10:15**: `docs(keccak): finalize Keccak-f[1600] verification report and logs`
 - **2026-03-21 15:45:00**: `refactor(keccak): clean up simulation dump variables`
 - **2026-03-22 14:50:22**: `feat(ntt): compute forward NTT twiddle factors in bit-reversed order`
+- **2026-03-23 09:30:15**: `feat(ntt): embed 128 twiddle coefficients in 12-bit format`
