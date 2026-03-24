@@ -412,3 +412,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-23 09:30:15**: `feat(ntt): embed 128 twiddle coefficients in 12-bit format`
 - **2026-03-23 13:45:50**: `feat(ntt): compute inverse INTT twiddle factors with scaling by 1/2`
 - **2026-03-24 10:20:30**: `feat(ntt): embed Montgomery representation factors R mod q`
+- **2026-03-24 15:10:40**: `test(ntt): verify twiddle mathematical properties (omega^128 = -1 mod q)`
