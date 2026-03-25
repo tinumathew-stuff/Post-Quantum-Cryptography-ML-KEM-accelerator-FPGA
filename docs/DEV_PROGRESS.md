@@ -414,3 +414,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-24 10:20:30**: `feat(ntt): embed Montgomery representation factors R mod q`
 - **2026-03-24 15:10:40**: `test(ntt): verify twiddle mathematical properties (omega^128 = -1 mod q)`
 - **2026-03-25 09:40:12**: `perf(ntt): map twiddle coefficients into distributed ROM / SRL`
+- **2026-03-25 14:15:35**: `refactor(ntt): format twiddle array initializer using compact SystemVerilog syntax`
