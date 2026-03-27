@@ -419,3 +419,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-26 15:50:10**: `test(ntt): validate all 256 twiddle values against FIPS 203 table 1`
 - **2026-03-27 09:15:45**: `fix(ntt): correct index offset for INTT layer 7 twiddle constant`
 - **2026-03-27 13:40:30**: `perf(ntt): ensure zero BRAM consumption for twiddle storage`
+- **2026-03-27 17:20:15**: `test(ntt): check canonical representation of twiddle factors [0, q-1]`
