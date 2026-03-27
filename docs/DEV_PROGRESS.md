@@ -417,3 +417,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-25 14:15:35**: `refactor(ntt): format twiddle array initializer using compact SystemVerilog syntax`
 - **2026-03-26 10:35:20**: `docs(ntt): document twiddle factor addressing scheme for Cooley-Tukey NTT`
 - **2026-03-26 15:50:10**: `test(ntt): validate all 256 twiddle values against FIPS 203 table 1`
+- **2026-03-27 09:15:45**: `fix(ntt): correct index offset for INTT layer 7 twiddle constant`
