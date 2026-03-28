@@ -408,3 +408,17 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-21 09:40:30**: `test(keccak): add automated pass/fail reporting banner to testbench`
 - **2026-03-21 13:10:15**: `docs(keccak): finalize Keccak-f[1600] verification report and logs`
 - **2026-03-21 15:45:00**: `refactor(keccak): clean up simulation dump variables`
+- **2026-03-22 14:50:22**: `feat(ntt): compute forward NTT twiddle factors in bit-reversed order`
+- **2026-03-23 09:30:15**: `feat(ntt): embed 128 twiddle coefficients in 12-bit format`
+- **2026-03-23 13:45:50**: `feat(ntt): compute inverse INTT twiddle factors with scaling by 1/2`
+- **2026-03-24 10:20:30**: `feat(ntt): embed Montgomery representation factors R mod q`
+- **2026-03-24 15:10:40**: `test(ntt): verify twiddle mathematical properties (omega^128 = -1 mod q)`
+- **2026-03-25 09:40:12**: `perf(ntt): map twiddle coefficients into distributed ROM / SRL`
+- **2026-03-25 14:15:35**: `refactor(ntt): format twiddle array initializer using compact SystemVerilog syntax`
+- **2026-03-26 10:35:20**: `docs(ntt): document twiddle factor addressing scheme for Cooley-Tukey NTT`
+- **2026-03-26 15:50:10**: `test(ntt): validate all 256 twiddle values against FIPS 203 table 1`
+- **2026-03-27 09:15:45**: `fix(ntt): correct index offset for INTT layer 7 twiddle constant`
+- **2026-03-27 13:40:30**: `perf(ntt): ensure zero BRAM consumption for twiddle storage`
+- **2026-03-27 17:20:15**: `test(ntt): check canonical representation of twiddle factors [0, q-1]`
+- **2026-03-28 10:45:00**: `style(ntt): clean up comments and mathematical derivation notes`
+- **2026-03-28 14:20:10**: `refactor(ntt): export function for twiddle factor lookup by layer`
