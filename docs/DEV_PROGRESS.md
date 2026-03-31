@@ -425,3 +425,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-29 15:10:40**: `feat(ntt): implement Cooley-Tukey butterfly arithmetic: u + v*zeta`
 - **2026-03-30 09:45:22**: `feat(ntt): implement Gentleman-Sande butterfly arithmetic for INTT`
 - **2026-03-30 14:20:30**: `feat(ntt): implement 16-bit Montgomery multiplication for twiddle scaling`
+- **2026-03-31 10:15:50**: `perf(ntt): implement DSP-free modular reduction for twiddle products`
