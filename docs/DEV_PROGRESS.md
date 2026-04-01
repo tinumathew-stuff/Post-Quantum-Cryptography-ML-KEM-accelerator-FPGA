@@ -427,3 +427,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-30 14:20:30**: `feat(ntt): implement 16-bit Montgomery multiplication for twiddle scaling`
 - **2026-03-31 10:15:50**: `perf(ntt): implement DSP-free modular reduction for twiddle products`
 - **2026-03-31 15:40:10**: `feat(ntt): balance 2-stage pipeline registers for 450 MHz clock target`
+- **2026-04-01 09:30:25**: `fix(ntt): resolve overflow in intermediate addition before reduction`
