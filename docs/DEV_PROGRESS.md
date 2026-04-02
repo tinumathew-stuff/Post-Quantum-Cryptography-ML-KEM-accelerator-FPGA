@@ -429,3 +429,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-31 15:40:10**: `feat(ntt): balance 2-stage pipeline registers for 450 MHz clock target`
 - **2026-04-01 09:30:25**: `fix(ntt): resolve overflow in intermediate addition before reduction`
 - **2026-04-01 13:55:40**: `test(ntt): create unit verification bench for butterfly arithmetic`
+- **2026-04-02 10:25:15**: `perf(ntt): optimize LUT logic depth for butterfly critical path`
