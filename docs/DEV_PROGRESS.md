@@ -431,3 +431,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-01 13:55:40**: `test(ntt): create unit verification bench for butterfly arithmetic`
 - **2026-04-02 10:25:15**: `perf(ntt): optimize LUT logic depth for butterfly critical path`
 - **2026-04-02 15:10:30**: `refactor(ntt): unify forward and inverse butterfly mode selection`
+- **2026-04-03 09:40:50**: `test(ntt): verify butterfly output correctness for all possible zeta inputs`
