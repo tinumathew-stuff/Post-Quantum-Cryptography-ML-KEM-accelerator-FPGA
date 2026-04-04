@@ -434,3 +434,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-03 09:40:50**: `test(ntt): verify butterfly output correctness for all possible zeta inputs`
 - **2026-04-03 14:35:10**: `docs(ntt): document butterfly pipeline timing diagram and stage delays`
 - **2026-04-03 18:00:25**: `test(ntt): run 500,000 random stimulus vectors through butterfly pipeline`
+- **2026-04-04 10:15:30**: `perf(ntt): verify zero DSP usage confirmed in butterfly synthesis`
