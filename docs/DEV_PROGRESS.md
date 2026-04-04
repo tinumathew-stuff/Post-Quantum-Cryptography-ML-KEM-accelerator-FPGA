@@ -422,3 +422,17 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-03-27 17:20:15**: `test(ntt): check canonical representation of twiddle factors [0, q-1]`
 - **2026-03-28 10:45:00**: `style(ntt): clean up comments and mathematical derivation notes`
 - **2026-03-28 14:20:10**: `refactor(ntt): export function for twiddle factor lookup by layer`
+- **2026-03-29 15:10:40**: `feat(ntt): implement Cooley-Tukey butterfly arithmetic: u + v*zeta`
+- **2026-03-30 09:45:22**: `feat(ntt): implement Gentleman-Sande butterfly arithmetic for INTT`
+- **2026-03-30 14:20:30**: `feat(ntt): implement 16-bit Montgomery multiplication for twiddle scaling`
+- **2026-03-31 10:15:50**: `perf(ntt): implement DSP-free modular reduction for twiddle products`
+- **2026-03-31 15:40:10**: `feat(ntt): balance 2-stage pipeline registers for 450 MHz clock target`
+- **2026-04-01 09:30:25**: `fix(ntt): resolve overflow in intermediate addition before reduction`
+- **2026-04-01 13:55:40**: `test(ntt): create unit verification bench for butterfly arithmetic`
+- **2026-04-02 10:25:15**: `perf(ntt): optimize LUT logic depth for butterfly critical path`
+- **2026-04-02 15:10:30**: `refactor(ntt): unify forward and inverse butterfly mode selection`
+- **2026-04-03 09:40:50**: `test(ntt): verify butterfly output correctness for all possible zeta inputs`
+- **2026-04-03 14:35:10**: `docs(ntt): document butterfly pipeline timing diagram and stage delays`
+- **2026-04-03 18:00:25**: `test(ntt): run 500,000 random stimulus vectors through butterfly pipeline`
+- **2026-04-04 10:15:30**: `perf(ntt): verify zero DSP usage confirmed in butterfly synthesis`
+- **2026-04-04 14:40:00**: `style(ntt): clean up butterfly comments and signal naming`
