@@ -438,3 +438,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-04 14:40:00**: `style(ntt): clean up butterfly comments and signal naming`
 - **2026-04-05 14:45:15**: `feat(ntt): implement 7-layer NTT nested loop address generation`
 - **2026-04-06 09:35:40**: `feat(ntt): implement bit-reversal indexing state machine`
+- **2026-04-06 14:10:25**: `feat(ntt): integrate butterfly unit instance into transform datapath`
