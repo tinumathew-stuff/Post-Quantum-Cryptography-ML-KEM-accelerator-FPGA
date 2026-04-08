@@ -441,3 +441,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-06 14:10:25**: `feat(ntt): integrate butterfly unit instance into transform datapath`
 - **2026-04-07 10:05:50**: `feat(ntt): implement dual-bank RAM read/write addressing without conflicts`
 - **2026-04-07 15:30:12**: `feat(ntt): implement INTT 7-layer loop with inverse twiddle sequencing`
+- **2026-04-08 14:40:30**: `test(ntt): verify roundtrip INTT(NTT(p)) == p for random polynomials`
