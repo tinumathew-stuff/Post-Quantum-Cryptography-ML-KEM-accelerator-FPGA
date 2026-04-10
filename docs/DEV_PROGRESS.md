@@ -446,3 +446,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-09 15:50:35**: `perf(ntt): achieve 280-cycle transform execution latency`
 - **2026-04-10 09:40:10**: `test(ntt): compare NTT coefficients against FIPS 203 KAT vectors`
 - **2026-04-10 14:15:25**: `docs(ntt): document state transition diagram and memory read/write schedule`
+- **2026-04-10 18:30:00**: `refactor(ntt): streamline start/done handshaking interface`
