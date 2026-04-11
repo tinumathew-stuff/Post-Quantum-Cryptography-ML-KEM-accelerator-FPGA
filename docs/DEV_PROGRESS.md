@@ -448,3 +448,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-10 14:15:25**: `docs(ntt): document state transition diagram and memory read/write schedule`
 - **2026-04-10 18:30:00**: `refactor(ntt): streamline start/done handshaking interface`
 - **2026-04-11 10:30:45**: `test(ntt): execute regression tests across 10,000 polynomial frames`
+- **2026-04-11 14:50:15**: `style(ntt): finalize code formatting and comments for ntt_intt subsystem`
