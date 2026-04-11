@@ -436,3 +436,16 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-03 18:00:25**: `test(ntt): run 500,000 random stimulus vectors through butterfly pipeline`
 - **2026-04-04 10:15:30**: `perf(ntt): verify zero DSP usage confirmed in butterfly synthesis`
 - **2026-04-04 14:40:00**: `style(ntt): clean up butterfly comments and signal naming`
+- **2026-04-05 14:45:15**: `feat(ntt): implement 7-layer NTT nested loop address generation`
+- **2026-04-06 09:35:40**: `feat(ntt): implement bit-reversal indexing state machine`
+- **2026-04-06 14:10:25**: `feat(ntt): integrate butterfly unit instance into transform datapath`
+- **2026-04-07 10:05:50**: `feat(ntt): implement dual-bank RAM read/write addressing without conflicts`
+- **2026-04-07 15:30:12**: `feat(ntt): implement INTT 7-layer loop with inverse twiddle sequencing`
+- **2026-04-08 14:40:30**: `test(ntt): verify roundtrip INTT(NTT(p)) == p for random polynomials`
+- **2026-04-09 10:15:20**: `fix(ntt): correct layer 0 twiddle index reset condition`
+- **2026-04-09 15:50:35**: `perf(ntt): achieve 280-cycle transform execution latency`
+- **2026-04-10 09:40:10**: `test(ntt): compare NTT coefficients against FIPS 203 KAT vectors`
+- **2026-04-10 14:15:25**: `docs(ntt): document state transition diagram and memory read/write schedule`
+- **2026-04-10 18:30:00**: `refactor(ntt): streamline start/done handshaking interface`
+- **2026-04-11 10:30:45**: `test(ntt): execute regression tests across 10,000 polynomial frames`
+- **2026-04-11 14:50:15**: `style(ntt): finalize code formatting and comments for ntt_intt subsystem`
