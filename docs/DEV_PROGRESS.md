@@ -451,3 +451,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-11 14:50:15**: `style(ntt): finalize code formatting and comments for ntt_intt subsystem`
 - **2026-04-13 09:40:20**: `feat(sampler): implement SHAKE-128 absorbing interface with seed inputs`
 - **2026-04-13 14:15:30**: `feat(sampler): implement SHAKE-256 absorbing interface for noise vectors`
+- **2026-04-14 10:25:50**: `feat(sampler): add matrix coordinate padding (i, j) for A-matrix generation`
