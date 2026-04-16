@@ -454,3 +454,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-14 10:25:50**: `feat(sampler): add matrix coordinate padding (i, j) for A-matrix generation`
 - **2026-04-14 15:40:15**: `feat(sampler): implement rate-squeezing streaming buffer logic`
 - **2026-04-15 14:20:10**: `fix(sampler): handle byte endianness alignment for sponge rate buffer`
+- **2026-04-16 10:15:35**: `perf(sampler): overlap Keccak permutation cycle with output word extraction`
