@@ -456,3 +456,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-15 14:20:10**: `fix(sampler): handle byte endianness alignment for sponge rate buffer`
 - **2026-04-16 10:15:35**: `perf(sampler): overlap Keccak permutation cycle with output word extraction`
 - **2026-04-16 15:50:20**: `docs(sampler): document sponge state machine and absorption protocol`
+- **2026-04-17 09:45:15**: `test(sampler): verify SHAKE-128 stream against standard test vectors`
