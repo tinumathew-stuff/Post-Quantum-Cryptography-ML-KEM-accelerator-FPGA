@@ -459,3 +459,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-17 09:45:15**: `test(sampler): verify SHAKE-128 stream against standard test vectors`
 - **2026-04-17 14:10:30**: `refactor(sampler): modularize sponge pad10*1 padding rule generation`
 - **2026-04-17 18:25:00**: `test(sampler): verify SHAKE-256 stream against standard test vectors`
+- **2026-04-18 10:20:15**: `perf(sampler): reduce control FSM register fan-out on start trigger`
