@@ -449,3 +449,15 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-10 18:30:00**: `refactor(ntt): streamline start/done handshaking interface`
 - **2026-04-11 10:30:45**: `test(ntt): execute regression tests across 10,000 polynomial frames`
 - **2026-04-11 14:50:15**: `style(ntt): finalize code formatting and comments for ntt_intt subsystem`
+- **2026-04-13 09:40:20**: `feat(sampler): implement SHAKE-128 absorbing interface with seed inputs`
+- **2026-04-13 14:15:30**: `feat(sampler): implement SHAKE-256 absorbing interface for noise vectors`
+- **2026-04-14 10:25:50**: `feat(sampler): add matrix coordinate padding (i, j) for A-matrix generation`
+- **2026-04-14 15:40:15**: `feat(sampler): implement rate-squeezing streaming buffer logic`
+- **2026-04-15 14:20:10**: `fix(sampler): handle byte endianness alignment for sponge rate buffer`
+- **2026-04-16 10:15:35**: `perf(sampler): overlap Keccak permutation cycle with output word extraction`
+- **2026-04-16 15:50:20**: `docs(sampler): document sponge state machine and absorption protocol`
+- **2026-04-17 09:45:15**: `test(sampler): verify SHAKE-128 stream against standard test vectors`
+- **2026-04-17 14:10:30**: `refactor(sampler): modularize sponge pad10*1 padding rule generation`
+- **2026-04-17 18:25:00**: `test(sampler): verify SHAKE-256 stream against standard test vectors`
+- **2026-04-18 10:20:15**: `perf(sampler): reduce control FSM register fan-out on start trigger`
+- **2026-04-18 14:45:00**: `style(sampler): clean up SystemVerilog port declarations and comments`
