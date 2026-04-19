@@ -462,3 +462,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-18 10:20:15**: `perf(sampler): reduce control FSM register fan-out on start trigger`
 - **2026-04-18 14:45:00**: `style(sampler): clean up SystemVerilog port declarations and comments`
 - **2026-04-19 10:15:30**: `feat(sampler): implement rejection sampling logic for SampleNTT`
+- **2026-04-19 14:40:22**: `feat(sampler): parse 24-bit chunks into two 12-bit candidate coefficients`
