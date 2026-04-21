@@ -465,3 +465,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-19 14:40:22**: `feat(sampler): parse 24-bit chunks into two 12-bit candidate coefficients`
 - **2026-04-20 09:30:15**: `feat(sampler): implement rejection test (d1 < q && d2 < q) with valid flags`
 - **2026-04-20 13:55:40**: `feat(sampler): implement CBD2 (eta=2) sampler for noise generation`
+- **2026-04-21 10:20:30**: `feat(sampler): implement CBD3 (eta=3) sampler for ML-KEM-512 noise generation`
