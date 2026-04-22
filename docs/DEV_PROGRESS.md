@@ -468,3 +468,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-21 10:20:30**: `feat(sampler): implement CBD3 (eta=3) sampler for ML-KEM-512 noise generation`
 - **2026-04-21 15:15:10**: `feat(sampler): implement modular reduction (a - b mod q) for CBD output`
 - **2026-04-22 09:40:45**: `perf(sampler): pipeline CBD hamming weight summation logic`
+- **2026-04-22 14:20:30**: `test(sampler): test rejection sampling against uniform distribution test`
