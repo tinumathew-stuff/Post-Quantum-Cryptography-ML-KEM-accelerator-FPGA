@@ -470,3 +470,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-22 09:40:45**: `perf(sampler): pipeline CBD hamming weight summation logic`
 - **2026-04-22 14:20:30**: `test(sampler): test rejection sampling against uniform distribution test`
 - **2026-04-23 10:10:15**: `fix(sampler): handle squeezing stall when rejection rate spikes`
+- **2026-04-23 15:35:40**: `test(sampler): test CBD2 and CBD3 distributions against statistical bounds`
