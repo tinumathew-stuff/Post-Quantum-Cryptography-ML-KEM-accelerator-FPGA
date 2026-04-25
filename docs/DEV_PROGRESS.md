@@ -461,3 +461,18 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-17 18:25:00**: `test(sampler): verify SHAKE-256 stream against standard test vectors`
 - **2026-04-18 10:20:15**: `perf(sampler): reduce control FSM register fan-out on start trigger`
 - **2026-04-18 14:45:00**: `style(sampler): clean up SystemVerilog port declarations and comments`
+- **2026-04-19 10:15:30**: `feat(sampler): implement rejection sampling logic for SampleNTT`
+- **2026-04-19 14:40:22**: `feat(sampler): parse 24-bit chunks into two 12-bit candidate coefficients`
+- **2026-04-20 09:30:15**: `feat(sampler): implement rejection test (d1 < q && d2 < q) with valid flags`
+- **2026-04-20 13:55:40**: `feat(sampler): implement CBD2 (eta=2) sampler for noise generation`
+- **2026-04-21 10:20:30**: `feat(sampler): implement CBD3 (eta=3) sampler for ML-KEM-512 noise generation`
+- **2026-04-21 15:15:10**: `feat(sampler): implement modular reduction (a - b mod q) for CBD output`
+- **2026-04-22 09:40:45**: `perf(sampler): pipeline CBD hamming weight summation logic`
+- **2026-04-22 14:20:30**: `test(sampler): test rejection sampling against uniform distribution test`
+- **2026-04-23 10:10:15**: `fix(sampler): handle squeezing stall when rejection rate spikes`
+- **2026-04-23 15:35:40**: `test(sampler): test CBD2 and CBD3 distributions against statistical bounds`
+- **2026-04-24 09:25:20**: `refactor(sampler): unify CBD parameter selection (eta=2 vs eta=3)`
+- **2026-04-24 14:10:50**: `perf(sampler): verify 0 DSP usage across entire hash_sampler core`
+- **2026-04-24 18:00:15**: `docs(sampler): document rejection rate expectations and throughput cycles`
+- **2026-04-25 10:45:30**: `test(sampler): verify matrix A generation matches FIPS 203 KAT vectors`
+- **2026-04-25 14:20:10**: `style(sampler): clean up internal wire declarations and formatting`
