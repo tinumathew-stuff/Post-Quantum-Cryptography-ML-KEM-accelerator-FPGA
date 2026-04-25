@@ -474,3 +474,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-24 09:25:20**: `refactor(sampler): unify CBD parameter selection (eta=2 vs eta=3)`
 - **2026-04-24 14:10:50**: `perf(sampler): verify 0 DSP usage across entire hash_sampler core`
 - **2026-04-24 18:00:15**: `docs(sampler): document rejection rate expectations and throughput cycles`
+- **2026-04-25 10:45:30**: `test(sampler): verify matrix A generation matches FIPS 203 KAT vectors`
