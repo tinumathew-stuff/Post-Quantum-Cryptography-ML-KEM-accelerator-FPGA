@@ -477,3 +477,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-25 10:45:30**: `test(sampler): verify matrix A generation matches FIPS 203 KAT vectors`
 - **2026-04-25 14:20:10**: `style(sampler): clean up internal wire declarations and formatting`
 - **2026-04-26 15:10:40**: `test(sampler): connect seed hex vector loaders into testbench`
+- **2026-04-27 09:45:22**: `test(sampler): verify A matrix expansion for k=2 (ML-KEM-512)`
