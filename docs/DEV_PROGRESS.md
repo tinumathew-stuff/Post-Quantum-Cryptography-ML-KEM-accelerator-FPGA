@@ -480,3 +480,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-27 09:45:22**: `test(sampler): verify A matrix expansion for k=2 (ML-KEM-512)`
 - **2026-04-27 14:20:30**: `test(sampler): verify A matrix expansion for k=3 (ML-KEM-768)`
 - **2026-04-28 10:15:50**: `test(sampler): verify A matrix expansion for k=4 (ML-KEM-1024)`
+- **2026-04-28 15:40:10**: `test(sampler): verify secret noise vector s generation across all k`
