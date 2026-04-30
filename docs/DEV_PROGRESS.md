@@ -483,3 +483,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-28 15:40:10**: `test(sampler): verify secret noise vector s generation across all k`
 - **2026-04-29 09:30:25**: `test(sampler): verify error noise vector e generation across all k`
 - **2026-04-29 13:55:40**: `fix(sampler): fix edge-case counter reset during back-to-back seed load`
+- **2026-04-30 10:25:15**: `perf(sampler): minimize idle cycles between Keccak squeeze blocks`
