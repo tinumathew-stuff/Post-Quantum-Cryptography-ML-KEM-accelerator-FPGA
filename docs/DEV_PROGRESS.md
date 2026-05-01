@@ -487,3 +487,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-30 15:10:30**: `refactor(sampler): simplify valid/ready handshake logic`
 - **2026-05-01 09:40:50**: `test(sampler): run automated regression test across all parameter sets`
 - **2026-05-01 14:35:10**: `docs(sampler): document verified cycle counts for sampleNTT and sampleCBD`
+- **2026-05-01 18:00:25**: `test(sampler): confirm bit-for-bit equivalence with C reference traces`
