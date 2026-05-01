@@ -485,3 +485,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-29 13:55:40**: `fix(sampler): fix edge-case counter reset during back-to-back seed load`
 - **2026-04-30 10:25:15**: `perf(sampler): minimize idle cycles between Keccak squeeze blocks`
 - **2026-04-30 15:10:30**: `refactor(sampler): simplify valid/ready handshake logic`
+- **2026-05-01 09:40:50**: `test(sampler): run automated regression test across all parameter sets`
