@@ -476,3 +476,17 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-04-24 18:00:15**: `docs(sampler): document rejection rate expectations and throughput cycles`
 - **2026-04-25 10:45:30**: `test(sampler): verify matrix A generation matches FIPS 203 KAT vectors`
 - **2026-04-25 14:20:10**: `style(sampler): clean up internal wire declarations and formatting`
+- **2026-04-26 15:10:40**: `test(sampler): connect seed hex vector loaders into testbench`
+- **2026-04-27 09:45:22**: `test(sampler): verify A matrix expansion for k=2 (ML-KEM-512)`
+- **2026-04-27 14:20:30**: `test(sampler): verify A matrix expansion for k=3 (ML-KEM-768)`
+- **2026-04-28 10:15:50**: `test(sampler): verify A matrix expansion for k=4 (ML-KEM-1024)`
+- **2026-04-28 15:40:10**: `test(sampler): verify secret noise vector s generation across all k`
+- **2026-04-29 09:30:25**: `test(sampler): verify error noise vector e generation across all k`
+- **2026-04-29 13:55:40**: `fix(sampler): fix edge-case counter reset during back-to-back seed load`
+- **2026-04-30 10:25:15**: `perf(sampler): minimize idle cycles between Keccak squeeze blocks`
+- **2026-04-30 15:10:30**: `refactor(sampler): simplify valid/ready handshake logic`
+- **2026-05-01 09:40:50**: `test(sampler): run automated regression test across all parameter sets`
+- **2026-05-01 14:35:10**: `docs(sampler): document verified cycle counts for sampleNTT and sampleCBD`
+- **2026-05-01 18:00:25**: `test(sampler): confirm bit-for-bit equivalence with C reference traces`
+- **2026-05-02 10:15:30**: `perf(sampler): verify timing slack margin on Keccak round feedback`
+- **2026-05-02 14:40:00**: `style(sampler): finalize sampler module clean-up and documentation`
