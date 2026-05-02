@@ -489,3 +489,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-01 14:35:10**: `docs(sampler): document verified cycle counts for sampleNTT and sampleCBD`
 - **2026-05-01 18:00:25**: `test(sampler): confirm bit-for-bit equivalence with C reference traces`
 - **2026-05-02 10:15:30**: `perf(sampler): verify timing slack margin on Keccak round feedback`
+- **2026-05-02 14:40:00**: `style(sampler): finalize sampler module clean-up and documentation`
