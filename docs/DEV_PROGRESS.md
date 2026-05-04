@@ -491,3 +491,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-02 10:15:30**: `perf(sampler): verify timing slack margin on Keccak round feedback`
 - **2026-05-02 14:40:00**: `style(sampler): finalize sampler module clean-up and documentation`
 - **2026-05-04 09:30:44**: `feat(codec): implement Polynomial-to-Byte encoding (12-bit packer)`
+- **2026-05-04 14:15:20**: `feat(codec): add byte stream shift registers for continuous throughput`
