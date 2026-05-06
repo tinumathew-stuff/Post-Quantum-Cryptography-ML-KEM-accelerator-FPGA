@@ -493,3 +493,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-04 09:30:44**: `feat(codec): implement Polynomial-to-Byte encoding (12-bit packer)`
 - **2026-05-04 14:15:20**: `feat(codec): add byte stream shift registers for continuous throughput`
 - **2026-05-06 09:25:50**: `fix(codec): resolve bit-endianness packing in 2-coefficient 3-byte boundary`
+- **2026-05-06 14:10:30**: `test(codec): test roundtrip poly_decode(poly_encode(p)) == p`
