@@ -498,3 +498,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-07 15:30:25**: `refactor(codec): simplify handshake signals for streaming bus interface`
 - **2026-05-08 09:40:15**: `test(codec): verify encoding/decoding against NIST ByteEncode12 vectors`
 - **2026-05-08 14:20:50**: `docs(codec): document bit-packing alignment and throughput cycles`
+- **2026-05-08 18:05:30**: `test(codec): run 1,000,000 randomized 12-bit coefficient vectors`
