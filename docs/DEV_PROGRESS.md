@@ -500,3 +500,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-08 14:20:50**: `docs(codec): document bit-packing alignment and throughput cycles`
 - **2026-05-08 18:05:30**: `test(codec): run 1,000,000 randomized 12-bit coefficient vectors`
 - **2026-05-09 10:30:20**: `perf(codec): confirm 0 DSP and 0 BRAM resource utilization`
+- **2026-05-09 14:15:00**: `style(codec): clean up SystemVerilog port declarations and comments`
