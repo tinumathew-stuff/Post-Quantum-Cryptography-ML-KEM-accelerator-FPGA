@@ -490,3 +490,14 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-01 18:00:25**: `test(sampler): confirm bit-for-bit equivalence with C reference traces`
 - **2026-05-02 10:15:30**: `perf(sampler): verify timing slack margin on Keccak round feedback`
 - **2026-05-02 14:40:00**: `style(sampler): finalize sampler module clean-up and documentation`
+- **2026-05-04 09:30:44**: `feat(codec): implement Polynomial-to-Byte encoding (12-bit packer)`
+- **2026-05-04 14:15:20**: `feat(codec): add byte stream shift registers for continuous throughput`
+- **2026-05-06 09:25:50**: `fix(codec): resolve bit-endianness packing in 2-coefficient 3-byte boundary`
+- **2026-05-06 14:10:30**: `test(codec): test roundtrip poly_decode(poly_encode(p)) == p`
+- **2026-05-07 10:15:40**: `perf(codec): optimize LUT usage by utilizing dedicated shift registers`
+- **2026-05-07 15:30:25**: `refactor(codec): simplify handshake signals for streaming bus interface`
+- **2026-05-08 09:40:15**: `test(codec): verify encoding/decoding against NIST ByteEncode12 vectors`
+- **2026-05-08 14:20:50**: `docs(codec): document bit-packing alignment and throughput cycles`
+- **2026-05-08 18:05:30**: `test(codec): run 1,000,000 randomized 12-bit coefficient vectors`
+- **2026-05-09 10:30:20**: `perf(codec): confirm 0 DSP and 0 BRAM resource utilization`
+- **2026-05-09 14:15:00**: `style(codec): clean up SystemVerilog port declarations and comments`
