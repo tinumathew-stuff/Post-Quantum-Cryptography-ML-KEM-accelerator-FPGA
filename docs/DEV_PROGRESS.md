@@ -503,3 +503,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-09 14:15:00**: `style(codec): clean up SystemVerilog port declarations and comments`
 - **2026-05-10 14:40:22**: `feat(compress): implement Compress_d logic for d=10, d=11 (vector u)`
 - **2026-05-11 09:30:15**: `feat(compress): implement Compress_d logic for d=4, d=5 (scalar v)`
+- **2026-05-12 10:20:30**: `feat(decompress): implement Decompress_d logic for d=10, d=11`
