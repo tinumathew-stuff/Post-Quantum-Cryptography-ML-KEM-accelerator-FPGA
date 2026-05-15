@@ -508,3 +508,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-13 14:20:30**: `test(compress): verify mathematical rounding property: round(2^d * x / q)`
 - **2026-05-14 10:10:15**: `fix(compress): fix division rounding bias in fixed-point multiplier approximation`
 - **2026-05-14 15:35:40**: `perf(compress): implement division-free Barrett multiplication for compression`
+- **2026-05-15 09:25:20**: `test(compress): verify all valid input coefficients [0, 3328] against C model`
