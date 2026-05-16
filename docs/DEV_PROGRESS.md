@@ -511,3 +511,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-15 09:25:20**: `test(compress): verify all valid input coefficients [0, 3328] against C model`
 - **2026-05-15 14:10:50**: `perf(compress): confirm zero DSPs utilized for all compression stages`
 - **2026-05-15 18:00:15**: `docs(compress): document compression formulas and precision bounds`
+- **2026-05-16 10:45:30**: `test(compress): run continuous streaming testbench on poly_codec`
