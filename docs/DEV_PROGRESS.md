@@ -501,3 +501,15 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-08 18:05:30**: `test(codec): run 1,000,000 randomized 12-bit coefficient vectors`
 - **2026-05-09 10:30:20**: `perf(codec): confirm 0 DSP and 0 BRAM resource utilization`
 - **2026-05-09 14:15:00**: `style(codec): clean up SystemVerilog port declarations and comments`
+- **2026-05-10 14:40:22**: `feat(compress): implement Compress_d logic for d=10, d=11 (vector u)`
+- **2026-05-11 09:30:15**: `feat(compress): implement Compress_d logic for d=4, d=5 (scalar v)`
+- **2026-05-12 10:20:30**: `feat(decompress): implement Decompress_d logic for d=10, d=11`
+- **2026-05-12 15:15:10**: `feat(decompress): implement Decompress_d logic for d=4, d=5`
+- **2026-05-13 14:20:30**: `test(compress): verify mathematical rounding property: round(2^d * x / q)`
+- **2026-05-14 10:10:15**: `fix(compress): fix division rounding bias in fixed-point multiplier approximation`
+- **2026-05-14 15:35:40**: `perf(compress): implement division-free Barrett multiplication for compression`
+- **2026-05-15 09:25:20**: `test(compress): verify all valid input coefficients [0, 3328] against C model`
+- **2026-05-15 14:10:50**: `perf(compress): confirm zero DSPs utilized for all compression stages`
+- **2026-05-15 18:00:15**: `docs(compress): document compression formulas and precision bounds`
+- **2026-05-16 10:45:30**: `test(compress): run continuous streaming testbench on poly_codec`
+- **2026-05-16 14:20:10**: `style(compress): format SystemVerilog code and add assertion checks`
