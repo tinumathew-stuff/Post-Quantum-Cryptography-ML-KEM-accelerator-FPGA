@@ -515,3 +515,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-16 14:20:10**: `style(compress): format SystemVerilog code and add assertion checks`
 - **2026-05-17 14:50:30**: `feat(mul): implement base multiplication in NTT domain: Z_q[X]/(X^2 - zeta)`
 - **2026-05-18 09:35:44**: `feat(mul): design dual-channel streaming Karatsuba multiplier architecture`
+- **2026-05-18 14:15:20**: `feat(mul): allocate exactly 8 DSP48E2 slices for high-speed arithmetic`
