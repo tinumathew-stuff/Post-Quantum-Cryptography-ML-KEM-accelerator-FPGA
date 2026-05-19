@@ -516,3 +516,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-17 14:50:30**: `feat(mul): implement base multiplication in NTT domain: Z_q[X]/(X^2 - zeta)`
 - **2026-05-18 09:35:44**: `feat(mul): design dual-channel streaming Karatsuba multiplier architecture`
 - **2026-05-18 14:15:20**: `feat(mul): allocate exactly 8 DSP48E2 slices for high-speed arithmetic`
+- **2026-05-19 10:10:35**: `feat(mul): implement Montgomery reduction post-multiplication step`
