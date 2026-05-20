@@ -518,3 +518,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-18 14:15:20**: `feat(mul): allocate exactly 8 DSP48E2 slices for high-speed arithmetic`
 - **2026-05-19 10:10:35**: `feat(mul): implement Montgomery reduction post-multiplication step`
 - **2026-05-19 15:40:10**: `feat(mul): pipeline multiplier across 4 clock stages for 450 MHz timing`
+- **2026-05-20 09:25:50**: `feat(mul): implement accumulate-in-place mode for matrix-vector multiplication`
