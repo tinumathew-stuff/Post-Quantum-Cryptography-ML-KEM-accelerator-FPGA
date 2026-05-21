@@ -520,3 +520,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-19 15:40:10**: `feat(mul): pipeline multiplier across 4 clock stages for 450 MHz timing`
 - **2026-05-20 09:25:50**: `feat(mul): implement accumulate-in-place mode for matrix-vector multiplication`
 - **2026-05-21 10:15:40**: `fix(mul): correct Montgomery factor q_inv constant sign extension`
+- **2026-05-21 15:30:25**: `perf(mul): optimize DSP48E2 internal cascade registers AREG and BREG`
