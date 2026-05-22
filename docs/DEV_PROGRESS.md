@@ -523,3 +523,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-21 15:30:25**: `perf(mul): optimize DSP48E2 internal cascade registers AREG and BREG`
 - **2026-05-22 09:40:15**: `test(mul): verify base multiplication against FIPS 203 algorithm 10`
 - **2026-05-22 14:20:50**: `refactor(mul): streamline coefficient streaming handshake interface`
+- **2026-05-22 18:05:30**: `test(mul): test randomized polynomial multiplication against golden model`
