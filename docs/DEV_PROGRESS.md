@@ -513,3 +513,16 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-15 18:00:15**: `docs(compress): document compression formulas and precision bounds`
 - **2026-05-16 10:45:30**: `test(compress): run continuous streaming testbench on poly_codec`
 - **2026-05-16 14:20:10**: `style(compress): format SystemVerilog code and add assertion checks`
+- **2026-05-17 14:50:30**: `feat(mul): implement base multiplication in NTT domain: Z_q[X]/(X^2 - zeta)`
+- **2026-05-18 09:35:44**: `feat(mul): design dual-channel streaming Karatsuba multiplier architecture`
+- **2026-05-18 14:15:20**: `feat(mul): allocate exactly 8 DSP48E2 slices for high-speed arithmetic`
+- **2026-05-19 10:10:35**: `feat(mul): implement Montgomery reduction post-multiplication step`
+- **2026-05-19 15:40:10**: `feat(mul): pipeline multiplier across 4 clock stages for 450 MHz timing`
+- **2026-05-20 09:25:50**: `feat(mul): implement accumulate-in-place mode for matrix-vector multiplication`
+- **2026-05-21 10:15:40**: `fix(mul): correct Montgomery factor q_inv constant sign extension`
+- **2026-05-21 15:30:25**: `perf(mul): optimize DSP48E2 internal cascade registers AREG and BREG`
+- **2026-05-22 09:40:15**: `test(mul): verify base multiplication against FIPS 203 algorithm 10`
+- **2026-05-22 14:20:50**: `refactor(mul): streamline coefficient streaming handshake interface`
+- **2026-05-22 18:05:30**: `test(mul): test randomized polynomial multiplication against golden model`
+- **2026-05-23 10:30:20**: `docs(mul): document DSP allocation, latency cycles, and throughput`
+- **2026-05-23 14:15:00**: `style(mul): clean up SystemVerilog port declarations and comments`
