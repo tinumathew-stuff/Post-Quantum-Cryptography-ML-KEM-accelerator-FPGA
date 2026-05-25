@@ -528,3 +528,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-23 14:15:00**: `style(mul): clean up SystemVerilog port declarations and comments`
 - **2026-05-24 10:15:30**: `test(mul): add full matrix-vector multiplication test harness`
 - **2026-05-24 14:40:22**: `test(mul): verify k=2 matrix-vector product A * s for ML-KEM-512`
+- **2026-05-25 09:30:15**: `test(mul): verify k=3 matrix-vector product A * s for ML-KEM-768`
