@@ -531,3 +531,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-25 09:30:15**: `test(mul): verify k=3 matrix-vector product A * s for ML-KEM-768`
 - **2026-05-25 13:55:40**: `test(mul): verify k=4 matrix-vector product A * s for ML-KEM-1024`
 - **2026-05-26 10:20:30**: `test(mul): verify inner product s^T * u for Decap message reconstruction`
+- **2026-05-26 15:15:10**: `perf(mul): eliminate bubble cycles in streaming coefficient feed`
