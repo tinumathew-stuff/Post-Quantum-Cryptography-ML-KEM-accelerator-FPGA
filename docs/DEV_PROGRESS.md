@@ -533,3 +533,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-26 10:20:30**: `test(mul): verify inner product s^T * u for Decap message reconstruction`
 - **2026-05-26 15:15:10**: `perf(mul): eliminate bubble cycles in streaming coefficient feed`
 - **2026-05-27 09:40:45**: `fix(mul): resolve accumulation reset timing when switching matrix rows`
+- **2026-05-27 14:20:30**: `test(mul): run 500,000 randomized inner-product vectors`
