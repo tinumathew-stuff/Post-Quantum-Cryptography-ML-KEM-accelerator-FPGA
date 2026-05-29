@@ -537,3 +537,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-28 10:10:15**: `docs(mul): document DSP cascade routing and power characteristics`
 - **2026-05-28 15:35:40**: `perf(mul): verify timing closure on 450 MHz clock on Kintex UltraScale`
 - **2026-05-29 09:25:20**: `test(mul): add assertion checking for Montgomery reduction bounds`
+- **2026-05-29 14:10:50**: `refactor(mul): streamline control flags and status indicators`
