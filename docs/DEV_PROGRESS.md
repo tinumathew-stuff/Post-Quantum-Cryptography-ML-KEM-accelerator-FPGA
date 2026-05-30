@@ -540,3 +540,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-29 14:10:50**: `refactor(mul): streamline control flags and status indicators`
 - **2026-05-29 18:00:15**: `test(mul): confirm bit-exact agreement with C reference Montgomery multiplication`
 - **2026-05-30 10:45:30**: `style(mul): finalize SystemVerilog formatting and comment blocks`
+- **2026-05-30 14:20:10**: `perf(mul): verify exact 8 DSP48E2 allocation confirmed in Vivado report`
