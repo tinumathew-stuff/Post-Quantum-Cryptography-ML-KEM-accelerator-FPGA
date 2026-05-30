@@ -526,3 +526,18 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-22 18:05:30**: `test(mul): test randomized polynomial multiplication against golden model`
 - **2026-05-23 10:30:20**: `docs(mul): document DSP allocation, latency cycles, and throughput`
 - **2026-05-23 14:15:00**: `style(mul): clean up SystemVerilog port declarations and comments`
+- **2026-05-24 10:15:30**: `test(mul): add full matrix-vector multiplication test harness`
+- **2026-05-24 14:40:22**: `test(mul): verify k=2 matrix-vector product A * s for ML-KEM-512`
+- **2026-05-25 09:30:15**: `test(mul): verify k=3 matrix-vector product A * s for ML-KEM-768`
+- **2026-05-25 13:55:40**: `test(mul): verify k=4 matrix-vector product A * s for ML-KEM-1024`
+- **2026-05-26 10:20:30**: `test(mul): verify inner product s^T * u for Decap message reconstruction`
+- **2026-05-26 15:15:10**: `perf(mul): eliminate bubble cycles in streaming coefficient feed`
+- **2026-05-27 09:40:45**: `fix(mul): resolve accumulation reset timing when switching matrix rows`
+- **2026-05-27 14:20:30**: `test(mul): run 500,000 randomized inner-product vectors`
+- **2026-05-28 10:10:15**: `docs(mul): document DSP cascade routing and power characteristics`
+- **2026-05-28 15:35:40**: `perf(mul): verify timing closure on 450 MHz clock on Kintex UltraScale`
+- **2026-05-29 09:25:20**: `test(mul): add assertion checking for Montgomery reduction bounds`
+- **2026-05-29 14:10:50**: `refactor(mul): streamline control flags and status indicators`
+- **2026-05-29 18:00:15**: `test(mul): confirm bit-exact agreement with C reference Montgomery multiplication`
+- **2026-05-30 10:45:30**: `style(mul): finalize SystemVerilog formatting and comment blocks`
+- **2026-05-30 14:20:10**: `perf(mul): verify exact 8 DSP48E2 allocation confirmed in Vivado report`
