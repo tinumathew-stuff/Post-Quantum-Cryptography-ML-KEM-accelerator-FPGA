@@ -543,3 +543,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-30 14:20:10**: `perf(mul): verify exact 8 DSP48E2 allocation confirmed in Vivado report`
 - **2026-06-01 14:15:20**: `feat(mem): implement zero-BRAM memory banking architecture`
 - **2026-06-02 10:10:35**: `feat(mem): map polynomial register arrays into CLB distributed RAM (LUTRAM)`
+- **2026-06-02 15:40:10**: `feat(mem): implement conflict-free address generation for parallel butterfly access`
