@@ -546,3 +546,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-02 15:40:10**: `feat(mem): implement conflict-free address generation for parallel butterfly access`
 - **2026-06-03 09:25:50**: `perf(mem): optimize shift register LUT (SRL) usage for pipeline buffers`
 - **2026-06-03 14:10:30**: `test(mem): verify zero BRAM inferred across all RTL memory blocks`
+- **2026-06-04 10:15:40**: `refactor(mem): optimize memory enable signals to minimize dynamic switching power`
