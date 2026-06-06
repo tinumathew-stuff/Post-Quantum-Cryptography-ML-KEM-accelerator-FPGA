@@ -541,3 +541,15 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-05-29 18:00:15**: `test(mul): confirm bit-exact agreement with C reference Montgomery multiplication`
 - **2026-05-30 10:45:30**: `style(mul): finalize SystemVerilog formatting and comment blocks`
 - **2026-05-30 14:20:10**: `perf(mul): verify exact 8 DSP48E2 allocation confirmed in Vivado report`
+- **2026-06-01 14:15:20**: `feat(mem): implement zero-BRAM memory banking architecture`
+- **2026-06-02 10:10:35**: `feat(mem): map polynomial register arrays into CLB distributed RAM (LUTRAM)`
+- **2026-06-02 15:40:10**: `feat(mem): implement conflict-free address generation for parallel butterfly access`
+- **2026-06-03 09:25:50**: `perf(mem): optimize shift register LUT (SRL) usage for pipeline buffers`
+- **2026-06-03 14:10:30**: `test(mem): verify zero BRAM inferred across all RTL memory blocks`
+- **2026-06-04 10:15:40**: `refactor(mem): optimize memory enable signals to minimize dynamic switching power`
+- **2026-06-04 15:30:25**: `docs(mem): document distributed RAM address mapping table`
+- **2026-06-05 09:40:15**: `fix(mem): resolve read-before-write hazard on ping-pong buffer swap`
+- **2026-06-05 14:20:50**: `test(mem): execute memory stress test with concurrent read/write patterns`
+- **2026-06-05 18:05:30**: `perf(mem): verify CLB memory utilization percentage stays under 5%`
+- **2026-06-06 10:30:20**: `style(mem): format Python analysis scripts and add docstrings`
+- **2026-06-06 14:15:00**: `test(mem): validate array parsing across all top and datapath files`
