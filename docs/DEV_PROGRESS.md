@@ -556,3 +556,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-07 15:10:40**: `feat(keygen): implement seed expansion state machine: G(d) -> (rho, sigma)`
 - **2026-06-08 09:45:22**: `feat(keygen): integrate on-the-fly matrix A expansion from seed rho`
 - **2026-06-08 14:20:30**: `feat(keygen): integrate noise sampling s and e from seed sigma`
+- **2026-06-09 10:15:50**: `feat(keygen): forward NTT transformation of secret vector s`
