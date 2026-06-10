@@ -558,3 +558,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-08 14:20:30**: `feat(keygen): integrate noise sampling s and e from seed sigma`
 - **2026-06-09 10:15:50**: `feat(keygen): forward NTT transformation of secret vector s`
 - **2026-06-09 15:40:10**: `feat(keygen): matrix-vector multiplication t = A * s + e in NTT domain`
+- **2026-06-10 09:30:25**: `feat(keygen): public key serialization: pk = ByteEncode12(t) || rho`
