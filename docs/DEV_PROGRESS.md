@@ -561,3 +561,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-10 09:30:25**: `feat(keygen): public key serialization: pk = ByteEncode12(t) || rho`
 - **2026-06-10 13:55:40**: `feat(keygen): secret key serialization: sk = ByteEncode12(s) || pk || H(pk) || z`
 - **2026-06-11 10:25:15**: `fix(keygen): fix byte offset alignment for H(pk) hash integration`
+- **2026-06-11 15:10:30**: `perf(keygen): overlap public key serialization with final hash computation`
