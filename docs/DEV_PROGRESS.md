@@ -563,3 +563,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-11 10:25:15**: `fix(keygen): fix byte offset alignment for H(pk) hash integration`
 - **2026-06-11 15:10:30**: `perf(keygen): overlap public key serialization with final hash computation`
 - **2026-06-12 09:40:50**: `feat(keygen): support dynamic parameter set selection k=2, 3, 4`
+- **2026-06-12 14:35:10**: `refactor(keygen): optimize FSM state encoding for one-hot performance`
