@@ -553,3 +553,17 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-05 18:05:30**: `perf(mem): verify CLB memory utilization percentage stays under 5%`
 - **2026-06-06 10:30:20**: `style(mem): format Python analysis scripts and add docstrings`
 - **2026-06-06 14:15:00**: `test(mem): validate array parsing across all top and datapath files`
+- **2026-06-07 15:10:40**: `feat(keygen): implement seed expansion state machine: G(d) -> (rho, sigma)`
+- **2026-06-08 09:45:22**: `feat(keygen): integrate on-the-fly matrix A expansion from seed rho`
+- **2026-06-08 14:20:30**: `feat(keygen): integrate noise sampling s and e from seed sigma`
+- **2026-06-09 10:15:50**: `feat(keygen): forward NTT transformation of secret vector s`
+- **2026-06-09 15:40:10**: `feat(keygen): matrix-vector multiplication t = A * s + e in NTT domain`
+- **2026-06-10 09:30:25**: `feat(keygen): public key serialization: pk = ByteEncode12(t) || rho`
+- **2026-06-10 13:55:40**: `feat(keygen): secret key serialization: sk = ByteEncode12(s) || pk || H(pk) || z`
+- **2026-06-11 10:25:15**: `fix(keygen): fix byte offset alignment for H(pk) hash integration`
+- **2026-06-11 15:10:30**: `perf(keygen): overlap public key serialization with final hash computation`
+- **2026-06-12 09:40:50**: `feat(keygen): support dynamic parameter set selection k=2, 3, 4`
+- **2026-06-12 14:35:10**: `refactor(keygen): optimize FSM state encoding for one-hot performance`
+- **2026-06-12 18:00:25**: `docs(keygen): document KeyGen state transition diagram and timing phases`
+- **2026-06-13 10:15:30**: `perf(keygen): verify timing closure at target 450 MHz frequency`
+- **2026-06-13 14:40:00**: `style(keygen): format SystemVerilog code and header comments`
