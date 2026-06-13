@@ -566,3 +566,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-12 14:35:10**: `refactor(keygen): optimize FSM state encoding for one-hot performance`
 - **2026-06-12 18:00:25**: `docs(keygen): document KeyGen state transition diagram and timing phases`
 - **2026-06-13 10:15:30**: `perf(keygen): verify timing closure at target 450 MHz frequency`
+- **2026-06-13 14:40:00**: `style(keygen): format SystemVerilog code and header comments`
