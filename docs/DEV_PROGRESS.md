@@ -568,3 +568,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-13 10:15:30**: `perf(keygen): verify timing closure at target 450 MHz frequency`
 - **2026-06-13 14:40:00**: `style(keygen): format SystemVerilog code and header comments`
 - **2026-06-15 09:30:44**: `test(keygen): verify seed expansion G(d) matches reference trace`
+- **2026-06-15 14:15:20**: `test(keygen): verify matrix A generation stage against golden model`
