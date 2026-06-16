@@ -570,3 +570,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-15 09:30:44**: `test(keygen): verify seed expansion G(d) matches reference trace`
 - **2026-06-15 14:15:20**: `test(keygen): verify matrix A generation stage against golden model`
 - **2026-06-16 10:10:35**: `test(keygen): verify noise sampling s and e stage against golden model`
+- **2026-06-16 15:40:10**: `test(keygen): verify NTT(s) transformation stage against golden model`
