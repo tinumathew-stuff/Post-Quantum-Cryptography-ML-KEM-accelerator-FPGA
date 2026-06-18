@@ -573,3 +573,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-16 15:40:10**: `test(keygen): verify NTT(s) transformation stage against golden model`
 - **2026-06-17 09:25:50**: `test(keygen): verify matrix-vector product t stage against golden model`
 - **2026-06-17 14:10:30**: `test(keygen): verify serialized public key pk against FIPS 203 KAT`
+- **2026-06-18 10:15:40**: `test(keygen): verify serialized secret key sk against FIPS 203 KAT`
