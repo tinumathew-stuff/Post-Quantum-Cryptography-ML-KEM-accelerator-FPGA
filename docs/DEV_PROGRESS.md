@@ -576,3 +576,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-18 10:15:40**: `test(keygen): verify serialized secret key sk against FIPS 203 KAT`
 - **2026-06-18 15:30:25**: `fix(keygen): correct stage checker comparison mask for padding bits`
 - **2026-06-19 09:40:15**: `test(keygen): test KeyGen back-to-back execution without reset`
+- **2026-06-19 14:20:50**: `perf(keygen): measure exact cycle latency: 512 (1,840c), 768 (2,680c), 1024 (3,720c)`
