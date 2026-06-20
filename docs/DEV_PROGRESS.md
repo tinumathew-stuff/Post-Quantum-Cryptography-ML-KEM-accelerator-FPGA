@@ -578,3 +578,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-19 09:40:15**: `test(keygen): test KeyGen back-to-back execution without reset`
 - **2026-06-19 14:20:50**: `perf(keygen): measure exact cycle latency: 512 (1,840c), 768 (2,680c), 1024 (3,720c)`
 - **2026-06-19 18:05:30**: `refactor(keygen): clean up waveform dump and assertion messages`
+- **2026-06-20 10:30:20**: `test(keygen): run full automated regression over 100 test iterations`
