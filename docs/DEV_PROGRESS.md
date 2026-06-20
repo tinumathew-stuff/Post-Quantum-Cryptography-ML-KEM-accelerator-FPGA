@@ -567,3 +567,16 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-12 18:00:25**: `docs(keygen): document KeyGen state transition diagram and timing phases`
 - **2026-06-13 10:15:30**: `perf(keygen): verify timing closure at target 450 MHz frequency`
 - **2026-06-13 14:40:00**: `style(keygen): format SystemVerilog code and header comments`
+- **2026-06-15 09:30:44**: `test(keygen): verify seed expansion G(d) matches reference trace`
+- **2026-06-15 14:15:20**: `test(keygen): verify matrix A generation stage against golden model`
+- **2026-06-16 10:10:35**: `test(keygen): verify noise sampling s and e stage against golden model`
+- **2026-06-16 15:40:10**: `test(keygen): verify NTT(s) transformation stage against golden model`
+- **2026-06-17 09:25:50**: `test(keygen): verify matrix-vector product t stage against golden model`
+- **2026-06-17 14:10:30**: `test(keygen): verify serialized public key pk against FIPS 203 KAT`
+- **2026-06-18 10:15:40**: `test(keygen): verify serialized secret key sk against FIPS 203 KAT`
+- **2026-06-18 15:30:25**: `fix(keygen): correct stage checker comparison mask for padding bits`
+- **2026-06-19 09:40:15**: `test(keygen): test KeyGen back-to-back execution without reset`
+- **2026-06-19 14:20:50**: `perf(keygen): measure exact cycle latency: 512 (1,840c), 768 (2,680c), 1024 (3,720c)`
+- **2026-06-19 18:05:30**: `refactor(keygen): clean up waveform dump and assertion messages`
+- **2026-06-20 10:30:20**: `test(keygen): run full automated regression over 100 test iterations`
+- **2026-06-20 14:15:00**: `docs(keygen): document stage-by-stage verification results and traces`
