@@ -580,3 +580,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-19 18:05:30**: `refactor(keygen): clean up waveform dump and assertion messages`
 - **2026-06-20 10:30:20**: `test(keygen): run full automated regression over 100 test iterations`
 - **2026-06-20 14:15:00**: `docs(keygen): document stage-by-stage verification results and traces`
+- **2026-06-21 14:50:30**: `feat(encap): implement public key deserialization and validation`
