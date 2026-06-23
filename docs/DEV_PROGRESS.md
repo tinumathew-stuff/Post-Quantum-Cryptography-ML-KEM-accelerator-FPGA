@@ -583,3 +583,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-21 14:50:30**: `feat(encap): implement public key deserialization and validation`
 - **2026-06-22 09:35:44**: `feat(encap): implement message hash G(m || H(pk)) -> (K, r)`
 - **2026-06-22 14:15:20**: `feat(encap): implement random vector sampling r from randomness seed`
+- **2026-06-23 10:10:35**: `feat(encap): forward NTT transform of random vector r`
