@@ -586,3 +586,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-23 10:10:35**: `feat(encap): forward NTT transform of random vector r`
 - **2026-06-23 15:40:10**: `feat(encap): compute u = INTT(A^T * r) + e1 ciphertext component`
 - **2026-06-24 09:25:50**: `feat(encap): compute v = INTT(t^T * r) + e2 + Decompress(m)`
+- **2026-06-24 14:10:30**: `feat(encap): ciphertext compression and packing: c = Compress(u) || Compress(v)`
