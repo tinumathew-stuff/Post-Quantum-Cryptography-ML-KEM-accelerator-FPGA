@@ -590,3 +590,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-25 15:30:25**: `fix(encap): resolve transpose matrix A^T address sequencing in Encap`
 - **2026-06-26 09:40:15**: `test(encap): verify encapsulation ciphertext c against FIPS 203 KAT`
 - **2026-06-26 14:20:50**: `test(encap): verify shared key K output matches golden C model`
+- **2026-06-26 18:05:30**: `perf(encap): optimize pipeline latency: 512 (2,120c), 768 (3,140c), 1024 (4,380c)`
