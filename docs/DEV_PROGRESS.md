@@ -588,3 +588,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-24 09:25:50**: `feat(encap): compute v = INTT(t^T * r) + e2 + Decompress(m)`
 - **2026-06-24 14:10:30**: `feat(encap): ciphertext compression and packing: c = Compress(u) || Compress(v)`
 - **2026-06-25 15:30:25**: `fix(encap): resolve transpose matrix A^T address sequencing in Encap`
+- **2026-06-26 09:40:15**: `test(encap): verify encapsulation ciphertext c against FIPS 203 KAT`
