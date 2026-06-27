@@ -580,3 +580,16 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-19 18:05:30**: `refactor(keygen): clean up waveform dump and assertion messages`
 - **2026-06-20 10:30:20**: `test(keygen): run full automated regression over 100 test iterations`
 - **2026-06-20 14:15:00**: `docs(keygen): document stage-by-stage verification results and traces`
+- **2026-06-21 14:50:30**: `feat(encap): implement public key deserialization and validation`
+- **2026-06-22 09:35:44**: `feat(encap): implement message hash G(m || H(pk)) -> (K, r)`
+- **2026-06-22 14:15:20**: `feat(encap): implement random vector sampling r from randomness seed`
+- **2026-06-23 10:10:35**: `feat(encap): forward NTT transform of random vector r`
+- **2026-06-23 15:40:10**: `feat(encap): compute u = INTT(A^T * r) + e1 ciphertext component`
+- **2026-06-24 09:25:50**: `feat(encap): compute v = INTT(t^T * r) + e2 + Decompress(m)`
+- **2026-06-24 14:10:30**: `feat(encap): ciphertext compression and packing: c = Compress(u) || Compress(v)`
+- **2026-06-25 15:30:25**: `fix(encap): resolve transpose matrix A^T address sequencing in Encap`
+- **2026-06-26 09:40:15**: `test(encap): verify encapsulation ciphertext c against FIPS 203 KAT`
+- **2026-06-26 14:20:50**: `test(encap): verify shared key K output matches golden C model`
+- **2026-06-26 18:05:30**: `perf(encap): optimize pipeline latency: 512 (2,120c), 768 (3,140c), 1024 (4,380c)`
+- **2026-06-27 10:30:20**: `refactor(encap): harmonize control signals with unified accelerator top`
+- **2026-06-27 14:15:00**: `docs(encap): document encapsulation datapath schedule and timing`
