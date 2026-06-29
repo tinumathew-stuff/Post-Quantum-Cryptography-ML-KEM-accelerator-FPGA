@@ -593,3 +593,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-26 18:05:30**: `perf(encap): optimize pipeline latency: 512 (2,120c), 768 (3,140c), 1024 (4,380c)`
 - **2026-06-27 10:30:20**: `refactor(encap): harmonize control signals with unified accelerator top`
 - **2026-06-27 14:15:00**: `docs(encap): document encapsulation datapath schedule and timing`
+- **2026-06-29 09:30:15**: `feat(decap): implement ciphertext decompression Decompress(u) and Decompress(v)`
