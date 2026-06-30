@@ -596,3 +596,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-29 09:30:15**: `feat(decap): implement ciphertext decompression Decompress(u) and Decompress(v)`
 - **2026-06-29 13:55:40**: `feat(decap): forward NTT transform of decompressed vector u`
 - **2026-06-30 10:20:30**: `feat(decap): inner product w = v - INTT(s^T * u) to recover message m'`
+- **2026-06-30 15:15:10**: `feat(decap): polynomial message decoding: m' = Compress(w)`
