@@ -599,3 +599,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-30 15:15:10**: `feat(decap): polynomial message decoding: m' = Compress(w)`
 - **2026-06-31 09:40:45**: `feat(decap): Fujisaki-Okamoto (FO) transform: re-encrypt c' = Encap(pk, m')`
 - **2026-07-01 14:20:30**: `feat(decap): constant-time ciphertext comparison: compare c == c'`
+- **2026-07-02 10:10:15**: `feat(decap): implicit rejection: constant-time conditional select K = (c == c') ? K_valid : J(z, c)`
