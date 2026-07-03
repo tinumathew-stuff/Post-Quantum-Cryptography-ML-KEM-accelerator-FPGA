@@ -602,3 +602,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-02 10:10:15**: `feat(decap): implicit rejection: constant-time conditional select K = (c == c') ? K_valid : J(z, c)`
 - **2026-07-03 09:25:20**: `test(decap): verify valid ciphertext decapsulation against FIPS 203 KAT`
 - **2026-07-03 14:10:50**: `test(decap): verify invalid/tampered ciphertext implicit rejection`
+- **2026-07-03 18:00:15**: `perf(decap): optimize pipeline timing: 512 (2,450c), 768 (3,620c), 1024 (5,050c)`
