@@ -593,3 +593,15 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-06-26 18:05:30**: `perf(encap): optimize pipeline latency: 512 (2,120c), 768 (3,140c), 1024 (4,380c)`
 - **2026-06-27 10:30:20**: `refactor(encap): harmonize control signals with unified accelerator top`
 - **2026-06-27 14:15:00**: `docs(encap): document encapsulation datapath schedule and timing`
+- **2026-06-29 09:30:15**: `feat(decap): implement ciphertext decompression Decompress(u) and Decompress(v)`
+- **2026-06-29 13:55:40**: `feat(decap): forward NTT transform of decompressed vector u`
+- **2026-06-30 10:20:30**: `feat(decap): inner product w = v - INTT(s^T * u) to recover message m'`
+- **2026-06-30 15:15:10**: `feat(decap): polynomial message decoding: m' = Compress(w)`
+- **2026-06-31 09:40:45**: `feat(decap): Fujisaki-Okamoto (FO) transform: re-encrypt c' = Encap(pk, m')`
+- **2026-07-01 14:20:30**: `feat(decap): constant-time ciphertext comparison: compare c == c'`
+- **2026-07-02 10:10:15**: `feat(decap): implicit rejection: constant-time conditional select K = (c == c') ? K_valid : J(z, c)`
+- **2026-07-03 09:25:20**: `test(decap): verify valid ciphertext decapsulation against FIPS 203 KAT`
+- **2026-07-03 14:10:50**: `test(decap): verify invalid/tampered ciphertext implicit rejection`
+- **2026-07-03 18:00:15**: `perf(decap): optimize pipeline timing: 512 (2,450c), 768 (3,620c), 1024 (5,050c)`
+- **2026-07-04 10:45:30**: `refactor(decap): streamline FO transform state machine and SHA3 core`
+- **2026-07-04 14:20:10**: `docs(decap): document constant-time security countermeasures and FO latency`
