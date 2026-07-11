@@ -605,3 +605,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-03 18:00:15**: `perf(decap): optimize pipeline timing: 512 (2,450c), 768 (3,620c), 1024 (5,050c)`
 - **2026-07-04 10:45:30**: `refactor(decap): streamline FO transform state machine and SHA3 core`
 - **2026-07-04 14:20:10**: `docs(decap): document constant-time security countermeasures and FO latency`
+- **2026-07-11 10:30:20**: `fix(system): resolve byte padding discrepancy in tb_decap_1024 hex loader`
