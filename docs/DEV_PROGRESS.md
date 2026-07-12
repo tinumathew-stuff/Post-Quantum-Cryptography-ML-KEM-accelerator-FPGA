@@ -607,3 +607,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-04 14:20:10**: `docs(decap): document constant-time security countermeasures and FO latency`
 - **2026-07-11 10:30:20**: `fix(system): resolve byte padding discrepancy in tb_decap_1024 hex loader`
 - **2026-07-11 14:15:00**: `test(system): verify automated PASS assertion checks across all 9 testbenches`
+- **2026-07-12 14:40:22**: `ci(sim): configure simulation flags and include paths in compile_rtl.sh`
