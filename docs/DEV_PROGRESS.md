@@ -613,3 +613,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-15 09:40:45**: `ci(sim): add support for parallel simulation batches across testbenches`
 - **2026-07-15 14:20:30**: `test(sim): run full regression suite on ML-KEM-512 (KeyGen, Encap, Decap)`
 - **2026-07-16 10:10:15**: `test(sim): run full regression suite on ML-KEM-768 (KeyGen, Encap, Decap)`
+- **2026-07-16 15:35:40**: `test(sim): run full regression suite on ML-KEM-1024 (KeyGen, Encap, Decap)`
