@@ -614,3 +614,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-15 14:20:30**: `test(sim): run full regression suite on ML-KEM-512 (KeyGen, Encap, Decap)`
 - **2026-07-16 10:10:15**: `test(sim): run full regression suite on ML-KEM-768 (KeyGen, Encap, Decap)`
 - **2026-07-16 15:35:40**: `test(sim): run full regression suite on ML-KEM-1024 (KeyGen, Encap, Decap)`
+- **2026-07-17 09:25:20**: `fix(sim): add missing library switch -L unisims_ver for Xilinx primitives`
