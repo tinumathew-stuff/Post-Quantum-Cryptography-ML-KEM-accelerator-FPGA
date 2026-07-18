@@ -607,3 +607,15 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-04 14:20:10**: `docs(decap): document constant-time security countermeasures and FO latency`
 - **2026-07-11 10:30:20**: `fix(system): resolve byte padding discrepancy in tb_decap_1024 hex loader`
 - **2026-07-11 14:15:00**: `test(system): verify automated PASS assertion checks across all 9 testbenches`
+- **2026-07-12 14:40:22**: `ci(sim): configure simulation flags and include paths in compile_rtl.sh`
+- **2026-07-13 13:55:40**: `ci(sim): add automated wave and log generation in run_sim.sh`
+- **2026-07-14 15:15:10**: `ci(sim): add colored terminal reporting and error trap in verify_all.sh`
+- **2026-07-15 09:40:45**: `ci(sim): add support for parallel simulation batches across testbenches`
+- **2026-07-15 14:20:30**: `test(sim): run full regression suite on ML-KEM-512 (KeyGen, Encap, Decap)`
+- **2026-07-16 10:10:15**: `test(sim): run full regression suite on ML-KEM-768 (KeyGen, Encap, Decap)`
+- **2026-07-16 15:35:40**: `test(sim): run full regression suite on ML-KEM-1024 (KeyGen, Encap, Decap)`
+- **2026-07-17 09:25:20**: `fix(sim): add missing library switch -L unisims_ver for Xilinx primitives`
+- **2026-07-17 14:10:50**: `perf(sim): optimize xelab compile time using multi-threading (-mt 8)`
+- **2026-07-17 18:00:15**: `test(sim): verify 100% test pass rate recorded across all 9 configurations`
+- **2026-07-18 10:45:30**: `docs(sim): document simulation script usage and regression guidelines`
+- **2026-07-18 14:20:10**: `refactor(sim): standardize shell script error handling (set -euo pipefail)`
