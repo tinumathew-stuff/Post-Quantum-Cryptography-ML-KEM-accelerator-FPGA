@@ -617,3 +617,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-17 09:25:20**: `fix(sim): add missing library switch -L unisims_ver for Xilinx primitives`
 - **2026-07-17 14:10:50**: `perf(sim): optimize xelab compile time using multi-threading (-mt 8)`
 - **2026-07-17 18:00:15**: `test(sim): verify 100% test pass rate recorded across all 9 configurations`
+- **2026-07-18 10:45:30**: `docs(sim): document simulation script usage and regression guidelines`
