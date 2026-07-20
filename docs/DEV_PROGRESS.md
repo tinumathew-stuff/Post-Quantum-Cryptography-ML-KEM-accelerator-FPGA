@@ -620,3 +620,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-18 10:45:30**: `docs(sim): document simulation script usage and regression guidelines`
 - **2026-07-18 14:20:10**: `refactor(sim): standardize shell script error handling (set -euo pipefail)`
 - **2026-07-19 14:45:30**: `feat(fpga): constrain target clock period to 2.222 ns (450 MHz)`
+- **2026-07-20 14:15:20**: `feat(fpga): configure Vivado synthesis directives for high-speed arithmetic`
