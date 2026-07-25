@@ -619,3 +619,12 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-17 18:00:15**: `test(sim): verify 100% test pass rate recorded across all 9 configurations`
 - **2026-07-18 10:45:30**: `docs(sim): document simulation script usage and regression guidelines`
 - **2026-07-18 14:20:10**: `refactor(sim): standardize shell script error handling (set -euo pipefail)`
+- **2026-07-19 14:45:30**: `feat(fpga): constrain target clock period to 2.222 ns (450 MHz)`
+- **2026-07-20 14:15:20**: `feat(fpga): configure Vivado synthesis directives for high-speed arithmetic`
+- **2026-07-21 10:10:35**: `feat(fpga): configure phys_opt_design timing optimization strategies`
+- **2026-07-23 15:30:25**: `perf(fpga): verify zero Block RAM (0 BRAM) synthesized in design`
+- **2026-07-24 09:40:15**: `perf(fpga): verify strictly 8 DSP48E2 slices consumed by multiplier`
+- **2026-07-24 18:05:30**: `perf(fpga): record achieved Fmax of 413.7 MHz (Tmin = 2.417 ns)`
+- **2026-07-25 10:30:20**: `test(fpga): verify 100% routing completion with zero DRC violations`
+- **2026-07-25 14:15:00**: `docs(fpga): summarize FPGA implementation metrics across LUTs, FFs, DSPs, BRAMs`
+- **2026-07-25 16:50:30**: `refactor(fpga): clean up synthesis tcl script comments and options`
