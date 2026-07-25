@@ -626,3 +626,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-24 09:40:15**: `perf(fpga): verify strictly 8 DSP48E2 slices consumed by multiplier`
 - **2026-07-24 18:05:30**: `perf(fpga): record achieved Fmax of 413.7 MHz (Tmin = 2.417 ns)`
 - **2026-07-25 10:30:20**: `test(fpga): verify 100% routing completion with zero DRC violations`
+- **2026-07-25 14:15:00**: `docs(fpga): summarize FPGA implementation metrics across LUTs, FFs, DSPs, BRAMs`
