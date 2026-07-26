@@ -1,0 +1,515 @@
+\section{Preliminaries and FIPS 203 Mathematical Formulation}
+\label{sec:preliminaries}
+
+This section establishes the mathematical foundations, algebraic ring settings, symmetric primitives, formal parameter configurations, algorithmic workflows, and security reductions governing the Module-Lattice-Based Key-Encapsulation Mechanism (\mbox{ML-KEM}) as standardized in NIST FIPS~203~\cite{fips203}. The theoretical formulations presented herein directly dictate the microarchitectural constraints, memory scheduling, and arithmetic optimizations realized in the proposed accelerator.
+
+\subsection{Ring Arithmetic and Incomplete Splitting}
+\label{sec:prelim_ring}
+
+The cryptographic security of \mbox{ML-KEM} is founded upon the computational intractability of the Module Learning With Errors ($\text{M-LWE}$) problem~\cite{langlois2015, bos2018kyber}, which generalizes both standard LWE over finite integer fields and Ring-LWE over polynomial rings to modules of rank $k$.
+
+\subsubsection{Polynomial Quotient Ring Setting}
+Let $n = 256$ denote the fixed polynomial ring degree, and let $q = 3329$ represent the operational prime modulus. Define the base cyclotomic polynomial quotient ring:
+\begin{equation}
+\label{eq:base_ring}
+\mathcal{R} = \mathbb{Z}[X] / (X^{256} + 1),
+\end{equation}
+and its residue quotient ring modulo $q$:
+\begin{equation}
+\label{eq:residue_ring}
+\mathcal{R}_q = \mathbb{Z}_q[X] / (X^{256} + 1).
+\end{equation}
+Elements of $\mathcal{R}_q$ are single-variable polynomials $f(X) = \sum_{j=0}^{255} f_j X^j$ of degree at most $n - 1 = 255$, with coefficients residing in the finite field $\mathbb{Z}_q = \{0, 1, \dots, q - 1\}$. Polynomial addition is evaluated coefficient-wise in $\mathbb{Z}_q$, while polynomial multiplication is performed modulo the cyclotomic polynomial $X^{256} + 1$ with all coefficients reduced modulo $q$.
+
+The $\text{M-LWE}$ problem operates over free $\mathcal{R}_q$-modules of rank $k$, denoted by $\mathcal{R}_q^k$, whose elements are column vectors of $k$ polynomials. Let $\chi_s$ and $\chi_e$ denote error distributions over $\mathcal{R}_q$ parameterized by Centered Binomial Distributions $\text{CBD}_\eta$. In the decision $\text{M-LWE}_{k, q, \chi}$ problem, an adversary must distinguish with non-negligible advantage between polynomial pairs $(\mathbf{A}, \mathbf{t}) \in \mathcal{R}_q^{k \times k} \times \mathcal{R}_q^k$ generated via:
+\begin{equation}
+\label{eq:mlwe_system}
+\mathbf{t} = \mathbf{A} \cdot \mathbf{s} + \mathbf{e},
+\end{equation}
+where $\mathbf{A} \leftarrow \mathcal{U}(\mathcal{R}_q^{k \times k})$ is drawn uniformly at random, secret vector $\mathbf{s} \leftarrow \chi_s^k$, and error vector $\mathbf{e} \leftarrow \chi_e^k$, and truly uniform pairs $(\mathbf{A}, \mathbf{u})$ where $\mathbf{u} \leftarrow \mathcal{U}(\mathcal{R}_q^k)$. The search $\text{M-LWE}$ problem demands recovering the secret vector $\mathbf{s}$ from the pair $(\mathbf{A}, \mathbf{A}\mathbf{s} + \mathbf{e})$. The best known classical and quantum cryptanalytic attacks against $\text{M-LWE}$---including the primal uSVP attack via the Block Korkine-Zolotarev (BKZ) lattice basis reduction algorithm and dual lattice attacks---exhibit computational complexity scaling exponentially with the total lattice dimension $N = n \cdot k = 256k$.
+
+\subsubsection{Algebraic Modulus and Incomplete Cyclotomic Splitting}
+The prime modulus selected for \mbox{ML-KEM} is:
+\begin{equation}
+\label{eq:kyber_prime}
+q = 3329 = 13 \times 2^8 + 1.
+\end{equation}
+Because $2^8 = 256$ divides $q - 1 = 3328$, the multiplicative group of units $\mathbb{Z}_q^*$ contains elements of order 256. Specifically, $\zeta = 17 \in \mathbb{Z}_q$ serves as a designated primitive 256-th root of unity modulo 3329, satisfying:
+\begin{equation}
+\label{eq:zeta_properties}
+\zeta^{256} \equiv 1 \pmod{3329} \quad \text{and} \quad \zeta^{128} \equiv -1 \pmod{3329}.
+\end{equation}
+However, complete linear factorization of the cyclotomic polynomial $X^{256} + 1$ over $\mathbb{Z}_q$ would require the existence of a primitive $2n = 512$-th root of unity in $\mathbb{Z}_q$, necessitating that $512 \mid (q - 1)$. Because:
+\begin{equation}
+\label{eq:non_splitting_criterion}
+\frac{q - 1}{2n} = \frac{3328}{512} = 6.5 \notin \mathbb{Z},
+\end{equation}
+no 512-th root of unity exists in $\mathbb{Z}_q$. Consequently, unlike traditional Ring-LWE schemes that split completely into 256 linear factors $(X - \zeta^{2i+1})$, the cyclotomic polynomial $X^{256} + 1$ in \mbox{ML-KEM} splits \textit{incompletely} into exactly 128 irreducible quadratic polynomial factors:
+\begin{equation}
+\label{eq:poly_splitting}
+X^{256} + 1 \equiv \prod_{i=0}^{127} \left( X^2 - \zeta^{2 \cdot \text{BitRev}_7(i) + 1} \right) \pmod{3329},
+\end{equation}
+where $\text{BitRev}_7(i)$ denotes the 7-bit bit-reversal of integer $i \in \{0, 1, \dots, 127\}$, formally defined by:
+\begin{equation}
+\label{eq:bitrev7_def}
+\text{BitRev}_7\left( \sum_{j=0}^{6} b_j 2^j \right) = \sum_{j=0}^{6} b_j 2^{6-j}, \quad b_j \in \{0, 1\}.
+\end{equation}
+
+By the Chinese Remainder Theorem (CRT), the polynomial quotient ring $\mathcal{R}_q$ is isomorphic to the direct product of 128 quadratic polynomial extension rings:
+\begin{equation}
+\label{eq:crt_isomorphism}
+\mathcal{R}_q \cong \prod_{i=0}^{127} \frac{\mathbb{Z}_q[X]}{\left( X^2 - \zeta^{2 \cdot \text{BitRev}_7(i) + 1} \right)}.
+\end{equation}
+This incomplete splitting is a fundamental architectural driver for the arithmetic datapath: ring multiplications cannot be executed as simple scalar pointwise products, but must instead be realized as 128 parallel degree-1 polynomial base multiplications.
+
+\subsection{Number Theoretic Transform (NTT) and Dyadic Base Multiplication}
+\label{sec:prelim_ntt}
+
+To circumvent the quadratic complexity $\mathcal{O}(n^2)$ of spatial polynomial convolution, \mbox{ML-KEM} transforms polynomials into the NTT domain, denoted $\mathcal{T}_q$.
+
+\subsubsection{NTT Domain Representation and Butterfly Stages}
+Any spatial polynomial $f(X) = \sum_{j=0}^{255} f_j X^j \in \mathcal{R}_q$ is uniquely represented in $\mathcal{T}_q$ by an array of 128 degree-1 polynomials:
+\begin{equation}
+\label{eq:ntt_domain_rep}
+\begin{aligned}
+\hat{f} = \text{NTT}(f) = \big( &\hat{f}_0 + \hat{f}_1 X, \, \hat{f}_2 + \hat{f}_3 X, \, \dots, \\
+&\hat{f}_{254} + \hat{f}_{255} X \big) \in \mathcal{T}_q,
+\end{aligned}
+\end{equation}
+where each consecutive coefficient pair $(\hat{f}_{2i}, \hat{f}_{2i+1})$ represents the residue:
+\begin{equation}
+\label{eq:ntt_residue_equiv}
+\hat{f}_{2i} + \hat{f}_{2i+1} X \equiv f(X) \pmod{X^2 - \zeta^{2\cdot\text{BitRev}_7(i) + 1}}.
+\end{equation}
+
+The forward transformation $\text{NTT}: \mathcal{R}_q \to \mathcal{T}_q$ is computed via a 7-stage decimation-in-time Cooley-Tukey butterfly network. Across stages $s \in \{0, 1, \dots, 6\}$, coefficient pairs $(u, v)$ separated by distance $2^{6-s}$ are transformed using twiddle factors $\zeta^W$ according to:
+\begin{equation}
+\label{eq:cooley_tukey}
+\begin{cases}
+u' = u + v \cdot \zeta^W \pmod{3329}, \\
+v' = u - v \cdot \zeta^W \pmod{3329}.
+\end{cases}
+\end{equation}
+Conversely, the inverse transformation $\text{INTT}: \mathcal{T}_q \to \mathcal{R}_q$ is evaluated via a 7-stage decimation-in-frequency Gentleman-Sande butterfly network:
+\begin{equation}
+\label{eq:gentleman_sande}
+\begin{cases}
+u' = u + v \pmod{3329}, \\
+v' = (u - v) \cdot \zeta^{-W} \pmod{3329},
+\end{cases}
+\end{equation}
+followed by a uniform normalization scaling by the modular inverse:
+\begin{equation}
+\label{eq:intt_scalar}
+128^{-1} \equiv 3303 \pmod{3329},
+\end{equation}
+since 7 butterfly stages introduce a cumulative factor of $2^7 = 128$.
+
+\subsubsection{Dyadic Base Multiplication and Karatsuba Decomposition}
+Let $\hat{f}, \hat{g} \in \mathcal{T}_q$. Ring multiplication $\hat{h} = \hat{f} \circ \hat{g}$ decomposes into 128 independent degree-1 polynomial base multiplications modulo $(X^2 - \gamma_i)$, where:
+\begin{equation}
+\label{eq:gamma_twiddle}
+\gamma_i = \zeta^{2\cdot\text{BitRev}_7(i) + 1}.
+\end{equation}
+For each quadratic factor index $i \in \{0, \dots, 127\}$, let $a(X) = a_0 + a_1 X$ and $b(X) = b_0 + b_1 X$. Their modular product modulo $(X^2 - \gamma_i)$ is formulated as:
+\begin{align}
+\label{eq:basemul_derivation}
+a(X) \cdot b(X) &= (a_0 + a_1 X)(b_0 + b_1 X) \nonumber \\
+&= a_0 b_0 + (a_0 b_1 + a_1 b_0) X + a_1 b_1 X^2 \nonumber \\
+&\equiv (a_0 b_0 + a_1 b_1 \gamma_i) \nonumber \\
+&\quad + (a_0 b_1 + a_1 b_0) X \pmod{X^2 - \gamma_i}.
+\end{align}
+The base product $(c_0, c_1) = \text{BaseMul}(a_0, a_1, b_0, b_1, \gamma_i)$ is therefore given by the coupled modular system:
+\begin{equation}
+\label{eq:basemul_system}
+\begin{cases}
+c_0 = a_0 b_0 + a_1 b_1 \gamma_i \pmod{3329}, \\
+c_1 = a_0 b_1 + a_1 b_0 \pmod{3329}.
+\end{cases}
+\end{equation}
+
+Direct computation of~\eqref{eq:basemul_system} requires four full-width modular multiplications ($a_0 b_0$, $a_1 b_1$, $(a_1 b_1)\gamma_i$, and the two products in the cross-term). To minimize digital signal processing (DSP) slice consumption, our architecture applies Karatsuba's algebraic decomposition~\cite{karatsuba1962} to the cross-term:
+\begin{equation}
+\label{eq:karatsuba_cross}
+a_0 b_1 + a_1 b_0 = (a_0 + a_1)(b_0 + b_1) - a_0 b_0 - a_1 b_1.
+\end{equation}
+By defining three intermediate products:
+\begin{equation}
+\label{eq:karatsuba_intermediates}
+\begin{cases}
+M_0 = a_0 \cdot b_0, \\
+M_1 = a_1 \cdot b_1, \\
+M_{\text{sum}} = (a_0 + a_1) \cdot (b_0 + b_1),
+\end{cases}
+\end{equation}
+the output coefficients are reconstructed as:
+\begin{equation}
+\label{eq:karatsuba_outputs}
+\begin{cases}
+c_0 = M_0 + M_1 \cdot \gamma_i \pmod{3329}, \\
+c_1 = M_{\text{sum}} - M_0 - M_1 \pmod{3329}.
+\end{cases}
+\end{equation}
+This formulation replaces four distinct multiplications with three core products ($M_0, M_1, M_{\text{sum}}$) and one constant scaling by $\gamma_i$, enabling our dual-channel streaming pointwise multiplier to process four polynomial coefficients per clock cycle while strictly confining total DSP utilization to eight DSP48E2 slices.
+
+\subsection{Symmetric Primitives and Sampling Algorithms}
+\label{sec:prelim_symmetric}
+
+All symmetric cryptographic routines in \mbox{ML-KEM} are instantiated from the Keccak-$f[1600]$ permutation defined in NIST FIPS~202~\cite{fips202}.
+
+\subsubsection{Cryptographic Sponge Instantiations}
+FIPS 203 specifies five standardized instantiations of the Keccak sponge family:
+\begin{enumerate}
+    \item $G: \mathbb{B}^* \to \mathbb{B}^{64} \equiv \text{SHA3-512}$: Squeezes 64 pseudorandom bytes from seed inputs for derivation of public matrix seeds and noise generation seeds.
+    \item $H: \mathbb{B}^* \to \mathbb{B}^{32} \equiv \text{SHA3-256}$: Evaluates a 32-byte cryptographic digest of public encapsulation keys, $h = H(ek)$.
+    \item $J: \mathbb{B}^* \to \mathbb{B}^{32} \equiv \text{SHAKE256}(M, 32)$: Computes a 32-byte pseudorandom rejection key during decapsulation.
+    \item $\text{PRF}_\eta: \mathbb{B}^{32} \times \mathbb{B} \to \mathbb{B}^{64\eta} \equiv \text{SHAKE256}(s \parallel b, 64\eta)$: Derives $64\eta$ pseudo-random bytes for centered binomial noise generation.
+    \item $\text{XOF}: \mathbb{B}^{32} \times \mathbb{B} \times \mathbb{B} \to \mathbb{B}^* \equiv \text{SHAKE128}(\rho \parallel i \parallel j)$: Squeezes an extensible pseudo-random byte stream for uniform matrix coefficient sampling.
+\end{enumerate}
+
+\subsubsection{Uniform Rejection Sampling (\texorpdfstring{$\text{SampleNTT}$}{SampleNTT})}
+The public matrix $\hat{\mathbf{A}} \in \mathcal{T}_q^{k \times k}$ is generated directly in the NTT domain by parsing the squeeze output of $\text{XOF}(\rho, j, i)$ through uniform rejection sampling. Every three consecutive input bytes $(B_0, B_1, B_2)$ produce two 12-bit candidate integers $d_1, d_2 \in [0, 4095]$:
+\begin{equation}
+\label{eq:sample_ntt_unpack}
+\begin{cases}
+d_1 = B_0 + 256 \cdot (B_1 \bmod 16), \\
+d_2 = \lfloor B_1 / 16 \rfloor + 16 \cdot B_2.
+\end{cases}
+\end{equation}
+A candidate $d$ is accepted as a valid field coefficient if and only if $d < 3329$. Because coefficients are drawn uniformly from $[0, 4095]$, the theoretical acceptance probability is:
+\begin{equation}
+\label{eq:acceptance_prob}
+p_{\text{acc}} = \frac{3329}{4096} \approx 81.274\%,
+\end{equation}
+inducing an expected rejection rate of $1 - p_{\text{acc}} \approx 18.726\% \approx 18.8\%$. In hardware, this non-deterministic rejection profile necessitates dedicated elastic FIFOs and multi-candidate parallel filtering to prevent datapath stalling.
+
+\subsubsection{Centered Binomial Distribution Sampling (\texorpdfstring{$\text{SamplePolyCBD}_\eta$}{SamplePolyCBD\_\textbackslash eta})}
+Secret and error vectors are sampled from the Centered Binomial Distribution with parameter $\eta \in \{2, 3\}$. Given $64\eta$ pseudorandom bytes $B \in \mathbb{B}^{64\eta}$ generated by $\text{PRF}_\eta$, the byte array is converted into a bit stream $(\beta_0, \beta_1, \dots, \beta_{512\eta - 1})$. Each polynomial coefficient $f_i \in \mathcal{R}_q$ ($i \in \{0, \dots, 255\}$) is evaluated as the difference between two independent Hamming weights:
+\begin{equation}
+\label{eq:cbd_formulation}
+f_i = \sum_{j=0}^{\eta-1} \beta_{2i\eta + j} - \sum_{j=0}^{\eta-1} \beta_{2i\eta + \eta + j} \pmod{3329}.
+\end{equation}
+The sampled coefficients follow a symmetric distribution centered at zero:
+\begin{equation}
+\label{eq:cbd_stats}
+\mathbb{E}[f_i] = 0, \quad \text{Var}(f_i) = \frac{\eta}{2}.
+\end{equation}
+Specifically, $\text{Var}(f_i) = 1.0$ for $\eta = 2$, and $\text{Var}(f_i) = 1.5$ for $\eta = 3$.
+
+\subsubsection{Coefficient Compression and Decompression}
+To optimize transmission bandwidth over physical communication channels, ciphertext components are compressed by truncating low-order bits. For $x \in \mathbb{Z}_q$ and bit-depth $d < 12$, the lossy compression function $\text{Compress}_d: \mathbb{Z}_q \to \mathbb{Z}_{2^d}$ is defined by:
+\begin{equation}
+\label{eq:compress_def}
+\begin{aligned}
+\text{Compress}_d(x) &= \left\lfloor \frac{2^d \cdot x + \lfloor q/2 \rfloor}{q} \right\rfloor \bmod 2^d \\
+&= \left\lfloor \frac{2^d \cdot x + 1664}{3329} \right\rfloor \bmod 2^d.
+\end{aligned}
+\end{equation}
+The decompression mapping $\text{Decompress}_d: \mathbb{Z}_{2^d} \to \mathbb{Z}_q$ reconstructs the nominal ring coefficient:
+\begin{equation}
+\label{eq:decompress_def}
+\text{Decompress}_d(y) = \left\lfloor \frac{q \cdot y + 2^{d-1}}{2^d} \right\rfloor = \left\lfloor \frac{3329 \cdot y + 2^{d-1}}{2^d} \right\rfloor.
+\end{equation}
+When applied to polynomial vectors or scalars, $\text{Compress}_d$ and $\text{Decompress}_d$ operate coefficient-wise. The approximation error $|x' - x \bmod^{\pm} q|$ introduced by compression is strictly bounded by:
+\begin{equation}
+\label{eq:compress_error_bound}
+|x' - x \bmod^{\pm} q| \le \left\lfloor \frac{q}{2^{d+1}} \right\rceil,
+\end{equation}
+which is absorbed within the decryption failure margin during decapsulation.
+
+\subsubsection{Byte Serialization and Deserialization}
+Polynomial coefficients are serialized into packed byte streams via $\text{ByteEncode}_d: \mathbb{Z}_{2^d}^{256} \to \mathbb{B}^{32d}$ and unpacked via $\text{ByteDecode}_d: \mathbb{B}^{32d} \to \mathbb{Z}_{2^d}^{256}$. For uncompressed 12-bit coefficients ($d = 12$), every pair of coefficients $(F[2i], F[2i+1])$ spans exactly three contiguous bytes $(B[3i], B[3i+1], B[3i+2])$:
+\begin{equation}
+\label{eq:byte_encode12}
+\begin{cases}
+B[3i] = F[2i] \bmod 256, \\
+B[3i+1] = \lfloor F[2i]/256 \rfloor + 16 \cdot (F[2i+1] \bmod 16), \\
+B[3i+2] = \lfloor F[2i+1]/16 \rfloor.
+\end{cases}
+\end{equation}
+Conversely, $\text{ByteDecode}_{12}$ inverts~\eqref{eq:byte_encode12}:
+\begin{equation}
+\label{eq:byte_decode12}
+\begin{cases}
+F[2i] = B[3i] + 256 \cdot (B[3i+1] \bmod 16), \\
+F[2i+1] = \lfloor B[3i+1]/16 \rfloor + 16 \cdot B[3i+2].
+\end{cases}
+\end{equation}
+
+\subsection{NIST FIPS 203 Parameter Sets and Security Categories}
+\label{sec:prelim_parameters}
+
+NIST FIPS~203 defines three standardized parameter configurations corresponding to NIST Security Categories 1, 3, and 5. Table~\ref{tab:fips203_parameters} provides a comprehensive comparative specification of these parameter sets.
+
+\begin{table*}[t]
+\caption{NIST FIPS 203 (\mbox{ML-KEM}) Parameter Sets, Security Classifications, and Architectural Specifications}
+\label{tab:fips203_parameters}
+\centering
+\footnotesize
+\begin{tabular}{@{}l c c c c@{}}
+\toprule
+\textbf{Architectural \& Cryptographic Parameter} & \textbf{Symbol} & \textbf{ML-KEM-512} & \textbf{ML-KEM-768} & \textbf{ML-KEM-1024} \\
+\midrule
+NIST Security Category & --- & Category 1 & Category 3 & Category 5 \\
+Target Classical Security Level & --- & AES-128 / SHA-256 & AES-192 / SHA-384 & AES-256 / SHA-512 \\
+Target Quantum Security Level & --- & Exhaustive Key Search & Exhaustive Key Search & Exhaustive Key Search \\
+Module Rank (Vector Dimension) & $k$ & \textbf{2} & \textbf{3} & \textbf{4} \\
+Polynomial Ring Degree & $n$ & 256 & 256 & 256 \\
+Operational Modulus & $q$ & 3329 & 3329 & 3329 \\
+Secret Vector Noise Width & $\eta_1$ & \textbf{3} & \textbf{2} & \textbf{2} \\
+Ciphertext Vector Noise Width & $\eta_2$ & \textbf{2} & \textbf{2} & \textbf{2} \\
+Ciphertext Vector Compression Depth & $d_u$ & \textbf{10} & \textbf{10} & \textbf{11} \\
+Ciphertext Scalar Compression Depth & $d_v$ & \textbf{4} & \textbf{4} & \textbf{5} \\
+Public Encapsulation Key Size ($ek$) & $384k + 32$ & \textbf{800 Bytes} & \textbf{1,184 Bytes} & \textbf{1,568 Bytes} \\
+Private Decapsulation Key Size ($dk$) & $768k + 96$ & \textbf{1,632 Bytes} & \textbf{2,400 Bytes} & \textbf{3,168 Bytes} \\
+Total Ciphertext Size ($c$) & $32(k \cdot d_u + d_v)$ & \textbf{768 Bytes} & \textbf{1,088 Bytes} & \textbf{1,568 Bytes} \\
+\quad --- Ciphertext Vector Size ($c_1$) & $32 \cdot k \cdot d_u$ & 640 Bytes & 960 Bytes & 1,408 Bytes \\
+\quad --- Ciphertext Scalar Size ($c_2$) & $32 \cdot d_v$ & 128 Bytes & 128 Bytes & 160 Bytes \\
+Shared Secret Key Size ($K$) & --- & \textbf{32 Bytes} (256 bits) & \textbf{32 Bytes} (256 bits) & \textbf{32 Bytes} (256 bits) \\
+Decapsulation Failure Probability Bound & $\delta$ & $\le 2^{-139}$ & $\le 2^{-164}$ & $\le 2^{-174}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The parameter variations across the three security tiers introduce distinct hardware design challenges:
+\begin{enumerate}
+    \item \textbf{ML-KEM-512 ($k = 2$):} Targeting NIST Category 1, the module rank $k = 2$ yields the lowest matrix multiplication overhead ($k^2 = 4$ polynomial base products). However, to compensate for the smaller total lattice dimension ($N = 256 \times 2 = 512$), the noise parameter $\eta_1$ is elevated to $3$, widening the secret coefficient variance to $\sigma^2 = 1.5$.
+    \item \textbf{ML-KEM-768 ($k = 3$):} Recommended as the primary global baseline for post-quantum key establishment (Category 3), this configuration balances security and performance across a lattice dimension of $N = 768$. Both noise widths are unified at $\eta_1 = \eta_2 = 2$.
+    \item \textbf{ML-KEM-1024 ($k = 4$):} Offering the highest quantum security margin (Category 5), the lattice dimension expands to $N = 1024$, requiring $k^2 = 16$ polynomial multiplications. Furthermore, the compression bit-depths increase to $d_u = 11$ and $d_v = 5$, demanding elastic compression hardware capable of dynamic runtime bit-width reconfiguration without datapath duplication.
+\end{enumerate}
+
+\subsection{Algorithmic Workflows of FIPS 203}
+\label{sec:prelim_algorithms}
+
+The cryptographic operations of \mbox{ML-KEM} are structured in a two-tier hierarchy: an underlying Chosen-Plaintext Attack secure Public-Key Encryption scheme ($\text{K-PKE}$) is encapsulated within the Chosen-Ciphertext Attack secure Key-Encapsulation Mechanism ($\text{ML-KEM}$) via the Fujisaki-Okamoto transform. The three primary operational workflows are formalized in Algorithms~\ref{alg:keygen}, \ref{alg:encaps}, and~\ref{alg:decaps}.
+
+\subsubsection{Key Generation}
+Algorithm~\ref{alg:keygen} details the key generation flow of \mbox{ML-KEM.KeyGen}. Driven by two 32-byte uniform seeds $d, z \in \mathbb{B}^{32}$, the algorithm expands seed $d$ via SHA3-512 into matrix seed $\rho$ and noise seed $\sigma$. The public matrix $\hat{\mathbf{A}} \in \mathcal{T}_q^{k \times k}$ is sampled directly into the NTT domain via $\text{SampleNTT}$. Secret vector $\mathbf{s} \in \mathcal{R}_q^k$ and error vector $\mathbf{e} \in \mathcal{R}_q^k$ are drawn from $\text{CBD}_{\eta_1}$, transformed to the NTT domain, and multiplied to produce public key vector $\hat{\mathbf{t}} = \hat{\mathbf{A}} \circ \hat{\mathbf{s}} + \hat{\mathbf{e}}$. Public key $ek$ and private key $dk$ are serialized, embedding $H(ek)$ and rejection seed $z$ into $dk$ to accelerate decapsulation.
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\begin{algorithm}[t]
+\caption{\mbox{ML-KEM.KeyGen}$(d, z)$ \cite{fips203}}
+\label{alg:keygen}
+\begin{algorithmic}[1]
+\Require Random seeds $d, z \in \mathbb{B}^{32}$
+\Ensure Encapsulation key $ek \in \mathbb{B}^{384k + 32}$, Decapsulation key $dk \in \mathbb{B}^{768k + 96}$
+\State $(\rho, \sigma) \leftarrow G(d \parallel k) = \text{SHA3-512}(d \parallel k)$
+\State $N \leftarrow 0$
+\For{$i = 0$ to $k - 1$} \Comment{Sample secret vector $\mathbf{s}$}
+    \State $\mathbf{s}[i] \leftarrow \text{SamplePolyCBD}_{\eta_1}(\text{PRF}_{\eta_1}(\sigma, N))$
+    \State $N \leftarrow N + 1$
+\EndFor
+\For{$i = 0$ to $k - 1$} \Comment{Sample error vector $\mathbf{e}$}
+    \State $\mathbf{e}[i] \leftarrow \text{SamplePolyCBD}_{\eta_1}(\text{PRF}_{\eta_1}(\sigma, N))$
+    \State $N \leftarrow N + 1$
+\EndFor
+\State $\hat{\mathbf{s}} \leftarrow \text{NTT}(\mathbf{s}), \quad \hat{\mathbf{e}} \leftarrow \text{NTT}(\mathbf{e})$
+\For{$i = 0$ to $k - 1$} \Comment{Sample public matrix $\hat{\mathbf{A}}$}
+    \For{$j = 0$ to $k - 1$}
+        \State $\hat{\mathbf{A}}[i, j] \leftarrow \text{SampleNTT}(\text{XOF}(\rho, j, i))$
+    \EndFor
+\EndFor
+\State $\hat{\mathbf{t}} \leftarrow \hat{\mathbf{A}} \circ \hat{\mathbf{s}} + \hat{\mathbf{e}} \in \mathcal{T}_q^k$
+\State $ek \leftarrow \text{ByteEncode}_{12}(\hat{\mathbf{t}}) \parallel \rho$
+\State $dk \leftarrow \text{ByteEncode}_{12}(\hat{\mathbf{s}}) \parallel ek \parallel H(ek) \parallel z$
+\State \Return $(ek, dk)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Encapsulation}
+Algorithm~\ref{alg:encaps} details key encapsulation \mbox{ML-KEM.Encaps}. The sender takes public key $ek$ and a 32-byte message seed $m \leftarrow \mathcal{U}(\mathbb{B}^{32})$, and computes $(K, r) \leftarrow \text{SHA3-512}(m \parallel H(ek))$. Transposed matrix $\hat{\mathbf{A}}^T$ is reconstructed, and error vectors $\mathbf{r}, \mathbf{e}_1, e_2$ are sampled. Ciphertext vector $\mathbf{u} = \text{INTT}(\hat{\mathbf{A}}^T \circ \hat{\mathbf{r}}) + \mathbf{e}_1$ and scalar $v = \text{INTT}(\hat{\mathbf{t}}^T \circ \hat{\mathbf{r}}) + e_2 + \text{Decompress}_1(\text{ByteDecode}_1(m))$ are evaluated, compressed, and packed into ciphertext $c = c_1 \parallel c_2$.
+
+\begin{algorithm}[t]
+\caption{\mbox{ML-KEM.Encaps}$(ek, m)$ \cite{fips203}}
+\label{alg:encaps}
+\begin{algorithmic}[1]
+\Require Encapsulation key $ek \in \mathbb{B}^{384k + 32}$, Ephemeral randomness $m \in \mathbb{B}^{32}$
+\Ensure Ciphertext $c \in \mathbb{B}^{32(k\cdot d_u + d_v)}$, Shared secret $K \in \mathbb{B}^{32}$
+\State $(K, r) \leftarrow G(m \parallel H(ek)) = \text{SHA3-512}(m \parallel H(ek))$
+\State $\hat{\mathbf{t}} \leftarrow \text{ByteDecode}_{12}(ek[0 : 384k])$
+\State $\rho \leftarrow ek[384k : 384k + 32]$
+\For{$i = 0$ to $k - 1$} \Comment{Reconstruct transposed matrix $\hat{\mathbf{A}}^T$}
+    \For{$j = 0$ to $k - 1$}
+        \State $\hat{\mathbf{A}}^T[i, j] \leftarrow \text{SampleNTT}(\text{XOF}(\rho, i, j))$
+    \EndFor
+\EndFor
+\State $N \leftarrow 0$
+\For{$i = 0$ to $k - 1$} \Comment{Sample noise vectors}
+    \State $\mathbf{r}[i] \leftarrow \text{SamplePolyCBD}_{\eta_1}(\text{PRF}_{\eta_1}(r, N))$
+    \State $N \leftarrow N + 1$
+\EndFor
+\For{$i = 0$ to $k - 1$}
+    \State $\mathbf{e}_1[i] \leftarrow \text{SamplePolyCBD}_{\eta_2}(\text{PRF}_{\eta_2}(r, N))$
+    \State $N \leftarrow N + 1$
+\EndFor
+\State $e_2 \leftarrow \text{SamplePolyCBD}_{\eta_2}(\text{PRF}_{\eta_2}(r, N))$
+\State $\hat{\mathbf{r}} \leftarrow \text{NTT}(\mathbf{r})$
+\State $\mathbf{u} \leftarrow \text{INTT}(\hat{\mathbf{A}}^T \circ \hat{\mathbf{r}}) + \mathbf{e}_1$
+\State $\mu \leftarrow \text{Decompress}_1(\text{ByteDecode}_1(m))$
+\State $v \leftarrow \text{INTT}(\hat{\mathbf{t}}^T \circ \hat{\mathbf{r}}) + e_2 + \mu$
+\State $c_1 \leftarrow \text{ByteEncode}_{d_u}(\text{Compress}_{d_u}(\mathbf{u}))$
+\State $c_2 \leftarrow \text{ByteEncode}_{d_v}(\text{Compress}_{d_v}(v))$
+\State $c \leftarrow c_1 \parallel c_2$
+\State \Return $(c, K)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Key Decapsulation with Implicit Rejection}
+Algorithm~\ref{alg:decaps} defines \mbox{ML-KEM.Decaps}. The recipient unpacks $dk$ into secret key $\hat{\mathbf{s}}$, public key $ek$, public digest $h$, and rejection seed $z$. Decryption recovers candidate message $m' = \text{ByteEncode}_1(\text{Compress}_1(v - \text{INTT}(\hat{\mathbf{s}}^T \circ \text{NTT}(\mathbf{u}))))$. Candidate coins $r'$ and tentative secret $\hat{K}'$ are re-derived via $G(m' \parallel h)$. The message is re-encrypted to produce regenerated ciphertext $c'$. Concurrently, the pseudorandom rejection key $K_{\text{reject}} \leftarrow \text{SHAKE256}(z \parallel c, 32)$ is evaluated. In strict constant time, the equality $c' == c$ is tested across all ciphertext bytes; if matched, $\hat{K}'$ is returned; otherwise, $K_{\text{reject}}$ is selected.
+
+\begin{algorithm}[t]
+\caption{\mbox{ML-KEM.Decaps}$(dk, c)$ \cite{fips203}}
+\label{alg:decaps}
+\begin{algorithmic}[1]
+\Require Decapsulation key $dk \in \mathbb{B}^{768k + 96}$, Ciphertext $c \in \mathbb{B}^{32(k\cdot d_u + d_v)}$
+\Ensure Shared secret key $K \in \mathbb{B}^{32}$
+\State $\hat{\mathbf{s}} \leftarrow \text{ByteDecode}_{12}(dk[0 : 384k])$ \Comment{Parse $dk$ components}
+\State $ek \leftarrow dk[384k : 768k + 32]$
+\State $h \leftarrow dk[768k + 32 : 768k + 64]$
+\State $z \leftarrow dk[768k + 64 : 768k + 96]$
+\State $\mathbf{u} \leftarrow \text{Decompress}_{d_u}(\text{ByteDecode}_{d_u}(c[0 : 32k\cdot d_u]))$
+\State $v \leftarrow \text{Decompress}_{d_v}(\text{ByteDecode}_{d_v}(c[32k\cdot d_u : 32(k\cdot d_u + d_v)]))$
+\State $w \leftarrow v - \text{INTT}(\hat{\mathbf{s}}^T \circ \text{NTT}(\mathbf{u}))$ \Comment{K-PKE Decryption}
+\State $m' \leftarrow \text{ByteEncode}_1(\text{Compress}_1(w))$
+\State $(\hat{K}', r') \leftarrow G(m' \parallel h) = \text{SHA3-512}(m' \parallel h)$
+\State $K_{\text{reject}} \leftarrow J(z \parallel c) = \text{SHAKE256}(z \parallel c, 32)$ \Comment{Rejection Key}
+\State $c' \leftarrow \text{K-PKE.Encrypt}(ek, m', r')$ \Comment{Re-encryption verification}
+\State $b \leftarrow \text{LockstepCompare}(c', c)$ \Comment{Constant-time 0/1 flag}
+\If{$b == 1$} \Comment{Evaluated via branch-free multiplexer}
+    \State \Return $\hat{K}'$
+\Else
+    \State \Return $K_{\text{reject}}$
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Fujisaki-Okamoto Transform and Side-Channel Threat Model}
+\label{sec:prelim_fo_security}
+
+\subsubsection{IND-CCA2 Security and Decryption Oracle Mitigation}
+The core encryption scheme $\text{K-PKE}$ is only Chosen-Plaintext Attack secure ($\text{IND-CPA}$). Because $\text{K-PKE}$ decryption computes:
+\begin{equation}
+\label{eq:pke_noise_term}
+w = v - \mathbf{s}^T \mathbf{u} = \mathbf{e}^T \mathbf{r} + e_2 - \mathbf{s}^T \mathbf{e}_1 + \mu + e_{\text{comp}},
+\end{equation}
+decryption succeeds if and only if the cumulative noise term $e_{\text{total}} = \mathbf{e}^T \mathbf{r} + e_2 - \mathbf{s}^T \mathbf{e}_1 + e_{\text{comp}}$ satisfies $\|e_{\text{total}}\|_\infty < \lfloor q/4 \rfloor = 832$. If an adversary had access to an unauthenticated decryption oracle, they could submit carefully crafted malformed ciphertexts $c^*$ lying precisely on the decision boundary. By observing whether decryption succeeds or fails, the attacker could recover linear inequalities involving secret coefficients $\mathbf{s}$, ultimately extracting the entire private key in a polynomial number of oracle queries.
+
+To achieve Indistinguishability under Adaptive Chosen-Ciphertext Attack ($\text{IND-CCA2}$), \mbox{ML-KEM} integrates the Fujisaki-Okamoto ($\text{FO}$) transform~\cite{fo1999} with implicit rejection. In the Quantum Random Oracle Model (QROM), the FO transform enforces that the sender's encryption randomness $r$ is deterministically derived from the plaintext message $m$ and public key hash $h$ via a cryptographically secure hash function $G(m \parallel h)$. During decapsulation, the recipient does not merely decrypt the message, but strictly re-encrypts candidate message $m'$ using the regenerated randomness $r'$, producing $c'$, and confirms that $c' \equiv c$.
+
+Under the \textit{implicit rejection} paradigm ratified in FIPS~203:
+\begin{enumerate}
+    \item If $c' = c$, the candidate secret $K = \hat{K}'$ is released.
+    \item If $c' \neq c$, rather than returning an explicit error indicator ($\bot$) that would confirm a decryption failure to the adversary, the accelerator outputs:
+    \begin{equation}
+    \label{eq:implicit_rejection_key}
+    K_{\text{reject}} \leftarrow \text{SHAKE256}(z \parallel c, 32).
+    \end{equation}
+\end{enumerate}
+Because seed $z$ is private, uniform, and independent of $\mathbf{s}$, $K_{\text{reject}}$ is computationally indistinguishable from a uniform random 256-bit string to any adversary lacking $z$. Any modified ciphertext produces an unpredictable pseudorandom shared secret, blinding the attacker and neutralizing decryption failure oracle attacks.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  x=1cm, y=1cm,
+  scale=0.90, every node/.style={transform shape}
+]
+
+  % 1. Inputs at top
+  \node[ioBlock, minimum width=2.4cm] (in_c) at (2.2, 7.2) {\textbf{Ciphertext} $c$\\$(c_1 \parallel c_2)$};
+  \node[ioBlock, minimum width=3.4cm] (in_dk) at (10.2, 7.2) {\textbf{Decapsulation Key} $dk$\\$(\hat{\mathbf{s}} \parallel ek \parallel h \parallel z)$};
+
+  % 2. Parsing blocks
+  \node[hwBlock, minimum width=2.6cm, fill=ieeeLightTeal] (parse_c) at (2.2, 5.6) {Ciphertext Parser\\$c_1 \to \mathbf{u}, \; c_2 \to v$};
+  \node[hwBlock, minimum width=3.6cm, fill=ieeeLightTeal] (parse_dk) at (10.2, 5.6) {Key Stream Parser\\Extract $\hat{\mathbf{s}}, ek, h, z$};
+
+  % 3. First execution level: K-PKE Decrypt & Rejection Hash
+  \node[hwCore, minimum width=3.2cm] (pke_dec) at (2.2, 3.8) {$\mathbf{K\text{-}PKE.Decrypt}$\\$w \leftarrow v - \text{INTT}(\hat{\mathbf{s}}^T \circ \hat{\mathbf{u}})$\\$m' \leftarrow \text{Decode}_1(\text{Comp}_1(w))$};
+  \node[hwCore, minimum width=3.4cm, fill=ieeeLightCoral] (shake_rej) at (10.2, 3.8) {$\mathbf{J(z \parallel c) = \text{SHAKE256}}$\\Evaluate 32-Byte\\Rejection Key $K_{\text{reject}}$};
+
+  % 4. Hash G(m' || h)
+  \node[hwCore, minimum width=3.4cm, fill=ieeeLightBlue] (sha_g) at (2.2, 2.0) {$\mathbf{G(m' \parallel h) = \text{SHA3-512}}$\\Derive Tentative Secret $\hat{K}'$\\Derive Encryption Coins $r'$};
+
+  % 5. Re-encryption core
+  \node[hwCore, minimum width=3.2cm] (pke_enc) at (2.2, 0.2) {$\mathbf{K\text{-}PKE.Encrypt}$\\$c' \leftarrow \text{Encrypt}(ek, m', r')$\\Regenerate $c'_1 \parallel c'_2$};
+
+  % 6. Constant-time Lockstep Comparator
+  \node[ctrlBlock, minimum width=3.2cm] (comp) at (6.5, 0.2) {\textbf{Lockstep Bitwise}\\\textbf{Comparator} ($c' == c$)\\Cumulative Flag $b \in \{0, 1\}$};
+
+  % 7. Constant-Time MUX
+  \node[muxBlock, minimum width=0.8cm, minimum height=1.8cm] (mux) at (10.4, 0.2) {};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy] at (10.4, 0.2) {MUX};
+
+  % 8. Output
+  \node[ioBlock, minimum width=3.0cm, fill=ieeeLightGreen] (out_k) at (13.4, 0.2) {\textbf{Final Shared Secret} $K$\\32 Bytes (256 bits)};
+
+  % --- Interconnect Lines ---
+  % Direct vertical inputs to parsers
+  \draw[ieeeBus] (in_c) -- (parse_c);
+  \draw[ieeeBus] (in_dk) -- (parse_dk);
+
+  % Ciphertext parser to K-PKE.Decrypt
+  \draw[ieeeBus] (parse_c) -- node[right, font=\sffamily\tiny] {$\mathbf{u}, v$} (pke_dec);
+
+  % Ciphertext to Rejection Hash J(z || c) via top outer highway
+  \draw[ieeeBus] (parse_c.north) -- ++(0, 0.4) -- ++(9.8, 0) |- (shake_rej.east);
+
+  % Ciphertext to Lockstep Comparator via far west highway below all blocks
+  \draw[ieeeBus] (parse_c.west) -- ++(-1.8, 0) |- ($(comp.south)+(-0.3,-0.9)$) -- ($(comp.south)+(-0.3,0)$);
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=north] at (3.5, -0.9) {Original Ciphertext $c$};
+
+  % Key parser to Decrypt (s_hat) - route out of west into open channel
+  \draw[ieeeBus] ($(parse_dk.west)+(0,0.2)$) -- ++(-3.0, 0) |- ($(pke_dec.north)+(0.5,0)$);
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=south east] at (6.2, 5.8) {$\hat{\mathbf{s}}$};
+
+  % Key parser to Rejection Hash (z) - direct vertical
+  \draw[ieeeBus] (parse_dk) -- node[right, font=\sffamily\tiny] {$z$} (shake_rej);
+
+  % Key parser to G hash (h) - route out of west, drop down at x = 5.8, enter sha_g.east
+  \draw[ieeeBus] ($(parse_dk.west)+(0,-0.2)$) -- ++(-2.8, 0) |- ($(sha_g.east)+(0,0.2)$);
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=south] at (6.4, 5.4) {$h$};
+
+  % Key parser to Re-encryption (ek) - route out of west, drop down at x = 5.2, enter pke_enc.east
+  \draw[ieeeBus] ($(parse_dk.west)+(0,-0.4)$) -- ++(-3.4, 0) |- ($(pke_enc.east)+(0,0.2)$);
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=south] at (5.6, 5.2) {$ek$};
+
+  % Decrypt to G hash (m')
+  \draw[ieeeBus] (pke_dec) -- node[right, font=\sffamily\tiny] {Candidate $m'$} (sha_g);
+
+  % G hash to Re-encryption (r')
+  \draw[ieeeBus] (sha_g) -- node[right, font=\sffamily\tiny] {Coins $r'$} (pke_enc);
+
+  % Re-encryption to Comparator (c')
+  \draw[ieeeBus] (pke_enc) -- node[above=1pt, font=\sffamily\tiny] {Regen $c'$} (comp);
+
+  % Comparator to MUX control (flag b) - routes below
+  \draw[ieeeControl] (comp.east) -- ++(1.0, 0) |- ($(mux.south)+(0,-0.3)$) -- (mux.south);
+  \node[font=\sffamily\tiny, text=ieeeCoral, anchor=north] at (8.8, -0.3) {Flag $b$};
+
+  % Tentative Secret K_hat' from G hash to MUX (enters west)
+  \draw[ieeeBus] (sha_g.east) -- ++(4.6, 0) |- (mux.west);
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=south] at (7.8, 2.0) {Tentative Secret $\hat{K}'$};
+
+  % Rejection Key K_reject from SHAKE256 to MUX (direct straight down into north)
+  \draw[ieeeBus] (shake_rej.south) -- (mux.north);
+  \node[font=\sffamily\tiny, text=ieeeCoral, anchor=west] at (10.45, 2.0) {$K_{\text{reject}}$};
+
+  % MUX to Output
+  \draw[ieeeBus] (mux.east) -- (out_k);
+
+\end{tikzpicture}
+\caption{Architectural workflow of the Fujisaki-Okamoto transform with implicit rejection during \mbox{ML-KEM} decapsulation, illustrating constant-time parallel rejection key derivation, complete ciphertext re-encryption, lockstep bitwise comparison, and branch-free secret selection.}
+\label{fig:fo_workflow}
+\end{figure*}
+
+\subsubsection{Side-Channel Threat Model and Constant-Time Implementation}
+While implicit rejection mathematically neutralizes chosen-ciphertext attacks at the protocol level, physical hardware remains susceptible to timing side-channel attacks~\cite{kocher1996}. If an implementation permits data-dependent timing variations during decapsulation---such as early termination upon observing the first mismatched ciphertext byte ($c'_j \neq c_j$), variable-latency modular division during decompression, or non-constant execution branches during polynomial sampling---an adversary monitoring clock cycle latencies can reconstruct the decryption failure oracle.
+
+To eliminate this timing vulnerability, the proposed accelerator operates under a strict constant-time side-channel threat model:
+\begin{enumerate}
+    \item \textbf{Cycle-Invariant Control Logic:} All finite state machines controlling \mbox{ML-KEM.Decaps} execute a strictly fixed sequence of states and clock cycles, fully invariant to the valid/invalid status of the ciphertext or the specific bit location of a corruption.
+    \item \textbf{Lockstep Ciphertext Comparison:} Ciphertext verification performs an exhaustive, cycle-by-cycle bitwise equality check spanning all $32(kd_u + d_v)$ bytes of $c'$ and $c$, continuously accumulating comparison results into a single-bit sticky register with zero early-exit branching.
+    \item \textbf{Branch-Free Secret Multiplexing:} The final shared secret selection between tentative secret $\hat{K}'$ and pseudorandom rejection key $K_{\text{reject}}$ is implemented via balanced constant-time logic multiplexers, ensuring identical dynamic switching activity, power dissipation profiles, and electromagnetic radiation characteristics regardless of the comparison outcome.
+\end{enumerate}
+Fig.~\ref{fig:fo_workflow} illustrates the end-to-end constant-time decapsulation flow enforced by our hardware architecture.

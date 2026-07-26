@@ -1,0 +1,120 @@
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{The Post-Quantum Transition and NIST FIPS 203}
+\label{sec:intro_pqc_transition}
+
+\IEEEPARstart{F}{or} more than four decades, the security foundations of global telecommunications, electronic commerce, financial settlement networks, and secure distributed computing architectures have rested upon public-key cryptography (PKC). Prominent asymmetric algorithms---most notably RSA, Diffie-Hellman (DH), and Elliptic Curve Cryptography (ECDH and ECDSA)---derive their computational hardness from the intractable nature of two classical number-theoretic problems: integer factorization and the discrete logarithm problem over finite abelian groups. However, the advent and continuous maturation of quantum computing fundamentally jeopardize these cryptographic foundations. As formally demonstrated by Peter Shor in 1994~\cite{shor1994}, a sufficiently large, fault-tolerant quantum computer (FTQC) executing Shor's algorithm can solve both integer factorization and discrete logarithms in polynomial time, $\mathcal{O}((\log N)^3)$, effectively reducing the mathematical security of 2048-bit RSA and 256-bit ECC to zero.
+
+The urgency of this vulnerability is drastically amplified by the ``Harvest Now, Decrypt Later'' (HNDL) adversarial paradigm. Nation-state adversaries and hostile entities are actively intercepting, harvesting, and archiving encrypted communications traversing public network backbones today. Once an operational FTQC becomes physically realizable, archived ciphertexts will be retrospectively decrypted, permanently compromising sovereign communications, classified defense assets, financial records, and personal health data whose statutory confidentiality requirements span multiple decades.
+
+In response to this existential threat, the National Institute of Standards and Technology (NIST) initiated an international Post-Quantum Cryptography (PQC) Standardization Project in 2016 to solicit, evaluate, and standardize quantum-resistant public-key cryptographic primitives. Following three exhaustive evaluation rounds spanning eight years, NIST announced its primary selections in July 2022 and formally promulgated the initial suite of federal standards on August~13, 2024:
+\begin{enumerate}
+    \item \textbf{Federal Information Processing Standard (FIPS) 203:} \textit{Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)}~\cite{fips203}, derived from the CRYSTALS-Kyber submission~\cite{bos2018kyber};
+    \item \textbf{FIPS 204:} \textit{Module-Lattice-Based Digital Signature Standard (ML-DSA)}~\cite{fips204}, derived from CRYSTALS-Dilithium;
+    \item \textbf{FIPS 205:} \textit{Stateless Hash-Based Digital Signature Standard (SLH-DSA)}~\cite{fips205}, derived from SPHINCS+.
+\end{enumerate}
+Among these, NIST FIPS 203 (ML-KEM) constitutes the universal standard for quantum-resistant key establishment and public-key encryption across ubiquitous digital communication protocols, including Transport Layer Security (TLS~1.3), Internet Key Exchange (IKEv2), Secure Shell (SSH), and Virtual Private Networks (VPNs). Table~\ref{tab:nist_timeline} summarizes the major milestone transitions throughout the NIST standardization lifecycle.
+
+\begin{table}[t]
+\caption{NIST Post-Quantum Cryptography Standardization Milestones}
+\label{tab:nist_timeline}
+\centering
+\footnotesize
+\begin{tabular}{@{}c p{6.8cm}@{}}
+\toprule
+\textbf{Year} & \textbf{Standardization Milestone and Evolution} \\
+\midrule
+2016 & NIST announces Call for Proposals for PQC algorithms. \\
+2017 & 82 initial candidate algorithms submitted (Round~1 begins). \\
+2019 & 26 candidate algorithms advance to Round~2 evaluation. \\
+2020 & 7 finalists and 8 alternate candidates selected for Round~3. \\
+2022 & CRYSTALS-Kyber selected as primary standard for KEM. \\
+2023 & Initial draft FIPS 203 released for public review and feedback. \\
+2024 & Formal release and ratification of FIPS 203 (ML-KEM) on August 13. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Computational Bottlenecks in Post-Quantum Lattice Cryptography}
+\label{sec:intro_bottlenecks}
+While classical asymmetric algorithms such as RSA and ECDH rely primarily on modular exponentiations and scalar point multiplications over elliptic curves, ML-KEM is founded upon the computational hardness of the Module Learning With Errors ($\text{M-LWE}$) problem over structured polynomial rings. The computational profile of ML-KEM departs dramatically from classical asymmetric primitives, imposing extreme hardware and arithmetic overheads across five primary operational domains:
+
+\begin{enumerate}
+    \item \textbf{Polynomial Ring Arithmetic and the Number Theoretic Transform (NTT):}
+    ML-KEM operates over the cyclotomic quotient ring $\mathcal{R}_q = \mathbb{Z}_q[X] / (X^{256} + 1)$ with prime modulus $q = 3329$. Because polynomial multiplication in the time domain exhibits quadratic complexity $\mathcal{O}(n^2)$, high-performance implementations transform polynomials into the NTT domain using the discrete Fourier-like ring isomorphism. However, because $q - 1 = 3328 = 13 \times 2^8$, the ring $\mathcal{R}_q$ does not split completely into linear factors over $\mathbb{Z}_q$, but instead into 128 quadratic polynomial factors modulo $(X^2 - \zeta^{2\cdot\text{BitRev}_7(i) + 1})$, where $\zeta = 17$ is a primitive 256-th root of unity. This incomplete splitting requires degree-1 dyadic base multiplications $\hat{f} \circ \hat{g}$, interleaved modular butterfly reductions, and complex twiddle-factor address generators. The high volume of polynomial ring transformations ($\text{NTT}$ and $\text{INTT}$) performed per key encapsulation and decapsulation execution constitutes up to 35\% of the total algorithmic latency.
+
+    \item \textbf{Cryptographic Sponge Permutations ($\text{Keccak-}f[1600]$):}
+    ML-KEM makes ubiquitous use of the Keccak sponge construction defined in FIPS~202~\cite{fips202} across multiple standard instantiations: SHA3-256 for public-key hashing ($H$), SHA3-512 for pseudorandom seed expansion ($G$), SHAKE-128 for public matrix coefficient generation ($\text{XOF}$), and SHAKE-256 for noise polynomial derivation ($\text{PRF}$) and rejection key generation ($J$). A complete encapsulation or decapsulation execution demands between 10 and 28 separate 24-round Keccak-$f[1600]$ state permutations. In software running on general-purpose processors, Keccak permutations dominate total execution time, consuming up to 60\% of all clock cycles.
+
+    \item \textbf{Rejection and Centered Binomial Distribution (CBD) Sampling:}
+    The generation of the public matrix $\hat{\mathbf{A}} \in \mathcal{R}_q^{k \times k}$ requires parsing uniform 168-byte SHAKE-128 squeeze blocks through a 12-bit rejection filter ($\text{SampleNTT}$). Coefficients $d \ge 3329$ are rejected, resulting in a non-deterministic throughput pattern with an empirical rejection rate of $\approx 18.8\%$. Concurrently, secret and noise vectors $\mathbf{s}, \mathbf{e}, \mathbf{r}, \mathbf{e}_1, e_2$ are generated by sampling from the Centered Binomial Distribution ($\text{SamplePolyCBD}_\eta$) with parameter $\eta \in \{2, 3\}$. Rejection stalls, multi-word byte-to-coefficient re-alignment, and lane buffering introduce severe throughput throttles in conventional processing pipelines.
+
+    \item \textbf{Polynomial Compression, Decompression, and Serialization:}
+    Ciphertext vectors $\mathbf{u}$ and polynomial $v$ are compressed by discarding low-order bits through non-power-of-two modular divisions:
+    \begin{equation}
+    \label{eq:intro_compress}
+    \text{Compress}_d(x) = \left\lfloor \frac{2^d \cdot x + \lfloor q/2 \rfloor}{q} \right\rfloor \pmod{2^d}
+    \end{equation}
+    for bit-depths $d \in \{1, 4, 5, 10, 11\}$. Direct hardware implementation of division by the prime modulus $q = 3329$ consumes extensive logic area and pipeline latency, while bit-packing arbitrary bit-widths into byte streams introduces unaligned boundary crossings that stall datapath flows.
+
+    \item \textbf{Timing Side-Channel Vulnerabilities and Fujisaki-Okamoto Transform:}
+    In software implementations, data-dependent memory accesses during polynomial transformations, rejection sampling branches, and non-constant-time modular arithmetic create severe cache-timing and execution-time side-channel leakages. Most critically, IND-CCA2 security in ML-KEM decapsulation is achieved via the Fujisaki-Okamoto ($\text{FO}$) transform~\cite{fo1999} with implicit rejection: an invalid or tampered ciphertext must generate a deterministic pseudorandom secret $K_{\text{reject}} \leftarrow \text{SHAKE256}(z \parallel c, 32)$ rather than an explicit error. Any microarchitectural timing variation during message re-encryption or ciphertext comparison provides an active adversary with a decryption failure oracle, enabling full secret-key recovery. Dedicated hardware must guarantee strictly constant-time execution paths independent of secret data and error states.
+\end{enumerate}
+
+\subsection{State-of-the-Art Limitations and Hardware Challenges}
+\label{sec:intro_challenges}
+Designing an ASIC or FPGA accelerator for NIST FIPS 203 involves resolving three mutually conflicting physical and microarchitectural challenges:
+
+\subsubsection{Block RAM Utilization and Floorplan Congestion}
+Most prior FPGA implementations of CRYSTALS-Kyber or ML-KEM rely heavily on dedicated Block RAM (BRAM) tiles (such as AMD/Xilinx RAMB36 and RAMB18 primitives) to store polynomial coefficient arrays, precomputed NTT twiddle factor tables, Keccak sponge states, public keys, secret keys, and intermediate ciphertext buffers~\cite{xing2023tcas1, imran2022tvlsi, banerjee2021sapphire}. Typical published accelerators consume between 8 and 36 BRAM tiles.
+
+However, in modern FPGA architectures, dedicated BRAM primitives are arranged in rigid, widely separated vertical columns embedded within the configurable logic block (CLB) fabric. As clock frequencies push beyond 300~MHz, routing long interconnect wires between distributed CLB datapaths and fixed BRAM columns induces catastrophic routing congestion, severe net delays, and timing closure failures. Furthermore, on resource-constrained embedded FPGAs, automotive silicon, and aerospace micro-devices, dedicated BRAM primitives are a scarce resource demanded by video processing pipelines, network packet buffers, and neural network scratchpads. A monolithic accelerator that can execute all ML-KEM operations with \textbf{strictly zero BRAMs} eliminates floorplan placement constraints, mitigates routing wire delays, and allows seamless synthesis into arbitrary FPGA fabrics or standard-cell ASIC layouts.
+
+\subsubsection{Exorbitant DSP Consumption Limiting Edge Co-Location}
+Modular arithmetic over $\mathbb{Z}_q$ and polynomial pointwise multiplications typically consume dozens of dedicated digital signal processing (DSP) blocks (e.g., DSP48E2 slices). Prior art architectures frequently deploy 16, 32, 48, or even 64 DSP slices to accelerate NTT butterflies, pointwise multiplications, and Barrett reducers~\cite{xing2023tcas1, imran2022tvlsi}. On edge-tier devices (e.g., Zynq UltraScale+ MPSoC, Artix-7, or low-density Kintex devices), DSP blocks are strictly budgeted for concurrent digital signal processing, sensor fusion, radar processing, or real-time neural network inference. Cryptographic accelerators consuming a heavy DSP footprint cannot be integrated into shared edge systems without displacing core payload workloads. Restricting total DSP consumption to a minimal fixed budget (such as strictly 8 DSP slices) while sustaining multi-hundred-megahertz throughput is an open research challenge.
+
+\subsubsection{Multi-Security-Level Agility Without Hardware Replication}
+NIST FIPS 203 specifies three distinct security categories corresponding to matrix-vector module ranks $k = 2$ (ML-KEM-512), $k = 3$ (ML-KEM-768), and $k = 4$ (ML-KEM-1024), accompanied by distinct noise widths ($\eta_1, \eta_2$) and compression bit-depths ($d_u, d_v$). Many existing hardware designs are parameter-locked, supporting only ML-KEM-768 to minimize control logic complexity. When prior architectures attempt to support all three security levels, they frequently resort to parallel replicated datapaths or redundant memory structures that balloon logic area and register consumption. A truly agile hardware accelerator must achieve dynamic, single-cycle runtime parameter configuration across all three NIST security levels using a unified, shared datapath without duplicating storage or arithmetic units.
+
+\subsection{Technical Contributions}
+\label{sec:intro_contributions}
+To overcome the aforementioned limitations, this paper presents a unified, high-frequency, all-security-level hardware accelerator for NIST FIPS 203. The proposed architecture establishes an ultra-constrained physical resource budget, achieving a \textbf{413.7~MHz} operating frequency on AMD Kintex UltraScale while consuming \textbf{strictly zero Block RAMs (0 BRAMs)} and \textbf{strictly eight DSP slices (8 DSPs)}.
+
+The primary technical contributions of this work are itemized as follows:
+\begin{enumerate}
+    \item \textbf{Zero-BRAM Distributed Memory Architecture:}
+    We design a monolithic memory subsystem synthesized entirely into CLB Distributed RAM (LUTRAM), 16-bit/32-bit Shift Register LUTs (SRLs), and CLB registers, consuming \textbf{0 BRAM36/BRAM18 tiles}. By architecting multi-bank distributed RAM structures with customized read/write address decoding, our architecture eliminates dedicated RAM column routing delays, drastically lowering wire congestion and enabling record timing closure across dense FPGA fabrics.
+
+    \item \textbf{Strictly 8-DSP Streaming Dual-Channel Karatsuba Datapath:}
+    We introduce a streaming pointwise dyadic multiplier that computes four polynomial coefficients per clock cycle over the quadratic quotient rings $\mathbb{Z}_q[X]/(X^2 - \zeta^{2r+1})$. By utilizing a degree-1 Karatsuba polynomial decomposition mapped directly onto AMD DSP48E2 primitives with internal pre-adders, the multiplier achieves a fixed 24-cycle pipeline latency while consuming \textbf{strictly eight DSP48E2 slices} across all operational modes and security levels.
+
+    \item \textbf{Zero-DSP 4-Butterfly Parallel NTT/INTT Engine:}
+    We propose a 4-butterfly parallel NTT/INTT transform engine that processes eight polynomial coefficients per clock cycle. Operating completely DSP-free (\textbf{0 DSPs}), the butterfly unit employs an optimized 3-chunk soft-logic multiplier tree coupled with a dedicated Barrett modular reduction stage that exploits the algebraic structure of the Kyber prime $q = 3329 = 13 \times 2^8 + 1$. Conflict-free memory access across all seven Cooley-Tukey and Gentleman-Sande stages is guaranteed by a novel 8-bank LUTRAM interleaving scheme.
+
+    \item \textbf{24-Cycle $\text{Keccak-}f[1600]$ Core with High-Throughput 64-Bit Lane Absorb:}
+    We develop a unified cryptographic sponge and sampling engine supporting SHA3-256, SHA3-512, SHAKE-128, and SHAKE-256. Featuring a single-round-per-cycle permutation architecture, the engine executes the full 1600-bit permutation in exactly 24 clock cycles. A high-bandwidth 64-bit lane absorption interface and an on-the-fly rejection sampler extract up to four 12-bit valid matrix coefficients per clock beat, eliminating byte-serial throughput bottlenecks.
+
+    \item \textbf{Division-Free Canonical Signed Digit (CSD) Compression Codecs:}
+    We implement an elastic, multiplier-less polynomial compression and decompression subsystem supporting runtime bit-depths $d \in \{1, 4, 5, 10, 11\}$. By converting the division by $q = 3329$ into fixed-point multiplication via $161271 \approx 2^{29}/3329$ and decomposing the constant into a Canonical Signed Digit adder tree, the codecs operate with zero DSPs and zero integer dividers.
+
+    \item \textbf{Constant-Time Fujisaki-Okamoto Transform Datapath with Implicit Rejection:}
+    We construct a hardware-enforced constant-time decapsulation pipeline. Message decryption, coin derivation, full ciphertext re-encryption, and lockstep bit-level ciphertext comparison are scheduled such that execution timing is strictly deterministic. In the event of a ciphertext mismatch, the core seamlessly selects the pseudorandom rejection key $K_{\text{reject}} \leftarrow \text{SHAKE256}(z \parallel c, 32)$ without branch divergence, providing robust resistance against timing side-channel attacks and decryption failure oracles.
+
+    \item \textbf{Comprehensive Physical Implementation and Silicon Verification:}
+    We synthesize, place, route, and physically verify the proposed accelerator on an AMD Kintex UltraScale FPGA (\texttt{xcku035-ffva1156-3-e}). The core achieves a maximum post-routing clock frequency of \textbf{413.7~MHz} ($T_{\text{clk}} = 2.417$~ns) with total utilization of 29,063 LUTs (14.3\%), 17,666 FFs (4.35\%), 8 DSPs (0.47\%), and 0 BRAMs. We demonstrate bit-exact compliance with the official NIST FIPS 203 Known Answer Tests (KAT) across ML-KEM-512, ML-KEM-768, and ML-KEM-1024, achieving execution times of 3.31--7.33~$\mu$s for KeyGen, 4.02--8.25~$\mu$s for Encapsulation, and 6.04--10.53~$\mu$s for Decapsulation.
+\end{enumerate}
+
+\subsection{Paper Organization}
+\label{sec:intro_organization}
+The remainder of this paper is organized as follows:
+\begin{itemize}
+    \item \textbf{Section~II} presents mathematical preliminaries, the algebraic ring setting, formal notations, parameter configurations, and complete algorithmic formulations of NIST FIPS 203 (KeyGen, Encaps, Decaps, and the Fujisaki-Okamoto transform).
+    \item \textbf{Section~III} details the top-level unified multi-mode architecture, controller finite state machine (FSM) scheduling, memory mapping, and interface protocols.
+    \item \textbf{Section~IV} details the zero-BRAM memory hierarchy, distributed RAM mapping, and conflict-free 8-bank scheduling.
+    \item \textbf{Section~V} expounds upon the arithmetic accelerators: the 0-DSP 4-butterfly parallel NTT/INTT engine, the 8-DSP streaming Karatsuba pointwise multiplier, and the modular field ALU.
+    \item \textbf{Section~VI} describes the unified cryptographic sponge and sampling architecture: the 24-cycle Keccak-$f[1600]$ engine, 64-bit lane absorption, uniform rejection sampler, and Centered Binomial Distribution sampler.
+    \item \textbf{Section~VII} presents the multiplier-free polynomial codecs, CSD compression/decompression, and zero-bubble ping-pong serialization architecture.
+    \item \textbf{Section~VIII} reports experimental FPGA implementation results, physical timing analysis, resource breakdowns, security evaluation, and comprehensive comparative analysis against state-of-the-art literature.
+    \item \textbf{Section~IX} concludes the paper with directions for future work.
+\end{itemize}
