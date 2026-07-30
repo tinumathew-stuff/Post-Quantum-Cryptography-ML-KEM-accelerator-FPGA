@@ -1,0 +1,403 @@
+\documentclass[varwidth=34cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+% Refined bus width annotation macro with centered label above tick mark
+\renewcommand{\buswidth}[4]{
+  \path ($(#1)!#3!(#2)$) node[coordinate] (bwpt) {};
+  \draw[line width=0.6pt, draw=ieeeNavy] ($(bwpt)+(-2.5pt,-3.5pt)$) -- ($(bwpt)+(2.5pt,3.5pt)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south, inner sep=1.5pt] at ($(bwpt)+(0pt,2.5pt)$) {#4};
+}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large ML-KEM HPKA: Polynomial Codecs \& Serialization Subsystem} \\[3pt]
+{\sffamily\footnotesize Subsystem 10 Microarchitecture --- RTL Modules: \texttt{mlkem\_poly\_compress.sv}, \texttt{mlkem\_poly\_decompress.sv}, \texttt{poly\_encode.sv}, \texttt{poly\_decode.sv}}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}
+
+  % ============================================================================
+  % ROW 1: DIVISION-FREE CSD POLYNOMIAL COMPRESSOR (7 Stages, Top Row)
+  % ============================================================================
+  
+  % Input Boundary Port
+  \node[ioBlock, minimum width=2.2cm, minimum height=1.8cm] (cmp_in) at (1.3, 0.0) {
+    \textbf{Slave AXI-S In}\\[2pt]
+    \scriptsize \texttt{tdata[15:0]}
+  };
+
+  % Stage 1: Input Boundary Register & Signed Restoration
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (cmp_s1) at (4.5, 0.0) {
+    \textbf{S1: Sign Restore}\\[2pt]
+    \scriptsize $x_{\text{canon}} \in [0, q-1]$
+  };
+
+  % Stage 2: CSD Common Subexpressions
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (cmp_s2) at (8.0, 0.0) {
+    \textbf{S2: CSD Subexpr}\\[2pt]
+    \scriptsize $T = 5x$, $U = 9x$
+  };
+
+  % Stage 3: CSD Subexpression Assembly
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (cmp_s3) at (11.5, 0.0) {
+    \textbf{S3: Assembly}\\[2pt]
+    \scriptsize $V = (T\ll 9) + U$
+  };
+
+  % Stage 4: Constant Product Assembly (Zero DSPs)
+  \node[hwCore, minimum width=2.8cm, minimum height=1.8cm] (cmp_s4) at (15.0, 0.0) {
+    \textbf{S4: CSD Product}\\[2pt]
+    \scriptsize $\text{prod} = T_{\text{hi}} - V$
+  };
+
+  % Stage 5: Multiplexer-Based Dynamic Shift
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (cmp_s5) at (18.5, 0.0) {
+    \textbf{S5: Dynamic Shift}\\[2pt]
+    \scriptsize $\text{sh} = \text{prod} \ll d$
+  };
+
+  % Stage 6: Constant Rounding Offset Addition
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (cmp_s6) at (22.0, 0.0) {
+    \textbf{S6: Offset Add}\\[2pt]
+    \scriptsize $+ C_{\text{offset}}$
+  };
+
+  % Stage 7: Quotient Extraction & Masking
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (cmp_s7) at (25.5, 0.0) {
+    \textbf{S7: Extraction}\\[2pt]
+    \scriptsize $\text{quot} = \text{full}[39:29]$
+  };
+
+  % Output Boundary Port
+  \node[ioBlock, minimum width=2.4cm, minimum height=1.8cm] (cmp_out) at (28.9, 0.0) {
+    \textbf{Master AXI-S Out}\\[2pt]
+    \scriptsize \texttt{tdata[10:0]}
+  };
+
+  % Compressor Interconnect Buses (Uniform clearance)
+  \draw[ieeeBus] (cmp_in.east) -- (cmp_s1.west);
+  \buswidth{cmp_in.east}{cmp_s1.west}{0.5}{16}
+
+  \draw[ieeeBus] (cmp_s1.east) -- (cmp_s2.west);
+  \buswidth{cmp_s1.east}{cmp_s2.west}{0.5}{12}
+
+  \draw[ieeeBus] (cmp_s2.east) -- (cmp_s3.west);
+  \buswidth{cmp_s2.east}{cmp_s3.west}{0.5}{31}
+
+  \draw[ieeeBus] (cmp_s3.east) -- (cmp_s4.west);
+  \buswidth{cmp_s3.east}{cmp_s4.west}{0.5}{54}
+
+  \draw[ieeeBus] (cmp_s4.east) -- (cmp_s5.west);
+  \buswidth{cmp_s4.east}{cmp_s5.west}{0.5}{30}
+
+  \draw[ieeeBus] (cmp_s5.east) -- (cmp_s6.west);
+  \buswidth{cmp_s5.east}{cmp_s6.west}{0.5}{40}
+
+  \draw[ieeeBus] (cmp_s6.east) -- (cmp_s7.west);
+  \buswidth{cmp_s6.east}{cmp_s7.west}{0.5}{41}
+
+  \draw[ieeeBus] (cmp_s7.east) -- (cmp_out.west);
+  \buswidth{cmp_s7.east}{cmp_out.west}{0.5}{11}
+
+  % Callout Badges for Compressor
+  \node[calloutBadge] at ($(cmp_s1.north east)+(-0.35,-0.35)$) {1};
+  \node[calloutBadge] at ($(cmp_s4.north east)+(-0.35,-0.35)$) {2};
+  \node[calloutBadge] at ($(cmp_s6.north east)+(-0.35,-0.35)$) {3};
+
+  % ============================================================================
+  % ROW 2: MODULUS DECOMPRESSOR & ELASTIC STALL CONTROLLER
+  % ============================================================================
+  
+  % Input Boundary Port
+  \node[ioBlock, minimum width=2.2cm, minimum height=1.8cm] (dec_in) at (1.3, -4.8) {
+    \textbf{Slave AXI-S In}\\[2pt]
+    \scriptsize \texttt{tdata[10:0]}
+  };
+
+  % Stage 1: Round Constant Generation
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (dec_s1) at (4.5, -4.8) {
+    \textbf{S1: Round Const}\\[2pt]
+    \scriptsize $\text{round} = 2^{d-1}$
+  };
+
+  % Stage 2: Partial Products
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (dec_s2) at (8.0, -4.8) {
+    \textbf{S2: Partial Prod}\\[2pt]
+    \scriptsize $\text{term}_1=3y$, $\text{term}_2=257y$
+  };
+
+  % Stage 3: Rounding Offset Integration
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (dec_s3) at (11.5, -4.8) {
+    \textbf{S3: Round Add}\\[2pt]
+    \scriptsize $\text{term}_2 + \text{round}$
+  };
+
+  % Stage 4: Sum Assembly
+  \node[hwCore, minimum width=2.8cm, minimum height=1.8cm] (dec_s4) at (15.0, -4.8) {
+    \textbf{S4: Sum Assembly}\\[2pt]
+    \scriptsize $3072y + \text{sum}_{\text{lo}}$
+  };
+
+  % Stage 5: Shift by d and Slice Extraction
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.8cm] (dec_s5) at (18.5, -4.8) {
+    \textbf{S5: Shift \& Slices}\\[2pt]
+    \scriptsize $\text{res} = \text{sum} \gg d$
+  };
+
+  % Output Boundary Port
+  \node[ioBlock, minimum width=2.4cm, minimum height=1.8cm] (dec_out) at (21.8, -4.8) {
+    \textbf{Master AXI-S Out}\\[2pt]
+    \scriptsize \texttt{tdata[11:0]}
+  };
+
+  % Decompressor Interconnect Buses
+  \draw[ieeeBus] (dec_in.east) -- (dec_s1.west);
+  \buswidth{dec_in.east}{dec_s1.west}{0.5}{11}
+
+  \draw[ieeeBus] (dec_s1.east) -- (dec_s2.west);
+  \buswidth{dec_s1.east}{dec_s2.west}{0.5}{11}
+
+  \draw[ieeeBus] (dec_s2.east) -- (dec_s3.west);
+  \buswidth{dec_s2.east}{dec_s3.west}{0.5}{33}
+
+  \draw[ieeeBus] (dec_s3.east) -- (dec_s4.west);
+  \buswidth{dec_s3.east}{dec_s4.west}{0.5}{20}
+
+  \draw[ieeeBus] (dec_s4.east) -- (dec_s5.west);
+  \buswidth{dec_s4.east}{dec_s5.west}{0.5}{24}
+
+  \draw[ieeeBus] (dec_s5.east) -- (dec_out.west);
+  \buswidth{dec_s5.east}{dec_out.west}{0.5}{12}
+
+  % Callout Badge for Decompressor
+  \node[calloutBadge] at ($(dec_s4.north east)+(-0.35,-0.35)$) {4};
+
+  % Elastic Stall & Handshake Controller (Row 2 Right)
+  \node[ctrlBlock, minimum width=5.2cm, minimum height=1.8cm] (stall_ctrl) at (27.2, -4.8) {
+    \textbf{Elastic Stall Controller}\\[2pt]
+    \scriptsize \texttt{pipe\_en = !m\_valid\_r || m\_axis\_tready}\\[1pt]
+    \tiny Synchronous Freeze (Zero Bubble)
+  };
+  \node[calloutBadge] at ($(stall_ctrl.north east)+(-0.35,-0.35)$) {8};
+
+  % Control lines from Stall Controller (Strict Manhattan paths, zero crossings)
+  \draw[ieeeControl] (stall_ctrl.west) -- (dec_out.east)
+    node[midway, above=1pt, font=\sffamily\tiny\bfseries, text=ieeeCoral, fill=white, inner sep=1.5pt] {\texttt{pipe\_en}};
+
+  \draw[ieeeControl] ($(stall_ctrl.north -| cmp_out.south)$) -- (cmp_out.south)
+    node[midway, right=3pt, font=\sffamily\tiny\bfseries, text=ieeeCoral, fill=white, inner sep=1.5pt] {\texttt{pipe\_en}};
+
+  % ============================================================================
+  % ROW 3 LEFT: PING-PONG SERIALIZATION CODEC (poly_encode.sv)
+  % ============================================================================
+  
+  % Input Port
+  \node[ioBlock, minimum width=1.6cm, minimum height=2.0cm] (enc_in) at (1.1, -10.8) {
+    \textbf{Coeff In}\\[2pt]
+    \scriptsize \texttt{in\_data[11:0]}
+  };
+
+  % Input Masking
+  \node[ctrlBlock, minimum width=1.4cm, minimum height=2.0cm] (enc_mask) at (3.1, -10.8) {
+    \textbf{Bit Mask}\\[2pt]
+    \scriptsize $d$-bit Filter
+  };
+
+  % Ping-Pong Buffers
+  \node[memBlock, minimum width=2.4cm, minimum height=1.4cm] (enc_b0) at (5.6, -9.8) {
+    \textbf{Bank 0}\\[2pt]
+    \scriptsize \texttt{coeff\_buf[0]}
+  };
+
+  \node[memBlock, minimum width=2.4cm, minimum height=1.4cm] (enc_b1) at (5.6, -11.8) {
+    \textbf{Bank 1}\\[2pt]
+    \scriptsize \texttt{coeff\_buf[1]}
+  };
+
+  \node[ctrlBlock, minimum width=2.4cm, minimum height=0.9cm] (enc_ctrl) at (5.6, -13.5) {
+    \textbf{Swap Controller}\\[2pt]
+    \tiny $8\text{ coeff}$ Boundary
+  };
+
+  % Static Slice Bus
+  \node[regBlock, minimum width=2.2cm, minimum height=3.4cm] (enc_bus) at (8.4, -10.8) {
+    \textbf{Static Slice}\\[2pt]
+    \scriptsize \texttt{chunk\_bits[95:0]}
+  };
+
+  % Hierarchical 4:1 Multiplexer Tree
+  \node[hwBlock, minimum width=2.0cm, minimum height=3.4cm] (enc_mux) at (11.0, -10.8) {
+    \textbf{4:1 Mux Tree}\\[2pt]
+    \scriptsize 4 Byte Muxes
+  };
+
+  \node[ctrlBlock, minimum width=2.0cm, minimum height=0.9cm] (enc_btrack) at (11.0, -13.5) {
+    \textbf{Byte Tracker}\\[2pt]
+    \tiny \texttt{rd\_byte\_cnt}
+  };
+
+  % Output Port
+  \node[ioBlock, minimum width=1.6cm, minimum height=2.0cm] (enc_out) at (13.3, -10.8) {
+    \textbf{Byte Out}\\[2pt]
+    \scriptsize \texttt{out\_data[7:0]}
+  };
+
+  % Encoder Routing (Strict Manhattan branches)
+  \draw[ieeeBus] (enc_in.east) -- (enc_mask.west);
+  \buswidth{enc_in.east}{enc_mask.west}{0.5}{12}
+
+  \draw[ieeeBus] ($(enc_mask.east)+(0,0.3)$) -- (4.1,-10.5) |- (enc_b0.west);
+  \draw[ieeeBus] ($(enc_mask.east)+(0,-0.3)$) -- (4.1,-11.1) |- (enc_b1.west);
+
+  \draw[ieeeBus] (enc_b0.east) -- ($(enc_bus.west)+(0,1.0)$);
+  \draw[ieeeBus] (enc_b1.east) -- ($(enc_bus.west)+(0,-1.0)$);
+
+  \draw[ieeeBus] (enc_bus.east) -- (enc_mux.west);
+  \buswidth{enc_bus.east}{enc_mux.west}{0.5}{96}
+
+  \draw[ieeeBus] (enc_mux.east) -- (enc_out.west);
+  \buswidth{enc_mux.east}{enc_out.west}{0.5}{8}
+
+  \draw[ieeeControl] (enc_ctrl.north) -- (enc_b1.south);
+  \draw[ieeeControl] (enc_b1.north) -- (enc_b0.south);
+  \draw[ieeeControl] (enc_ctrl.east) -- (enc_btrack.west);
+  \draw[ieeeControl] (enc_btrack.north) -- (enc_mux.south);
+
+  % Callout Badges in Encoder
+  \node[calloutBadge] at ($(enc_b0.north east)+(-0.35,-0.35)$) {5};
+  \node[calloutBadge] at ($(enc_bus.north east)+(-0.35,-0.35)$) {6};
+
+  % ============================================================================
+  % ROW 3 RIGHT: PING-PONG DESERIALIZATION CODEC (poly_decode.sv)
+  % ============================================================================
+  
+  % Input Port
+  \node[ioBlock, minimum width=1.6cm, minimum height=2.0cm] (dec_in_byte) at (16.5, -10.8) {
+    \textbf{Byte In}\\[2pt]
+    \scriptsize \texttt{in\_data[7:0]}
+  };
+
+  % Input Gate
+  \node[ctrlBlock, minimum width=1.4cm, minimum height=2.0cm] (dec_gate) at (18.6, -10.8) {
+    \textbf{Byte Gate}\\[2pt]
+    \scriptsize Ingest Filter
+  };
+
+  % Ping-Pong Buffers
+  \node[memBlock, minimum width=2.4cm, minimum height=1.4cm] (dec_b0) at (21.2, -9.8) {
+    \textbf{Bank 0}\\[2pt]
+    \scriptsize \texttt{byte\_buf[0]}
+  };
+
+  \node[memBlock, minimum width=2.4cm, minimum height=1.4cm] (dec_b1) at (21.2, -11.8) {
+    \textbf{Bank 1}\\[2pt]
+    \scriptsize \texttt{byte\_buf[1]}
+  };
+
+  \node[ctrlBlock, minimum width=2.4cm, minimum height=0.9cm] (dec_ctrl) at (21.2, -13.5) {
+    \textbf{Swap Controller}\\[2pt]
+    \tiny $d\text{ Byte}$ Boundary
+  };
+
+  % Static Parallel Unpack Array
+  \node[regBlock, minimum width=2.2cm, minimum height=3.4cm] (dec_unpack) at (24.1, -10.8) {
+    \textbf{Static Unpack}\\[2pt]
+    \scriptsize \texttt{decoded[0:7]}
+  };
+
+  % Hierarchical Multiplexers
+  \node[hwBlock, minimum width=2.0cm, minimum height=3.4cm] (dec_mux) at (26.8, -10.8) {
+    \textbf{4:1 Mux Tree}\\[2pt]
+    \scriptsize 2 Coeff Muxes
+  };
+
+  \node[ctrlBlock, minimum width=2.0cm, minimum height=0.9cm] (dec_ctrack) at (26.8, -13.5) {
+    \textbf{Coeff Tracker}\\[2pt]
+    \tiny \texttt{rd\_coeff\_cnt}
+  };
+
+  % Output Port
+  \node[ioBlock, minimum width=1.6cm, minimum height=2.0cm] (dec_out_coeff) at (29.2, -10.8) {
+    \textbf{Coeff Out}\\[2pt]
+    \scriptsize \texttt{out\_data[11:0]}
+  };
+
+  % Decoder Routing (Strict Manhattan branches)
+  \draw[ieeeBus] (dec_in_byte.east) -- (dec_gate.west);
+  \buswidth{dec_in_byte.east}{dec_gate.west}{0.5}{8}
+
+  \draw[ieeeBus] ($(dec_gate.east)+(0,0.3)$) -- (19.65,-10.5) |- (dec_b0.west);
+  \draw[ieeeBus] ($(dec_gate.east)+(0,-0.3)$) -- (19.65,-11.1) |- (dec_b1.west);
+
+  \draw[ieeeBus] (dec_b0.east) -- ($(dec_unpack.west)+(0,1.0)$);
+  \draw[ieeeBus] (dec_b1.east) -- ($(dec_unpack.west)+(0,-1.0)$);
+
+  \draw[ieeeBus] (dec_unpack.east) -- (dec_mux.west);
+  \buswidth{dec_unpack.east}{dec_mux.west}{0.5}{96}
+
+  \draw[ieeeBus] (dec_mux.east) -- (dec_out_coeff.west);
+  \buswidth{dec_mux.east}{dec_out_coeff.west}{0.5}{12}
+
+  \draw[ieeeControl] (dec_ctrl.north) -- (dec_b1.south);
+  \draw[ieeeControl] (dec_b1.north) -- (dec_b0.south);
+  \draw[ieeeControl] (dec_ctrl.east) -- (dec_ctrack.west);
+  \draw[ieeeControl] (dec_ctrack.north) -- (dec_mux.south);
+
+  % Callout Badge in Decoder
+  \node[calloutBadge] at ($(dec_b0.north east)+(-0.35,-0.35)$) {7};
+
+  % ============================================================================
+  % BACKGROUND CONTAINERS & SUBSYSTEM FRAMES
+  % ============================================================================
+  \begin{scope}[on background layer]
+    % Frame 1: Compressor
+    \node[subsystemFrame, fit=(cmp_in)(cmp_s1)(cmp_s2)(cmp_s3)(cmp_s4)(cmp_s5)(cmp_s6)(cmp_s7)(cmp_out), inner sep=14pt] (frame_comp) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_comp.north west)+(8pt,-1pt)$) {\textbf{CSD Polynomial Compressor} (\texttt{mlkem\_poly\_compress.sv})};
+
+    % Frame 2: Decompressor
+    \node[subsystemFrame, fit=(dec_in)(dec_s1)(dec_s2)(dec_s3)(dec_s4)(dec_s5)(dec_out), inner sep=14pt] (frame_decomp) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_decomp.north west)+(8pt,-1pt)$) {\textbf{Modulus Shift-and-Add Decompressor} (\texttt{mlkem\_poly\_decompress.sv})};
+
+    % Frame 3: Stall Controller
+    \node[subsystemFrame, fit=(stall_ctrl), inner sep=14pt] (frame_stall) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_stall.north west)+(8pt,-1pt)$) {\textbf{Elastic Backpressure Interconnect}};
+
+    % Frame 4: Poly Encode
+    \node[subsystemFrame, fit=(enc_in)(enc_mask)(enc_b0)(enc_b1)(enc_ctrl)(enc_bus)(enc_mux)(enc_btrack)(enc_out), inner sep=12pt] (frame_encode) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_encode.north west)+(8pt,-1pt)$) {\textbf{Serialization Codec} (\texttt{poly\_encode.sv})};
+
+    % Frame 5: Poly Decode
+    \node[subsystemFrame, fit=(dec_in_byte)(dec_gate)(dec_b0)(dec_b1)(dec_ctrl)(dec_unpack)(dec_mux)(dec_ctrack)(dec_out_coeff), inner sep=12pt] (frame_decode) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_decode.north west)+(8pt,-1pt)$) {\textbf{Deserialization Codec} (\texttt{poly\_decode.sv})};
+  \end{scope}
+
+\end{tikzpicture}
+
+\vspace{0.5cm}
+% ------------------------------------------------------------------------------
+% Publication-Grade Architectural Callout Legend Table (4 Columns)
+% ------------------------------------------------------------------------------
+\begin{center}
+\footnotesize
+\begin{tabular}{cllp{18.5cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Input Reg \& Signed Restore & $16\text{b} \to 12\text{b}$ & Maps signed coefficients $[-q, q-1]$ into canonical range $[0, q-1]$ via $x[15]\,?\,(x+3329):x$. \\
+\textbf{2} & Multiplier-Free CSD Tree & $12\text{b} \to 30\text{b}$ & Evaluates $161271 \cdot x = (5x \ll 15) - (2560x + 9x)$ using 4 shift-add operations without DSPs. \\
+\textbf{3} & Dynamic Shift \& Offset Adder & $30\text{b} \to 11\text{b}$ & Computes $(\text{prod} \ll d) + C_{\text{offset}}$ ($C_{\text{offset}}=268354944$) and slices bits $[39:29]$ for FIPS 203 rounding. \\
+\textbf{4} & Shift-and-Add Decompressor & $11\text{b} \to 12\text{b}$ & Reconstructs $(3329y + 2^{d-1}) \gg d$ using 5-stage shift-add decomposition $3329 = 3072 + 257$ with 0 DSPs. \\
+\textbf{5} & Dual-Bank Ping-Pong Buffer & $2 \times (8 \times 12\text{b})$ & Two banks of eight 12-bit registers alternating write/read on 8-coefficient chunk boundaries ($8d\text{b} = d\text{B}$). \\
+\textbf{6} & Static Bit-Slice \& 4:1 Mux & $96\text{b} \to 8\text{b}$ & Concatenates 8 coefficients into 96-bit bus and serializes bytes via hierarchical 4:1 mux tree without shifters. \\
+\textbf{7} & Deserialization Ping-Pong Array & $2 \times (12 \times 8\text{b})$ & Dual-bank byte buffer unpacking 96-bit chunks into 8 parallel coefficients, serialized by hierarchical mux tree. \\
+\textbf{8} & Elastic Stall Controller & Control & Propagates downstream ready/valid handshakes and freezes internal registers synchronously under stall. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
