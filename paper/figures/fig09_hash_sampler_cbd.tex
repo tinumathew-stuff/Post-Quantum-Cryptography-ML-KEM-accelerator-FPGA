@@ -1,0 +1,277 @@
+\documentclass[varwidth=36cm,border=20pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+% Refined bus width tick annotation macros with exact coordinates and zero collision
+\newcommand{\buswidthH}[2]{
+  \draw[line width=0.6pt, draw=ieeeNavy] ($(#1)+(-2.5pt,-3.5pt)$) -- ($(#1)+(2.5pt,3.5pt)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south, inner sep=1.5pt] at ($(#1)+(0pt,2.5pt)$) {#2};
+}
+
+\newcommand{\buswidthV}[2]{
+  \draw[line width=0.6pt, draw=ieeeNavy] ($(#1)+(-3.5pt,-2.5pt)$) -- ($(#1)+(3.5pt,2.5pt)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=east, inner sep=1.5pt] at ($(#1)+(-2pt,0pt)$) {#2};
+}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large FIPS 203 ML-KEM Architecture: Unified Cryptographic Hash Sponge, Matrix Sampler \& CBD Unit} \\[4pt]
+{\sffamily\footnotesize Subsystem 09 Microarchitecture --- RTL Modules: \texttt{mlkem\_hash\_sampler.sv}, \texttt{keccak\_f1600.sv}, \texttt{sha3\_256\_core.sv}}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}[node distance=1.0cm and 1.4cm]
+
+  % ============================================================================
+  % Column 1: External Host Ingestion & Lane Absorb Subsystem (Left Column)
+  % ============================================================================
+  
+  \node[ioBlock, minimum width=4.4cm, minimum height=1.4cm] (cmd_port) at (2.8, 4.4) {
+    \textbf{Host Command Port}\\[2pt]
+    \scriptsize Handshake, rank $k$, seed \& mode config
+  };
+
+  \node[ioBlock, minimum width=4.4cm, minimum height=1.4cm] (lane_port) at (2.8, 2.6) {
+    \textbf{64-bit Lane Ingest Port}\\[2pt]
+    \scriptsize High-throughput lane absorb ($8\times$ speedup)
+  };
+
+  \node[memBlock, minimum width=4.4cm, minimum height=1.5cm] (absorb_buf) at (2.8, 0.8) {
+    \textbf{Unified Absorb Buffer}\\[2pt]
+    \scriptsize $17 \times 64\text{b}$ LUTRAM with dynamic $pad10^*1$
+  };
+
+  \node[ioBlock, minimum width=4.4cm, minimum height=1.5cm] (digest_port) at (2.8, -3.8) {
+    \textbf{Digest Output Port}\\[2pt]
+    \scriptsize Parallel 256-bit $H(\text{pk})$ \& $G(\sigma)$ outputs
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(cmd_port)(lane_port)(absorb_buf)(digest_port), inner sep=10pt] (frame_ingest) {};
+    \node[subsystemLabel, anchor=north west] at (frame_ingest.north west) {Host Ingestion \& Lane Absorb};
+  \end{scope}
+
+  % ============================================================================
+  % Column 2: Multi-Rate Cryptographic Sponge Engine (Center-Left Column)
+  % ============================================================================
+
+  \node[ctrlBlock, minimum width=5.4cm, minimum height=1.6cm] (sponge_fsm) at (11.2, 4.4) {
+    \textbf{Multi-Rate Sponge Controller}\\[2pt]
+    \scriptsize 15-state one-hot FSM (\texttt{fsm\_q[14:0]})
+  };
+
+  \node[hwCore, minimum width=5.4cm, minimum height=1.8cm] (keccak_core) at (11.2, 0.8) {
+    \textbf{Keccak-$f[1600]$ Core (\texttt{FAST\_24})}\\[2pt]
+    \scriptsize 24-round single-cycle permutation datapath\\
+    \scriptsize 1600-bit state register (\texttt{state\_q[1599:0]})
+  };
+
+  \node[memBlock, minimum width=5.4cm, minimum height=1.6cm] (stream_fifo) at (11.2, -2.2) {
+    \textbf{Squeeze Shift Buffer \& Slicer}\\[2pt]
+    \scriptsize $28 \times 48\text{b}$ (1344b) FIFO with 48b / 16b / 24b slicers
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(sponge_fsm)(keccak_core)(stream_fifo), inner sep=10pt] (frame_sponge) {};
+    \node[subsystemLabel, anchor=north west] at (frame_sponge.north west) {Multi-Rate Sponge Engine};
+  \end{scope}
+
+  % ============================================================================
+  % Column 3 Top: On-the-Fly Matrix A Rejection Sampler (Center-Right Top)
+  % ============================================================================
+
+  \node[hwBlock, minimum width=6.6cm, minimum height=1.4cm, inner sep=6pt] (cand_gen) at (21.5, 4.4) {
+    \textbf{4-Candidate Extractor}\\[2pt]
+    \scriptsize Slices 48b into $4 \times 12\text{b}$ candidates ($d_0..d_3$)\\
+    \scriptsize Modulo comparators: $d_i < 3329$ ($P \approx 81.3\%$)
+  };
+
+  \node[hwBlock, minimum width=6.6cm, minimum height=1.2cm] (compactor) at (21.5, 2.8) {
+    \textbf{16-Case Barrel Compactor}\\[2pt]
+    \scriptsize Packs valid candidates into contiguous lanes (\texttt{comp\_cnt[2:0]})
+  };
+
+  \node[regBlock, minimum width=6.6cm, minimum height=0.6cm] (pipe_reg1) at (21.5, 1.5) {
+    \scriptsize \textbf{Stage 1 Pipeline Barrier} (\texttt{pipe\_cand\_q[0:3]}, \texttt{pipe\_cnt\_q})
+  };
+
+  \node[memBlock, minimum width=6.6cm, minimum height=1.5cm, inner sep=6pt] (residue_stage) at (21.5, -0.1) {
+    \textbf{Stage 2 Residue FIFO \& Stager}\\[2pt]
+    \scriptsize 36-bit residue pool; emits aligned 48-bit bursts
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(cand_gen)(compactor)(pipe_reg1)(residue_stage), inner sep=10pt] (frame_matrix) {};
+    \node[subsystemLabel, anchor=north west] at (frame_matrix.north west) {Matrix A Rejection Sampler};
+  \end{scope}
+
+  % ============================================================================
+  % Column 3 Bottom: Centered Binomial Distribution (CBD) Sampler (Center-Right Bottom)
+  % ============================================================================
+
+  \node[hwBlock, minimum width=6.6cm, minimum height=1.4cm, inner sep=6pt] (simd_popcount) at (21.5, -2.4) {
+    \textbf{SIMD Popcount Unit ($\eta \in \{2, 3\}$)}\\[2pt]
+    \scriptsize Evaluates Hamming weights ($a_t, b_t$) via half-adders \& masks
+  };
+
+  \node[hwBlock, minimum width=6.6cm, minimum height=1.2cm] (modq_unit) at (21.5, -4.1) {
+    \textbf{Modular Subtraction Logic}\\[2pt]
+    \scriptsize Modular difference $\Delta_t = a_t - b_t \bmod 3329$ (0 DSPs)
+  };
+
+  \node[regBlock, minimum width=6.6cm, minimum height=1.0cm] (cbd_lookahead) at (21.5, -5.6) {
+    \textbf{CBD Lookahead Register}\\[2pt]
+    \scriptsize Precomputed 48-bit quad-coefficient register (\texttt{cbd\_data\_q})
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(simd_popcount)(modq_unit)(cbd_lookahead), inner sep=10pt] (frame_cbd) {};
+    \node[subsystemLabel, anchor=north west] at (frame_cbd.north west) {CBD Noise Sampler ($\eta=2, 3$)};
+  \end{scope}
+
+  % ============================================================================
+  % Column 4: Decoupled Output Arbiter & Quad-Coeff Streaming Port (Far-Right)
+  % ============================================================================
+
+  \node[hwBlock, fill=ieeeLightSlate, draw=ieeeBorder, line width=0.8pt, minimum width=1.4cm, minimum height=2.8cm] (out_mux) at (29.2, -1.8) {
+    \textbf{MUX}\\[6pt]
+    \scriptsize \texttt{0: Mat A}\\[8pt]
+    \scriptsize \texttt{1: CBD}
+  };
+
+  \node[ioBlock, minimum width=3.8cm, minimum height=2.6cm] (out_port) at (33.0, -1.8) {
+    \textbf{Quad-Coeff Streaming Port}\\[2pt]
+    \scriptsize $4 \times 12\text{b}$ coeffs / clock (\texttt{out\_data[47:0]})\\[1pt]
+    \scriptsize Handshake: \texttt{out\_valid, out\_ready}\\[1pt]
+    \scriptsize Status: \texttt{out\_count[2:0], cmd\_done}
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(out_mux)(out_port), inner sep=10pt] (frame_out) {};
+    \node[subsystemLabel, anchor=north east] at (frame_out.north east) {Quad-Coeff Output Port};
+  \end{scope}
+
+  % ============================================================================
+  % Signal Interconnect Routing (Strict Manhattan, Dedicated Channels, Zero Overlap)
+  % ============================================================================
+
+  % 1. Host Command to Sponge FSM (Horizontal corridor at Y = 4.4)
+  \draw[ieeeControl] (cmd_port.east) -- (sponge_fsm.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at ($(cmd_port.east)!0.5!(sponge_fsm.west)+(0,2pt)$) {cmd\_valid / cmd\_mode};
+
+  % 2. Lane Ingestion Port to Absorb Buffer (Vertical drop in Col 1)
+  \draw[ieeeBus] (lane_port.south) -- (absorb_buf.north);
+  \buswidthV{2.8, 2.05}{64}
+
+  % 3. Command Port Seed/Coord bus to Absorb Buffer (Channel at X = 5.8)
+  \draw[ieeeBus] ($(cmd_port.east)+(0,-0.35)$) -- (5.8, 4.05) -- (5.8, 1.2) -- ($(absorb_buf.east)+(0,0.4)$);
+  \buswidthV{5.8, 3.4}{256}
+
+  % 4. Absorb Buffer to Keccak Core (Direct horizontal bus at Y = 0.8)
+  \draw[ieeeBus] (absorb_buf.east) -- (keccak_core.west);
+  \buswidthH{6.8, 0.8}{1088}
+
+  % 5. Keccak Digest Output to Parallel Digest Port (Channel at X = 7.0)
+  \draw[ieeeBus] ($(keccak_core.west)+(0,-0.5)$) -- (7.0, 0.3) -- (7.0, -3.8) -- (digest_port.east);
+  \buswidthV{7.0, -1.8}{256/512}
+
+  % 6. Sponge FSM to Keccak Core Controls (Direct vertical lines)
+  \draw[ieeeControl] ($(sponge_fsm.south)+(-1.0,0)$) -- ($(keccak_core.north)+(-1.0,0)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=east] at ($(sponge_fsm.south)+(-1.0,-0.6)$) {start / round};
+
+  \draw[ieeeControl] ($(keccak_core.north)+(1.0,0)$) -- ($(sponge_fsm.south)+(1.0,0)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=west] at ($(sponge_fsm.south)+(1.0,-0.6)$) {round\_done};
+
+  % 7. Keccak Core Squeezed Data to Compact Shift Buffer (Direct vertical bus)
+  \draw[ieeeBus] (keccak_core.south) -- (stream_fifo.north);
+  \buswidthV{11.2, -0.7}{1344}
+
+  % 8. Sponge FSM Control to Matrix A Extractor (Horizontal line at Y = 4.8)
+  \draw[ieeeControl] ($(sponge_fsm.east)+(0,0.4)$) -- ($(cand_gen.west)+(0,0.4)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at ($(sponge_fsm.east)!0.5!(cand_gen.west)+(0,2pt)$) {matrix\_en};
+
+  % 9. Shift Buffer Squeezed Word to Matrix Candidate Extractor (Channel at X = 15.8)
+  \draw[ieeeBus] ($(stream_fifo.east)+(0,0.3)$) -- (15.8, -1.9) -- (15.8, 4.0) -- ($(cand_gen.west)+(0,-0.4)$);
+  \buswidthV{15.8, 1.0}{48}
+
+  % 10. Shift Buffer Word to CBD SIMD Popcount (Direct horizontal bus at Y = -2.4)
+  \draw[ieeeBus] ($(stream_fifo.east)+(0,-0.2)$) -- ($(simd_popcount.west)+(0,0.0)$);
+  \buswidthH{16.0, -2.4}{16/24}
+
+  % 11. Matrix Sampler Internal Datapath (Strict vertical lines)
+  \draw[ieeeBus] (cand_gen.south) -- (compactor.north);
+  \buswidthV{21.5, 3.6}{48}
+
+  \draw[ieeeBus] (compactor.south) -- (pipe_reg1.north);
+  \buswidthV{21.5, 2.15}{48}
+
+  \draw[ieeeBus] (pipe_reg1.south) -- (residue_stage.north);
+  \buswidthV{21.5, 0.7}{48}
+
+  % 12. CBD Sampler Internal Datapath (Strict vertical lines)
+  \draw[ieeeBus] (simd_popcount.south) -- (modq_unit.north);
+  \buswidthV{21.5, -3.25}{24}
+
+  \draw[ieeeBus] (modq_unit.south) -- (cbd_lookahead.north);
+  \buswidthV{21.5, -4.85}{48}
+
+  % 13. Matrix Stage Data to Quad-Coeff Mux (Channel at X = 26.6, enters at Y = -1.55)
+  \draw[ieeeBus] (residue_stage.east) -- (26.6, -0.1) -- (26.6, -1.55) -- ($(out_mux.west)+(0,0.25)$);
+  \buswidthV{26.6, -0.8}{48}
+
+  % 14. CBD Data to Quad-Coeff Mux (Channel at X = 27.5, enters at Y = -2.15)
+  \draw[ieeeBus] (cbd_lookahead.east) -- (27.5, -5.6) -- (27.5, -2.15) -- ($(out_mux.west)+(0,-0.35)$);
+  \buswidthV{27.5, -3.95}{48}
+
+  % 15. Quad-Coeff Mux to Output Port (Direct horizontal bus at Y = -1.8)
+  \draw[ieeeBus] (out_mux.east) -- (out_port.west);
+  \buswidthH{30.5, -1.8}{48}
+
+  % 16. Mode Select Control to Output Mux (Top clearance highway at Y = 6.8)
+  \draw[ieeeControl] (sponge_fsm.north) -- (11.2, 6.8) -- (29.2, 6.8) -- (out_mux.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south east] at ($(out_mux.north)+(0,2pt)$) {sel};
+
+  % ============================================================================
+  % Callout Badges (1 through 10)
+  % ============================================================================
+  \node[calloutBadge] at ($(cmd_port.north west)+(0.35,-0.35)$) {1};
+  \node[calloutBadge] at ($(absorb_buf.north west)+(0.35,-0.35)$) {2};
+  \node[calloutBadge] at ($(digest_port.north west)+(0.35,-0.35)$) {3};
+  \node[calloutBadge] at ($(sponge_fsm.north west)+(0.35,-0.35)$) {4};
+  \node[calloutBadge] at ($(keccak_core.north west)+(0.35,-0.35)$) {5};
+  \node[calloutBadge] at ($(stream_fifo.north west)+(0.35,-0.35)$) {6};
+  \node[calloutBadge] at ($(cand_gen.north west)+(0.35,-0.35)$) {7};
+  \node[calloutBadge] at ($(residue_stage.north west)+(0.35,-0.35)$) {8};
+  \node[calloutBadge] at ($(simd_popcount.north west)+(0.35,-0.35)$) {9};
+  \node[calloutBadge] at ($(out_port.north west)+(0.35,-0.35)$) {10};
+
+\end{tikzpicture}
+
+\vspace{0.5cm}
+% ==============================================================================
+% Publication-Grade Architectural Callout Legend Table
+% ==============================================================================
+{\centering
+\footnotesize
+\begin{tabular}{cllp{13.8cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Host Command Port & Handshake / Config & Latches mode, rank $k$, seeds, and swaps coordinates $(i,j) \leftrightarrow (j,i)$ for zero-cycle matrix transposition. \\
+\textbf{2} & Fast 64-bit Absorb Buffer & $17 \times 64\text{b}$ (1088-bit) LUTRAM & Absorbs 64-bit lanes per cycle ($8\times$ byte speedup) and injects dynamic $pad10^*1$ padding at lane boundaries. \\
+\textbf{3} & Parallel Digest Output Port & $2 \times 256\text{-bit}$ Hash Buses & Emits single-cycle latched SHA3-256 $H(\text{pk})$ and upper 256-bit $G(\sigma)$ digest outputs to host registers. \\
+\textbf{4} & Multi-Rate Sponge Controller & 15-bit One-Hot Register & Orchestrates absorption, permutations, and squeezing across SHA3-256/512 and SHAKE-128/256 modes. \\
+\textbf{5} & Keccak-$f[1600]$ Core (\texttt{FAST\_24}) & 1600-bit State Datapath & Executes 24-round permutation in 24 clock cycles; provides single-cycle $\theta$-$\rho$-$\pi$-$\chi$-$\iota$ round logic. \\
+\textbf{6} & Squeeze Shift Buffer \& Slicer & $28 \times 48\text{b}$ (1344-bit) FIFO & Streams 48b words for Matrix A or 16b/24b for CBD, stitching byte 135 across blocks for $\eta=3$ sampling. \\
+\textbf{7} & 4-Way Rejection Candidate Engine & $4 \times 12\text{-bit}$ Modulo Datapath & Extracts four 12-bit candidates ($d_0..d_3$), tests $d_i < 3329$ ($P \approx 81.3\%$), and compacts items in 1 LUT delay. \\
+\textbf{8} & Stage 2 Residue FIFO \& Stager & 36-bit Residue + 48-bit Staging & Buffers leftovers and emits strictly aligned 4-coefficient bursts (48 bits), shielding NTT cores from stalls. \\
+\textbf{9} & CBD SIMD Noise Sampler & SIMD Popcount + 6-LUT ALU & Computes Hamming weights for $\eta \in \{2,3\}$ and evaluates modular difference $a - b \bmod 3329$ with zero DSPs. \\
+\textbf{10} & Quad-Coeff Streaming Port & 48-bit Stream ($4 \times 12\text{b}$ / cc) & Multiplexes Matrix A and CBD streams into aligned 48-bit beats with ready/valid backpressure handshaking. \\
+\bottomrule
+\end{tabular}
+\par}
+
+\end{document}

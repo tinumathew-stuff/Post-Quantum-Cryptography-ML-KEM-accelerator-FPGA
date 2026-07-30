@@ -1,0 +1,269 @@
+\documentclass[varwidth=34cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large FIPS 203 ML-KEM Architecture: 24-Cycle Keccak-$f[1600]$ Permutation Engine} \\[3pt]
+{\sffamily\footnotesize Subsystem 08 Microarchitecture --- RTL Module: \texttt{keccak\_f1600.sv} (\texttt{FAST\_24=1}, Single-Cycle Round Pipeline)}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}
+
+  % ============================================================================
+  % Column 1: External Host & Parallel Absorb Interface (Center x = 2.2)
+  % ============================================================================
+  \node[ioBlock, minimum width=4.2cm, minimum height=1.1cm] at (2.2, 2.5) (io_datain) {
+    \textbf{Parallel State Ingestion}\\[2pt]
+    \scriptsize \texttt{state\_in[1599:0]}
+  };
+
+  \node[hwCore, minimum width=4.6cm, minimum height=1.6cm] at (2.2, 0.5) (absorb_unit) {
+    \textbf{Parallel Absorb \& State Mux}\\[2pt]
+    \scriptsize 2:1 D-Mux: \texttt{absorb\_val} vs \texttt{next\_chi}
+  };
+
+  \node[ioBlock, minimum width=4.2cm, minimum height=1.3cm] at (2.2, -1.9) (io_host) {
+    \textbf{Host Command \& Status}\\[2pt]
+    \scriptsize \texttt{start, load, absorb, ready, done}
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(io_datain)(absorb_unit)(io_host), inner sep=10pt] (frame_absorb) {};
+    \node[subsystemLabel, anchor=north west] at (frame_absorb.north west) {External Host \& Parallel Absorb Interface};
+  \end{scope}
+
+  % ============================================================================
+  % Column 2: 1600-Bit Registered State Matrix (Center x = 9.6)
+  % ============================================================================
+  \node[regBlock, minimum width=5.6cm, minimum height=3.5cm] at (9.6, 0.7) (state_matrix) {
+    \textbf{1600-Bit State Matrix}\\[2pt]
+    \scriptsize \texttt{state\_q[1599:0]} ($25 \times 64\text{b}$ FDRE Array)\\[3pt]
+    \tiny
+    $\begin{matrix}
+    A_{0,0} & A_{1,0} & A_{2,0} & A_{3,0} & A_{4,0} \\
+    A_{0,1} & A_{1,1} & A_{2,1} & A_{3,1} & A_{4,1} \\
+    A_{0,2} & A_{1,2} & A_{2,2} & A_{3,2} & A_{4,2} \\
+    A_{0,3} & A_{1,3} & A_{2,3} & A_{3,3} & A_{4,3} \\
+    A_{0,4} & A_{1,4} & A_{2,4} & A_{3,4} & A_{4,4}
+    \end{matrix}$\\[3pt]
+    \scriptsize 7-Bank Clock Enables (\texttt{chi\_en\_q})
+  };
+
+  \node[ioBlock, minimum width=4.8cm, minimum height=1.0cm] at (9.6, -2.1) (io_stateout) {
+    \textbf{Continuous State Output}\\[2pt]
+    \scriptsize \texttt{state\_out[1599:0]}
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(state_matrix)(io_stateout), inner sep=10pt] (frame_state) {};
+    \node[subsystemLabel, anchor=north west] at (frame_state.north west) {1600-Bit Registered State Matrix ($5 \times 5$ Lanes)};
+  \end{scope}
+
+  % ============================================================================
+  % Column 3: Theta (θ) Parity & Diffusion Network (Center x = 17.2)
+  % ============================================================================
+  \node[hwBlock, minimum width=5.4cm, minimum height=1.2cm] at (17.2, 2.4) (theta_c) {
+    \textbf{Step 1a: Column Parities}\\[2pt]
+    \scriptsize $C[x] = \bigoplus_{y=0}^4 A[x, y] \quad (5 \times 64\text{b})$
+  };
+
+  \node[hwBlock, minimum width=5.4cm, minimum height=1.2cm] at (17.2, 0.6) (theta_d) {
+    \textbf{Step 1b: Neighbor Mixing $\mathbf{D[x]}$}\\[2pt]
+    \scriptsize $D[x] = C[x-1] \oplus \text{ROL}_{64}(C[x+1], 1)$
+  };
+
+  \node[hwCore, minimum width=5.4cm, minimum height=1.3cm] at (17.2, -1.2) (theta_xor) {
+    \textbf{Step 1c: Parity Sheet XOR}\\[2pt]
+    \scriptsize $A'[x, y] = A[x, y] \oplus D[x] \quad (1600\text{b})$
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(theta_c)(theta_d)(theta_xor), inner sep=10pt] (frame_theta) {};
+    \node[subsystemLabel, anchor=north west] at (frame_theta.north west) {Theta ($\theta$) Parity \& Diffusion Network};
+  \end{scope}
+
+  % ============================================================================
+  % Column 4: Rho (ρ), Pi (π), Chi (χ) & Iota (ι) Transformations (Center x = 25.8)
+  % ============================================================================
+  \node[hwBlock, minimum width=5.8cm, minimum height=1.1cm] at (25.8, 2.6) (rho_layer) {
+    \textbf{Step 2: Rho ($\mathbf{\rho}$) Rotation}\\[2pt]
+    \scriptsize $A'[x,y] = \text{ROL}_{64}(A[x,y], r[x,y])$
+  };
+
+  \node[hwBlock, minimum width=5.8cm, minimum height=1.1cm] at (25.8, 1.2) (pi_layer) {
+    \textbf{Step 3: Pi ($\mathbf{\pi}$) Transposition}\\[2pt]
+    \scriptsize $A'[y, (2x+3y)\bmod 5] = A[x, y]$
+  };
+
+  \node[hwCore, minimum width=5.8cm, minimum height=1.2cm] at (25.8, -0.2) (chi_layer) {
+    \textbf{Step 4: Chi ($\mathbf{\chi}$) Row S-Boxes}\\[2pt]
+    \scriptsize $A'[x,y] = B[x,y] \oplus ((\sim B[x+1,y]) \ \& \ B[x+2,y])$
+  };
+
+  \node[hwBlock, minimum width=5.8cm, minimum height=1.2cm] at (25.8, -1.7) (iota_core) {
+    \textbf{Step 5: Iota ($\mathbf{\iota}$) RC Injector}\\[2pt]
+    \scriptsize Lane 0: $A'[0,0] = \chi_b[0] \oplus RC[round\_q]$
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(rho_layer)(pi_layer)(chi_layer)(iota_core), inner sep=10pt] (frame_trans) {};
+    \node[subsystemLabel, anchor=north west] at (frame_trans.north west) {Rho ($\rho$), Pi ($\pi$), Chi ($\chi$) \& Iota ($\iota$) Core Stages};
+  \end{scope}
+
+  % ============================================================================
+  % Bottom Row: 24-Round Control Sequencer, CE Unit & Round Constant ROM
+  % ============================================================================
+  \node[ctrlBlock, minimum width=5.6cm, minimum height=1.4cm] at (9.6, -5.3) (fsm_seq) {
+    \textbf{24-Round State Sequencer}\\[2pt]
+    \scriptsize Round Counter: \texttt{round\_q[4:0]} ($0 \to 23$)
+  };
+
+  \node[ctrlBlock, minimum width=5.2cm, minimum height=1.4cm] at (17.2, -5.3) (ce_controller) {
+    \textbf{7-Bank Fanout-Balanced CE Unit}\\[2pt]
+    \scriptsize \texttt{chi\_en\_q[0:6]} ($\le 256$ FFs/bank)
+  };
+
+  \node[memBlock, minimum width=5.4cm, minimum height=1.4cm] at (25.8, -5.3) (rc_rom) {
+    \textbf{24-Entry Round Constant ROM}\\[2pt]
+    \scriptsize $24 \times 64\text{b}$ Table: $RC[0..23]$
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(fsm_seq)(ce_controller)(rc_rom), inner sep=10pt] (frame_ctrl) {};
+    \node[subsystemLabel, anchor=north west] at (frame_ctrl.north west) {24-Round Control Sequencer, CE Partitioning \& Round Constant ROM};
+  \end{scope}
+
+  % ============================================================================
+  % Interconnect Routing: Strict Orthogonal Manhattan Channels (ZERO Overlaps)
+  % ============================================================================
+
+  % 1. Parallel State Ingestion: io_datain directly south into absorb_unit
+  \draw[ieeeBus] (io_datain.south) -- (absorb_unit.north);
+  \buswidth{io_datain.south}{absorb_unit.north}{0.5}{1600}
+
+  % 2. Absorb D-Multiplexer Output state_d[1599:0] to state_matrix (Upper Track)
+  \coordinate (abs_out) at ($(absorb_unit.east)+(0, 0.3)$);
+  \coordinate (sm_in) at ($(state_matrix.west)+(0, 0.1)$);
+  \draw[ieeeBus] (abs_out) -- (sm_in);
+  \buswidth{abs_out}{sm_in}{0.55}{1600}
+
+  % 3. In-Place State Tap state_q[1599:0] to absorb_unit (Lower Track, Parallel)
+  \coordinate (sm_tap) at ($(state_matrix.west)+(0, -0.5)$);
+  \coordinate (abs_tap) at ($(absorb_unit.east)+(0, -0.3)$);
+  \draw[ieeeBus] (sm_tap) -- (abs_tap);
+  \buswidth{sm_tap}{abs_tap}{0.45}{1600}
+
+  % 4. Host Control absorb_en from io_host to absorb_unit
+  \draw[ieeeControl] (io_host.north) -- (absorb_unit.south);
+
+  % 5. Master Handshake Signals start, ready, done between io_host and fsm_seq
+  % Routes down from io_host, along y = -5.3 channel, straight into fsm_seq.west
+  \draw[ieeeControl] (io_host.south) -- (2.2, -5.3) -- (fsm_seq.west);
+
+  % 6. Continuous State Output state_out[1599:0]
+  \draw[ieeeBus] (state_matrix.south) -- (io_stateout.north);
+  \buswidth{state_matrix.south}{io_stateout.north}{0.5}{1600}
+
+  % 7. State Matrix to Theta Step: 1600b bus branches to theta_c and theta_xor (Channel 2: x = 14.0)
+  \draw[ieeeBus] (state_matrix.east) -- (14.0, 0.7) coordinate (tap_a);
+  \buswidth{state_matrix.east}{tap_a}{0.65}{1600}
+  \draw[ieeeBus] (tap_a) |- (theta_c.west);
+  \draw[ieeeBus] (tap_a) |- (theta_xor.west);
+
+  % 8. Theta Step Internal Connections: C[x] to theta_d, D[x] to theta_xor
+  \draw[ieeeBus] (theta_c.south) -- (theta_d.north);
+  \buswidth{theta_c.south}{theta_d.north}{0.5}{320}
+
+  \draw[ieeeBus] (theta_d.south) -- (theta_xor.north);
+  \buswidth{theta_d.south}{theta_xor.north}{0.5}{320}
+
+  % 9. next_theta[1599:0] from Theta Step to Rho Step (routes in dedicated inter-column Channel 3 at x = 21.5)
+  \coordinate (tx_mid) at (21.5, -1.2);
+  \coordinate (tx_top) at (21.5, 2.6);
+  \draw[ieeeBus] (theta_xor.east) -- (tx_mid) -- (tx_top) -- (rho_layer.west);
+  \buswidth{tx_mid}{tx_top}{0.48}{1600}
+
+  % 10. Column 4 Pipeline Datapath: Rho -> Pi -> Chi -> Iota
+  \draw[ieeeBus] (rho_layer.south) -- (pi_layer.north);
+  \buswidth{rho_layer.south}{pi_layer.north}{0.5}{1600}
+
+  \draw[ieeeBus] (pi_layer.south) -- (chi_layer.north);
+  \draw[ieeeBus] (chi_layer.south) -- (iota_core.north);
+
+  % 11. Round Constant injection round_rc[63:0] into Iota Core
+  \draw[ieeeBus] (rc_rom.north) -- (iota_core.south);
+  \buswidth{rc_rom.north}{iota_core.south}{0.5}{64}
+
+  % 12. Single-Cycle Feedback Bus next_chi[1599:0] (routes along unobstructed perimeter highway)
+  \coordinate (fb_e) at (30.4, -1.7);
+  \coordinate (fb_top_e) at (30.4, 4.4);
+  \coordinate (fb_top_w) at (-1.2, 4.4);
+  \coordinate (fb_w) at (-1.2, 0.5);
+  \draw[ieeeBus] (iota_core.east) -- (fb_e) -- (fb_top_e) -- (fb_top_w) -- (fb_w) -- (absorb_unit.west);
+  \buswidth{fb_e}{fb_top_e}{0.48}{1600}
+  \node[font=\sffamily\scriptsize\bfseries, text=ieeeNavy, fill=white, inner sep=2.5pt, rounded corners=1pt, draw=ieeeSlate!40, line width=0.4pt] at (14.5, 4.4) {Single-Cycle Permutation Feedback Bus: \texttt{next\_chi[1599:0]}};
+
+  % 13. FSM Sequencer to CE Controller Trigger
+  \draw[ieeeControl] (fsm_seq.east) -- (ce_controller.west);
+
+  % 14. Clock Enable Distribution state_ce[6:0] from CE Unit to State Matrix
+  % Dedicated Non-Crossing Corridor: routes north from ce_controller to y = -3.5,
+  % west along y = -3.5 to x = 13.0, up along x = 13.0 (left of tap_a at x = 14.0),
+  % then west into state_matrix.east. ZERO wire crossings!
+  \draw[ieeeControl] (ce_controller.north) -- (17.2, -3.5) coordinate (ce_m1) -- (13.0, -3.5) coordinate (ce_m2) -- (13.0, -0.5) -- ($(state_matrix.east)+(0, -1.2)$);
+  \buswidth{ce_m1}{ce_m2}{0.5}{7}
+
+  % 15. Round Counter round_q[4:0] from Sequencer to RC ROM (routes along bottom highway at y = -7.2)
+  \draw[ieeeBus] (fsm_seq.south) -- (9.6, -7.2) coordinate (rq_m1) -- (25.8, -7.2) coordinate (rq_m2) -- (rc_rom.south);
+  \buswidth{rq_m1}{rq_m2}{0.2}{5}
+
+  % ============================================================================
+  % Callout Badges (IDs 1 through 8) - Dedicated Non-Overlapping Coordinates
+  % ============================================================================
+  \node[calloutBadge] at ($(absorb_unit.north east)+(-0.38,-0.38)$) {1};
+  \node[calloutBadge] at ($(state_matrix.north east)+(-0.38,-0.38)$) {2};
+  \node[calloutBadge] at ($(theta_c.north east)+(-0.38,-0.38)$) {3};
+  \node[calloutBadge] at ($(rho_layer.north east)+(-0.38,-0.38)$) {4};
+  \node[calloutBadge] at ($(pi_layer.north east)+(-0.38,-0.38)$) {5};
+  \node[calloutBadge] at ($(chi_layer.north east)+(-0.38,-0.38)$) {6};
+  \node[calloutBadge] at ($(iota_core.north east)+(-0.38,-0.38)$) {7};
+  \node[calloutBadge] at ($(fsm_seq.north east)+(-0.38,-0.38)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.45cm}
+% ==============================================================================
+% Concise Publication-Grade Callout Legend Table (Strict 4-Column Schema)
+% ==============================================================================
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{cllp{16.5cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Parallel Absorb \& State Mux & 1600-bit Data / Ctrl & 2:1 synchronous injection mux; loads \texttt{state\_in} directly (\texttt{load=1}) or absorbs in-place into \texttt{state\_q} in 1 cycle. \\
+\addlinespace[3pt]
+\textbf{2} & Registered State Matrix (\texttt{state\_q}) & 1600-bit ($25 \times 64\text{b}$) & $5 \times 5$ array of 64-bit lanes (1,600 FDRE flip-flops); continuously drives \texttt{state\_out[1599:0]} at 450~MHz. \\
+\addlinespace[3pt]
+\textbf{3} & Theta ($\theta$) Parity Diffusion Network & $5 \times 64\text{b} \to 1600\text{b}$ & Computes column parities $C[x]$, neighbor mixing $D[x]$, and XORs into all 25 lanes in 2 LUT levels. \\
+\addlinespace[3pt]
+\textbf{4} & Rho ($\rho$) Bitwise Rotator Array & $24 \times 64\text{b}$ Intra-Lane & Bitwise cyclic left rotations on 24 lanes by fixed offsets $r[x,y]$; implemented as zero-cost wire routing. \\
+\addlinespace[3pt]
+\textbf{5} & Pi ($\pi$) Coordinate Transposition & $25 \times 64\text{b}$ Inter-Lane & Lane coordinate permutation mapping $y \leftarrow 2x+3y \bmod 5$; fused with $\rho$ as pure interconnect routing. \\
+\addlinespace[3pt]
+\textbf{6} & Chi ($\chi$) Row S-Box Layer & 1600-bit Non-Linear & 5-bit quadratic non-linear S-box array operating across each row; maps into a single LUT level. \\
+\addlinespace[3pt]
+\textbf{7} & Iota ($\iota$) Injector \& RC ROM & 64-bit Asymmetry Bus & XORs 64-bit LFSR round constant $RC[round\_q]$ into origin lane $A[0,0]$ to break permutation symmetry. \\
+\addlinespace[3pt]
+\textbf{8} & 24-Round State Sequencer \& CE Unit & Control / 5-bit Counter & Governs single-cycle round sequencing ($0 \to 23$, 24 cycles total) and drives 7-bank clock enables ($\le 256$ FFs/bank). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

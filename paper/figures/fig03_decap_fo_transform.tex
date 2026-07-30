@@ -1,0 +1,450 @@
+\documentclass[varwidth=35cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large FIPS 203 ML-KEM Architecture: Decapsulation Datapath \& Constant-Time FO Transform Engine} \\[3pt]
+{\sffamily\footnotesize Subsystem 03 Microarchitecture --- RTL Modules: \texttt{mlkem\_decap\_datapath.svh} \& \texttt{mlkem\_keygen\_top.sv}}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}[node distance=1.1cm and 1.6cm]
+
+  % ============================================================================
+  % Column 1: Key Ingestion, Ciphertext Reception & Lane Buffering (X = 3.6cm)
+  % ============================================================================
+  \node[ioBlock, minimum width=4.4cm, minimum height=1.1cm] at (3.6, 13.6) (dk_port) {
+    \textbf{Decap Key Port}\\[1pt]
+    \scriptsize \texttt{dk\_in [63:0]} $\cdot$ $dk = (\hat{\mathbf{s}} \parallel ek \parallel H(ek) \parallel z)$
+  };
+
+  \node[hwBlock, minimum width=4.4cm, minimum height=1.2cm] at (3.6, 11.5) (sk_parser) {
+    \textbf{Key Parser \& Demux}\\[1pt]
+    \scriptsize \texttt{poly\_decode12\_lane} ($12\text{b} \rightarrow 48\text{b}$)\\[1pt]
+    \scriptsize Bounds verify: \texttt{dec\_sk\_bad\_q}
+  };
+
+  \node[regBlock, minimum width=4.4cm, minimum height=1.1cm] at (3.6, 9.3) (seed_regs) {
+    \textbf{Key Metadata Registers}\\[1pt]
+    \scriptsize $\rho, H(ek), z$ [255:0] Registers
+  };
+
+  \node[ioBlock, minimum width=4.4cm, minimum height=1.1cm] at (3.6, 7.0) (ct_port) {
+    \textbf{Ciphertext Ingestion Port}\\[1pt]
+    \scriptsize \texttt{ct\_in [87:0]} $\cdot$ Ciphertext $c = c_1 \parallel c_2$
+  };
+
+  \node[hwBlock, minimum width=4.4cm, minimum height=1.2cm] at (3.6, 4.9) (ct_parser) {
+    \textbf{CT Decoder \& Decompress}\\[1pt]
+    \scriptsize \texttt{poly\_decode\_group}\\[1pt]
+    \scriptsize Decompress: $c_1 \rightarrow \mathbf{u}', c_2 \rightarrow v'$
+  };
+
+  \node[hwBlock, minimum width=4.4cm, minimum height=1.1cm] at (3.6, 2.8) (lane_packer) {
+    \textbf{Ciphertext Lane Packer}\\[1pt]
+    \scriptsize $88\text{b} \rightarrow 64\text{b}$ Shift Stager
+  };
+
+  \node[memBlock, minimum width=4.4cm, minimum height=1.2cm] at (3.6, 0.7) (ram_ct_lanes) {
+    \textbf{Ciphertext Lane Buffer}\\[1pt]
+    \scriptsize \texttt{dec\_ct\_lanes} ($196 \times 64\text{b}$ LUTRAM)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(dk_port)(sk_parser)(seed_regs)(ct_port)(ct_parser)(lane_packer)(ram_ct_lanes), inner sep=10pt] (frame_io) {};
+    \node[subsystemLabel, anchor=north west] at (frame_io.north west) {Key Ingestion, Ciphertext Reception \& Lane Buffering};
+  \end{scope}
+
+  % ============================================================================
+  % Column 2: Dual Orchestration FSMs \& Zero-BRAM Storage (X = 11.4cm)
+  % ============================================================================
+  \node[ctrlBlock, minimum width=4.6cm, minimum height=1.3cm] at (11.4, 13.6) (decap_fsm) {
+    \textbf{Decap Arithmetic FSM}\\[1pt]
+    \scriptsize \texttt{dec\_state\_t} (\texttt{DC\_0} to \texttt{DC\_5})\\[1pt]
+    \scriptsize Supervised by Top FSM
+  };
+
+  \node[ctrlBlock, minimum width=4.6cm, minimum height=1.2cm] at (11.4, 11.5) (hash_fsm) {
+    \textbf{Decap Hash FSM}\\[1pt]
+    \scriptsize \texttt{dec\_hash\_state\_t} (\texttt{DH\_0} to \texttt{DH\_4})\\[1pt]
+    \scriptsize Schedules $H(ek)$ and $K_{reject}$
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] at (11.4, 9.4) (ram_s) {
+    \textbf{NTT Poly RAM (\texttt{ram\_s})}\\[1pt]
+    \scriptsize $4 \times 64 \times 48\text{b}$ LUTRAM ($\hat{\mathbf{u}}'$)
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] at (11.4, 7.6) (ram_e) {
+    \textbf{Secret Key RAM (\texttt{ram\_e})}\\[1pt]
+    \scriptsize $256 \times 48\text{b}$ LUTRAM ($\hat{\mathbf{s}}$)
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] at (11.4, 5.8) (ram_u_prod) {
+    \textbf{Inverse Staging RAM}\\[1pt]
+    \scriptsize $5 \times 64 \times 48\text{b}$ LUTRAM ($\mathbf{u}', \hat{w}$)
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] at (11.4, 4.0) (ram_v_e2) {
+    \textbf{Ciphertext Scalar RAM}\\[1pt]
+    \scriptsize $64 \times 48\text{b}$ LUTRAM ($v'$)
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] at (11.4, 2.2) (ram_pk) {
+    \textbf{Public Key RAM (\texttt{ram\_pk})}\\[1pt]
+    \scriptsize $4 \times 64 \times 48\text{b}$ LUTRAM ($\hat{\mathbf{t}}$)
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] at (11.4, 0.4) (ram_ct_retained) {
+    \textbf{Retained CT RAM}\\[1pt]
+    \scriptsize $160 \times 88\text{b}$ LUTRAM (\texttt{enc\_ct\_ram})
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(decap_fsm)(hash_fsm)(ram_s)(ram_e)(ram_u_prod)(ram_v_e2)(ram_pk)(ram_ct_retained), inner sep=10pt] (frame_core) {};
+    \node[subsystemLabel, anchor=north west] at (frame_core.north west) {Dual Orchestration FSMs \& Zero-BRAM Storage};
+  \end{scope}
+
+  % ============================================================================
+  % Column 3: Candidate Message Recovery \& Re-encryption Pipeline (X = 20.6cm)
+  % ============================================================================
+  \node[hwCore, minimum width=4.8cm, minimum height=1.3cm] at (20.6, 13.6) (ntt_core) {
+    \textbf{4-Butterfly NTT / INTT Core}\\[1pt]
+    \scriptsize 224 cycles/poly, 0 DSPs (Soft Logic)\\[1pt]
+    \scriptsize $\hat{\mathbf{u}}' \leftarrow \text{NTT}(\mathbf{u}'), w \leftarrow \text{INTT}(\hat{w})$
+  };
+
+  \node[hwCore, minimum width=4.8cm, minimum height=1.3cm] at (20.6, 11.3) (mul_core) {
+    \textbf{Dual-PWM Multiplier}\\[1pt]
+    \scriptsize 8x DSP48E2 Slices, 4-Stage Pipe\\[1pt]
+    \scriptsize Product: $\hat{w} = \hat{\mathbf{s}}^T \circ \hat{\mathbf{u}}'$
+  };
+
+  \node[aluBlock, minimum width=4.8cm, minimum height=1.3cm] at (20.6, 8.8) (msg_slicer) {
+    \textbf{Message Slicer}\\[1pt]
+    \scriptsize $(v' - w) \pmod q \rightarrow \text{Compress}_1$\\[1pt]
+    \scriptsize Candidate bitstream $m'$
+  };
+
+  \node[regBlock, minimum width=4.8cm, minimum height=0.9cm] at (20.6, 6.6) (msg_reg) {
+    \textbf{Message Register ($m'$)}\\[1pt]
+    \scriptsize \texttt{dec\_message\_q [255:0]}
+  };
+
+  \node[ctrlBlock, minimum width=4.8cm, minimum height=1.2cm] at (20.6, 4.4) (reenc_kick) {
+    \textbf{Re-encryption Trigger}\\[1pt]
+    \scriptsize \texttt{dec\_kick} Sequencer\\[1pt]
+    \scriptsize Hands off to Encap FSM
+  };
+
+  \node[hwBlock, minimum width=4.8cm, minimum height=1.4cm] at (20.6, 1.6) (reenc_pipe) {
+    \textbf{K-PKE Re-encryption}\\[1pt]
+    \scriptsize $c' = \text{Encrypt}(ek, m', r')$ in lockstep\\[1pt]
+    \scriptsize Emits 88-bit groups \texttt{enc\_ct\_data}
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(ntt_core)(mul_core)(msg_slicer)(msg_reg)(reenc_kick)(reenc_pipe), inner sep=10pt] (frame_arith) {};
+    \node[subsystemLabel, anchor=north west] at (frame_arith.north west) {Candidate Message Recovery \& Re-encryption Engine};
+  \end{scope}
+
+  % ============================================================================
+  % Column 4: Keccak Core, Verification \& Constant-Time FO Mux (X = 29.8cm)
+  % ============================================================================
+  \node[hwCore, minimum width=4.8cm, minimum height=1.7cm] at (29.8, 13.4) (keccak_core) {
+    \textbf{Shared Keccak-f[1600] Core}\\[1pt]
+    \scriptsize 64-bit Lane Absorb / Squeeze\\[1pt]
+    \scriptsize $\bullet$ SHA3-256: Verify $ek$ $\;\bullet\;$ SHAKE-256: $K_{reject} \leftarrow J(z \parallel c)$\\[1pt]
+    \scriptsize $\bullet$ SHA3-512: Derives $(\hat{K}', r') \leftarrow G(m' \parallel H(ek))$
+  };
+
+  \node[hwBlock, minimum width=4.8cm, minimum height=1.1cm] at (29.8, 10.7) (h_checker) {
+    \textbf{PK Integrity Checker}\\[1pt]
+    \scriptsize 64-way 2-level XOR tree: $H(ek)$
+  };
+
+  \node[regBlock, minimum width=4.8cm, minimum height=0.9cm] at (29.8, 8.8) (rejection_reg) {
+    \textbf{Rejection Key Reg ($K_{reject}$)}\\[1pt]
+    \scriptsize \texttt{dec\_reject\_q [255:0]}
+  };
+
+  \node[regBlock, minimum width=4.8cm, minimum height=0.9cm] at (29.8, 7.1) (session_reg) {
+    \textbf{Session Key Reg ($\hat{K}'$)}\\[1pt]
+    \scriptsize \texttt{enc\_secret\_q [255:0]}
+  };
+
+  \node[hwBlock, minimum width=4.8cm, minimum height=1.3cm] at (29.8, 4.9) (ct_comparator) {
+    \textbf{Constant-Time Comparator}\\[1pt]
+    \scriptsize 88-bit Equality Tree ($c' == c$)\\[1pt]
+    \scriptsize Accumulator: \texttt{dec\_mismatch\_q}
+  };
+
+  \node[trapezium, trapezium left angle=75, trapezium right angle=75, trapezium stretches=true,
+        shape border rotate=180, draw=ieeeBorder, fill=ieeeLightSlate, line width=0.7pt,
+        align=center, font=\sffamily\footnotesize\bfseries, inner sep=3pt,
+        minimum width=3.8cm, minimum height=1.1cm] at (29.8, 2.3) (fo_mux) {
+    FO Mux\\[1pt]
+    \tiny $c' = c \mathbin{?} \hat{K}' : K_{reject}$
+  };
+
+  \node[ioBlock, minimum width=4.8cm, minimum height=1.1cm] at (29.8, 0.4) (ss_port) {
+    \textbf{Shared Secret Output Port}\\[1pt]
+    \scriptsize \texttt{shared\_secret [255:0]}
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(keccak_core)(h_checker)(rejection_reg)(session_reg)(ct_comparator)(fo_mux)(ss_port), inner sep=10pt] (frame_hash) {};
+    \node[subsystemLabel, anchor=north west] at (frame_hash.north west) {Keccak Engine, Verification \& Constant-Time FO Mux};
+  \end{scope}
+
+  % ============================================================================
+  % Interconnect Routing: Strict Orthogonal Manhattan Channels (Zero Overlaps)
+  % ============================================================================
+
+  % --- 1. Ingestion Datapath (Column 1 Local) ---
+  \draw[ieeeBus] (dk_port.south) -- (sk_parser.north);
+  \buswidth{dk_port.south}{sk_parser.north}{0.5}{64}
+
+  \draw[ieeeBus] (sk_parser.south) -- (seed_regs.north);
+  \buswidth{sk_parser.south}{seed_regs.north}{0.5}{256}
+
+  \draw[ieeeBus] (ct_port.south) -- (ct_parser.north);
+  \buswidth{ct_port.south}{ct_parser.north}{0.5}{88}
+
+  \draw[ieeeBus] (ct_parser.south) -- (lane_packer.north);
+  \buswidth{ct_parser.south}{lane_packer.north}{0.5}{88}
+
+  \draw[ieeeBus] (lane_packer.south) -- (ram_ct_lanes.north);
+  \buswidth{lane_packer.south}{ram_ct_lanes.north}{0.5}{64}
+
+  % --- 2. Channel 1: Column 1 to Column 2 RAMs (Dedicated Tracks X = 6.4, 7.0, 7.6, 8.1, 8.6) ---
+  % Retained original ciphertext groups from lane_packer to ram_ct_retained (Track C1_1: X = 6.4)
+  \coordinate (c_ret1) at (6.4, 2.8);
+  \coordinate (c_ret2) at (6.4, 0.4);
+  \draw[ieeeBus] (lane_packer.east) -- (c_ret1) -- (c_ret2) -- (ram_ct_retained.west);
+  \buswidth{c_ret1}{c_ret2}{0.5}{88}
+
+  % Public Key Vector t_hat from sk_parser to ram_pk (Track C1_2: X = 7.0)
+  \coordinate (c_pk1) at (7.0, 11.2);
+  \coordinate (c_pk2) at (7.0, 2.2);
+  \draw[ieeeBus] ($(sk_parser.east)+(0,-0.3)$) -- (c_pk1) -- (c_pk2) -- (ram_pk.west);
+  \buswidth{c_pk1}{c_pk2}{0.5}{48}
+
+  % Secret Vector s_hat from sk_parser to ram_e (Track C1_3: X = 7.6)
+  \coordinate (c_sk1) at (7.6, 11.5);
+  \coordinate (c_sk2) at (7.6, 7.6);
+  \draw[ieeeBus] (sk_parser.east) -- (c_sk1) -- (c_sk2) -- (ram_e.west);
+  \buswidth{c_sk1}{c_sk2}{0.5}{48}
+
+  % Raw u_prime from ct_parser to ram_u_prod (Track C1_4: X = 8.1)
+  \coordinate (c_u1) at (8.1, 5.1);
+  \coordinate (c_u2) at (8.1, 5.8);
+  \draw[ieeeBus] ($(ct_parser.east)+(0,0.2)$) -- (c_u1) -- (c_u2) -- (ram_u_prod.west);
+  \buswidth{c_u1}{c_u2}{0.5}{48}
+
+  % Raw v_prime from ct_parser to ram_v_e2 (Track C1_5: X = 8.6)
+  \coordinate (c_v1) at (8.6, 4.7);
+  \coordinate (c_v2) at (8.6, 4.0);
+  \draw[ieeeBus] ($(ct_parser.east)+(0,-0.2)$) -- (c_v1) -- (c_v2) -- (ram_v_e2.west);
+  \buswidth{c_v1}{c_v2}{0.5}{48}
+
+  % --- 3. Long Clearance Channels (Above and Below Frames) ---
+  % ek Stream to Keccak (SHA3-256 integrity check) - Clearance Route Above (Y = 15.3)
+  \coordinate (c_ek1) at (0.9, 15.3);
+  \coordinate (c_ek2) at (28.8, 15.3);
+  \draw[ieeeBus] (sk_parser.west) -- (0.9, 11.5) -- (c_ek1) -- (c_ek2) -- ($(keccak_core.north)+(-1.0,0)$);
+  \buswidth{c_ek1}{c_ek2}{0.35}{64}
+
+  % Rejection Seed z to Keccak (SHAKE-256) - Clearance Route Above (Y = 15.9)
+  \coordinate (c_z1) at (0.4, 15.9);
+  \coordinate (c_z2) at (30.8, 15.9);
+  \draw[ieeeBus] (seed_regs.west) -- (0.4, 9.3) -- (c_z1) -- (c_z2) -- ($(keccak_core.north)+(1.0,0)$);
+  \buswidth{c_z1}{c_z2}{0.35}{256}
+
+  % Stored H(ek) from seed_regs to h_checker - Clearance Route Above (Y = 16.5) and Channel 3 (X = 26.6)
+  \coordinate (c_h1) at (-0.1, 16.5);
+  \coordinate (c_h2) at (26.6, 16.5);
+  \draw[ieeeBus] ($(seed_regs.west)+(0,-0.3)$) -- (-0.1, 9.0) -- (c_h1) -- (c_h2) |- ($(h_checker.west)+(0,-0.4)$);
+  \buswidth{c_h1}{c_h2}{0.35}{256}
+
+  % Buffered Ciphertext Lanes from dec_ct_lanes to Keccak for J(z || c) - Clearance Route Below (Y = -1.3)
+  \coordinate (c_lanes1) at (3.6, -1.3);
+  \coordinate (c_lanes2) at (33.9, -1.3);
+  \draw[ieeeBus] (ram_ct_lanes.south) -- (c_lanes1) -- (c_lanes2) |- ($(keccak_core.east)+(0,0.3)$);
+  \buswidth{c_lanes1}{c_lanes2}{0.4}{64}
+
+  % --- 4. Channel 2: Arithmetic Core & Multiplier Interconnect (X = 14.2 to 17.7) ---
+  % FSM Controls to NTT Core (Direct Horizontal Line)
+  \draw[ieeeControl] (decap_fsm.east) -- (ntt_core.west);
+
+  % Decap FSM Control to Multiplier (Track C2_Ctrl: X = 14.2)
+  \draw[ieeeControl] ($(decap_fsm.east)+(0,-0.3)$) -- (14.2, 13.3) |- ($(mul_core.west)+(0,0.3)$);
+
+  % Hash FSM Control to Keccak Core (Route via Channel 1: X = 8.1, Top Corridor Y = 14.8)
+  \coordinate (c_hashctrl1) at (8.1, 11.5);
+  \coordinate (c_hashctrl2) at (8.1, 14.8);
+  \coordinate (c_hashctrl3) at (27.8, 14.8);
+  \draw[ieeeControl] (hash_fsm.west) -- (c_hashctrl1) -- (c_hashctrl2) -- (c_hashctrl3) |- ($(keccak_core.north)+(-2.0,0)$);
+
+  % Forward NTT output: u_hat_prime from NTT core into ram_s (Track C2_1: X = 14.8)
+  \coordinate (c_uhat1) at (14.8, 13.5);
+  \coordinate (c_uhat2) at (14.8, 9.6);
+  \draw[ieeeBus] ($(ntt_core.west)+(0,-0.1)$) -- (c_uhat1) -- (c_uhat2) -- ($(ram_s.east)+(0,0.2)$);
+  \buswidth{c_uhat1}{c_uhat2}{0.5}{48}
+
+  % Multiplier Input B: u_hat_prime from ram_s to mul_core (Track C2_2: X = 15.4)
+  \coordinate (c_mulb1) at (15.4, 9.2);
+  \coordinate (c_mulb2) at (15.4, 11.4);
+  \draw[ieeeBus] ($(ram_s.east)+(0,-0.2)$) -- (c_mulb1) -- (c_mulb2) -- ($(mul_core.west)+(0,0.1)$);
+  \buswidth{c_mulb1}{c_mulb2}{0.5}{48}
+
+  % Multiplier Input A: s_hat from ram_e to mul_core (Track C2_3: X = 16.0)
+  \coordinate (c_mula1) at (16.0, 7.6);
+  \coordinate (c_mula2) at (16.0, 11.1);
+  \draw[ieeeBus] (ram_e.east) -- (c_mula1) -- (c_mula2) -- ($(mul_core.west)+(0,-0.2)$);
+  \buswidth{c_mula1}{c_mula2}{0.5}{48}
+
+  % Forward NTT input: raw u_prime from ram_u_prod to NTT core (Track C2_4: X = 16.6)
+  \coordinate (c_nttin1) at (16.6, 6.0);
+  \coordinate (c_nttin2) at (16.6, 13.2);
+  \draw[ieeeBus] ($(ram_u_prod.east)+(0,0.2)$) -- (c_nttin1) -- (c_nttin2) -- ($(ntt_core.west)+(0,-0.4)$);
+  \buswidth{c_nttin1}{c_nttin2}{0.5}{48}
+
+  % Multiplier output: w_hat staged back to ram_u_prod for INTT (Track C2_5: X = 17.2)
+  \coordinate (c_what1) at (17.2, 10.9);
+  \coordinate (c_what2) at (17.2, 5.5);
+  \draw[ieeeBus] ($(mul_core.west)+(0,-0.4)$) -- (c_what1) -- (c_what2) -- ($(ram_u_prod.east)+(0,-0.3)$);
+  \buswidth{c_what1}{c_what2}{0.5}{48}
+
+  % Scalar ciphertext v_prime from ram_v_e2 into message slicer (Track C2_6: X = 17.7)
+  \coordinate (c_vsl1) at (17.7, 4.0);
+  \coordinate (c_vsl2) at (17.7, 8.8);
+  \draw[ieeeBus] (ram_v_e2.east) -- (c_vsl1) -- (c_vsl2) -- (msg_slicer.west);
+  \buswidth{c_vsl1}{c_vsl2}{0.5}{48}
+
+  % Public key t_hat from ram_pk to re-encryption datapath (Track C2_7: X = 15.0)
+  \coordinate (c_pkt1) at (15.0, 2.2);
+  \coordinate (c_pkt2) at (15.0, 1.6);
+  \draw[ieeeBus] (ram_pk.east) -- (c_pkt1) -- (c_pkt2) -- (reenc_pipe.west);
+  \buswidth{c_pkt2}{reenc_pipe.west}{0.5}{48}
+
+  % --- 5. Channel 3: Message Recovery & Re-encryption Pipeline (X = 23.6 to 27.0) ---
+  % Inverse NTT output: w into message slicer (Track C3_1: X = 23.6)
+  \coordinate (c_intt1) at (23.6, 13.6);
+  \coordinate (c_intt2) at (23.6, 9.1);
+  \draw[ieeeBus] (ntt_core.east) -- (c_intt1) -- (c_intt2) -- ($(msg_slicer.east)+(0,0.3)$);
+  \buswidth{c_intt1}{c_intt2}{0.5}{48}
+
+  % Sliced message bit stream to candidate message register (Local Column 3)
+  \draw[ieeeBus] (msg_slicer.south) -- (msg_reg.north);
+  \buswidth{msg_slicer.south}{msg_reg.north}{0.5}{256}
+
+  % Candidate message m_prime to Keccak (SHA3-512) (Track C3_2: X = 24.2)
+  \coordinate (c_mreg1) at (24.2, 6.6);
+  \coordinate (c_mreg2) at (24.2, 13.2);
+  \draw[ieeeBus] (msg_reg.east) -- (c_mreg1) -- (c_mreg2) -- ($(keccak_core.west)+(0,-0.2)$);
+  \buswidth{c_mreg1}{c_mreg2}{0.5}{256}
+
+  % Message done strobe to re-encryption trigger sequencer (Local Column 3)
+  \draw[ieeeControl] (msg_reg.south) -- (reenc_kick.north);
+
+  % Deterministic coins r_prime from Keccak to re-encryption datapath (Track C3_3: X = 24.8)
+  \coordinate (c_coins1) at (24.8, 12.8);
+  \coordinate (c_coins2) at (24.8, 1.3);
+  \draw[ieeeBus] ($(keccak_core.west)+(0,-0.6)$) -- (c_coins1) -- (c_coins2) -- ($(reenc_pipe.east)+(0,-0.3)$);
+  \buswidth{c_coins1}{c_coins2}{0.5}{256}
+
+  % Integrity status from h_checker to re-encryption trigger sequencer (Track C3_4: X = 25.4)
+  \draw[ieeeControl] ($(h_checker.west)+(0,0.2)$) -- (25.4, 10.9) |- ($(reenc_kick.east)+(0,0.3)$);
+
+  % Re-encryption kick to K-PKE re-encryption datapath (Local Column 3)
+  \draw[ieeeControl] (reenc_kick.south) -- (reenc_pipe.north);
+
+  % Regenerated ciphertext c_prime to constant-time comparator (Track C3_5: X = 26.0)
+  \coordinate (c_cprime1) at (26.0, 1.9);
+  \coordinate (c_cprime2) at (26.0, 4.6);
+  \draw[ieeeBus] ($(reenc_pipe.east)+(0,0.3)$) -- (c_cprime1) -- (c_cprime2) -- ($(ct_comparator.west)+(0,-0.3)$);
+  \buswidth{c_cprime1}{c_cprime2}{0.5}{88}
+
+  % Retained original ciphertext c from ram_ct_retained to comparator via Bottom Channel (Y = -0.7, Track C3_7: X = 27.0)
+  \coordinate (c_bot_h1) at (13.7, -0.7);
+  \coordinate (c_bot_h2) at (27.0, -0.7);
+  \coordinate (c_bot_v2) at (27.0, 5.2);
+  \draw[ieeeBus] (ram_ct_retained.east) -- (c_bot_h1) -- (c_bot_h2) -- (c_bot_v2) -- ($(ct_comparator.west)+(0,0.3)$);
+  \buswidth{c_bot_h1}{c_bot_h2}{0.5}{88}
+
+  % --- 6. Verification, FO Transform & Constant-Time Output (Column 4 Local & East Channels) ---
+  % SHA3-256 Digest from Keccak to Integrity Checker (Direct Vertical Bus)
+  \draw[ieeeBus] (keccak_core.south) -- (h_checker.north);
+  \buswidth{keccak_core.south}{h_checker.north}{0.5}{256}
+
+  % SHAKE-256 Rejection Key K_reject from Keccak to rejection register and FO Mux (Track E1: X = 32.7)
+  \coordinate (c_krej1) at (32.7, 13.1);
+  \coordinate (c_krej2) at (32.7, 8.8);
+  \coordinate (c_krej_h) at (32.7, 3.8);
+  \coordinate (c_krej_drop) at (28.9, 3.8);
+  \draw[ieeeBus] ($(keccak_core.east)+(0,-0.3)$) -- (c_krej1) -- (c_krej2) -- (rejection_reg.east);
+  \buswidth{c_krej1}{c_krej2}{0.5}{256}
+  \draw[ieeeBus] (rejection_reg.east) -- (c_krej2) -- (c_krej_h) -- (c_krej_drop) -- ($(fo_mux.north)+(-0.9,0)$);
+  \buswidth{c_krej2}{c_krej_h}{0.5}{256}
+
+  % SHA3-512 Session Key K_hat_prime from Keccak to session register and FO Mux (Track E2: X = 33.3)
+  \coordinate (c_khat1) at (33.3, 12.8);
+  \coordinate (c_khat2) at (33.3, 7.1);
+  \coordinate (c_khat_h) at (33.3, 3.3);
+  \coordinate (c_khat_drop) at (30.7, 3.3);
+  \draw[ieeeBus] ($(keccak_core.east)+(0,-0.6)$) -- (c_khat1) -- (c_khat2) -- (session_reg.east);
+  \buswidth{c_khat1}{c_khat2}{0.5}{256}
+  \draw[ieeeBus] (session_reg.east) -- (c_khat2) -- (c_khat_h) -- (c_khat_drop) -- ($(fo_mux.north)+(0.9,0)$);
+  \buswidth{c_khat2}{c_khat_h}{0.5}{256}
+
+  % Cumulative mismatch flag dec_mismatch to FO Mux select (West Slanted Face Select Input)
+  \coordinate (c_mismatch_bot) at (27.8, 2.3);
+  \draw[ieeeControl] ($(ct_comparator.south)+(-2.0,0)$) -- (c_mismatch_bot) -- (fo_mux.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=east] at (27.7, 3.1) {\texttt{dec\_mismatch}};
+
+  % Shared secret output from FO Mux to Output Port (Direct Vertical Bus from narrow bottom face)
+  \draw[ieeeBus] (fo_mux.south) -- (ss_port.north);
+  \buswidth{fo_mux.south}{ss_port.north}{0.5}{256}
+
+  % ============================================================================
+  % Callout Badges (IDs 1 through 8) - Clear and Perfectly Legible Placement
+  % ============================================================================
+  \node[calloutBadge] at ($(sk_parser.north east)+(-0.35,-0.35)$) {1};
+  \node[calloutBadge] at ($(ram_ct_lanes.north east)+(-0.35,-0.35)$) {2};
+  \node[calloutBadge] at ($(decap_fsm.north east)+(-0.35,-0.35)$) {3};
+  \node[calloutBadge] at (22.0, 9.8) {4};
+  \node[calloutBadge] at ($(keccak_core.north east)+(-0.4,-0.4)$) {5};
+  \node[calloutBadge] at ($(reenc_kick.north east)+(-0.35,-0.35)$) {6};
+  \node[calloutBadge] at ($(ct_comparator.north east)+(-0.35,-0.35)$) {7};
+  \node[calloutBadge] at ($(fo_mux.east)+(0.45,0)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.6cm}
+% ==============================================================================
+% Concise Publication Callout Legend Table (Strict 4-Column Schema)
+% ==============================================================================
+\begin{center}
+\footnotesize
+\begin{tabular}{cllp{18.5cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Decap Key Ingestion \& Demux & 64b Stream $\rightarrow$ 48b/256b & Parses $dk = (\hat{\mathbf{s}} \parallel ek \parallel H(ek) \parallel z)$, decodes secret vector $\hat{\mathbf{s}}$ into \texttt{ram\_e}, stages public key $ek$ into \texttt{ram\_pk}, and registers seeds $\rho, H(ek), z$. \\
+\textbf{2} & Ciphertext Buffer (\texttt{dec\_ct\_lanes}) & $196 \times 64\text{b}$ LUTRAM & Decompresses $c_1 \rightarrow \mathbf{u}', c_2 \rightarrow v'$ into staging RAMs and serializes 88-bit groups into 196 64-bit lanes for $J(z \parallel c)$ hash. \\
+\textbf{3} & Dual Decap Orchestration FSMs & Control / Handshake & Arithmetic FSM (\texttt{DC\_0}--\texttt{DC\_5}) schedules NTT, dyadic multiplication, INTT, and slicing; Hash FSM (\texttt{DH\_0}--\texttt{DH\_4}) manages $H(ek)$ check and $K_{reject}$. \\
+\textbf{4} & Candidate Message Recovery Slicer & 48b Word $\rightarrow$ 256b Reg & Evaluates $w = \text{INTT}(\hat{\mathbf{s}}^T \circ \hat{\mathbf{u}}')$, subtracts $(v' - w) \pmod q$, and slices 1-bit coefficients via $\text{Compress}_1(v' - w)$ into 256-bit register $m'$. \\
+\textbf{5} & Shared Keccak-f[1600] Sponge Core & 64b Lane $\rightarrow$ 256b/512b & Executes SHA3-256 for $ek$ integrity verification, SHAKE-256 for $K_{reject} = J(z \parallel c)$, and SHA3-512 for $(\hat{K}', r') = G(m' \parallel H(ek))$. \\
+\textbf{6} & Re-encryption Trigger Sequencer & Handshake (\texttt{dec\_kick}) & Asserts \texttt{dec\_kick} upon message recovery and hash checks, transferring control to Encap FSM to regenerate $c' = \text{Encrypt}(ek, m', r')$. \\
+\textbf{7} & Constant-Time Ciphertext Comparator & 88b Parallel Lockstep & Compares regenerated $c'$ against stored $c$ group-by-group, accumulating differences into \texttt{dec\_mismatch\_q} in strictly invariant clock cycles. \\
+\textbf{8} & Branchless Constant-Time FO Mux & 256b Multiplexer & Emits valid session key $\hat{K}'$ if $c' == c$ or pseudo-random rejection key $K_{reject}$ if $c' \neq c$, eliminating chosen-ciphertext timing side channels. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

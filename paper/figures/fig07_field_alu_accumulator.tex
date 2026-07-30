@@ -1,0 +1,493 @@
+\documentclass[varwidth=34cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large FIPS 203 ML-KEM Architecture: Modular Field ALU \& Vector Accumulation Pipeline} \\[3pt]
+{\sffamily\footnotesize Subsystem 07 Microarchitecture --- Modular Arithmetic Units \& Vector Accumulator Pipeline (\texttt{field\_add.sv}, \texttt{field\_sub.sv}, \texttt{mlkem\_keygen\_top.sv}) --- Kintex UltraScale 450~MHz}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}[node distance=1.0cm and 1.2cm]
+
+  % ============================================================================
+  % SECTION 1: MODULAR FIELD ARITHMETIC UNITS (TOP HALF)
+  % ============================================================================
+
+  % ----------------------------------------------------------------------------
+  % Subsystem 07A: Modular Field Adder (field_add.sv) - Left Column
+  % ----------------------------------------------------------------------------
+  \node[ioBlock, minimum width=1.8cm, minimum height=1.3cm] at (1.6, 9.8) (add_in_io) {
+    \textbf{Adder In}\\[2pt]
+    \scriptsize \texttt{in\_a, in\_b [11:0]}
+  };
+
+  \node[hwCore, minimum width=3.8cm, minimum height=1.1cm] at (5.3, 10.6) (add_chain1) {
+    \textbf{\hspace*{0.4cm}Chain 1: Raw Sum}\\[2pt]
+    \scriptsize \hspace*{0.4cm}$S_{\text{raw}} = A + B$ (13-bit)
+  };
+
+  \node[hwCore, minimum width=3.8cm, minimum height=1.1cm] at (5.3, 9.0) (add_chain2) {
+    \textbf{Chain 2: Modulus Sub}\\[2pt]
+    \scriptsize $S_{\text{sub}} = A + B + 4863$ (14-bit)
+  };
+
+  \node[muxBlock, minimum width=0.5cm, minimum height=1.0cm] at (8.1, 9.8) (add_mux) {};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(add_mux.north)+(0,0.06)$) {2:1 MUX};
+
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.3cm] at (10.6, 9.8) (add_skid) {
+    \textbf{\hspace*{0.4cm}2-Entry Skid}\\[2pt]
+    \scriptsize \hspace*{0.4cm}Boundary Regs
+  };
+
+  \node[ioBlock, minimum width=1.8cm, minimum height=1.3cm] at (13.8, 9.8) (add_out_io) {
+    \textbf{Adder Out}\\[2pt]
+    \scriptsize \texttt{out\_data [11:0]}
+  };
+
+  \coordinate (add_top_pad) at (7.5, 11.6);
+  \coordinate (add_bot_pad) at (7.5, 7.8);
+
+  % Adder Frame
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(add_in_io)(add_chain1)(add_chain2)(add_mux)(add_skid)(add_out_io)(add_top_pad)(add_bot_pad), inner sep=10pt] (frame_add) {};
+    \node[subsystemLabel, anchor=north west] at (frame_add.north west) {Subsystem 07A: Modular Field Adder (\texttt{field\_add.sv})};
+  \end{scope}
+
+  % ----------------------------------------------------------------------------
+  % Subsystem 07B: Modular Field Subtractor (field_sub.sv) - Right Column
+  % ----------------------------------------------------------------------------
+  \node[ioBlock, minimum width=1.8cm, minimum height=1.3cm] at (16.8, 9.8) (sub_in_io) {
+    \textbf{Sub In}\\[2pt]
+    \scriptsize \texttt{in\_a, in\_b [11:0]}
+  };
+
+  \node[hwCore, minimum width=3.8cm, minimum height=1.1cm] at (20.5, 10.6) (sub_chain1) {
+    \textbf{\hspace*{0.4cm}Chain 1: Raw Diff}\\[2pt]
+    \scriptsize \hspace*{0.4cm}$D_{\text{raw}} = A - B$ (13-bit)
+  };
+
+  \node[hwCore, minimum width=3.8cm, minimum height=1.1cm] at (20.5, 9.0) (sub_chain2) {
+    \textbf{Chain 2: Modulus Add}\\[2pt]
+    \scriptsize $D_{\text{add}} = A + 3329 - B$ (13-bit)
+  };
+
+  \node[muxBlock, minimum width=0.5cm, minimum height=1.0cm] at (23.3, 9.8) (sub_mux) {};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=north] at ($(sub_mux.south)+(0,-0.06)$) {2:1 MUX};
+
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.3cm] at (25.8, 9.8) (sub_skid) {
+    \textbf{\hspace*{0.4cm}2-Entry Skid}\\[2pt]
+    \scriptsize \hspace*{0.4cm}Boundary Regs
+  };
+
+  \node[ioBlock, minimum width=1.8cm, minimum height=1.3cm] at (29.0, 9.8) (sub_out_io) {
+    \textbf{Sub Out}\\[2pt]
+    \scriptsize \texttt{out\_data [11:0]}
+  };
+
+  \coordinate (sub_top_pad) at (22.5, 11.6);
+  \coordinate (sub_bot_pad) at (22.5, 7.8);
+
+  % Subtractor Frame
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(sub_in_io)(sub_chain1)(sub_chain2)(sub_mux)(sub_skid)(sub_out_io)(sub_top_pad)(sub_bot_pad), inner sep=10pt] (frame_sub) {};
+    \node[subsystemLabel, anchor=north west] at (frame_sub.north west) {Subsystem 07B: Modular Field Subtractor (\texttt{field\_sub.sv})};
+  \end{scope}
+
+  % ============================================================================
+  % SECTION 2: 4-STAGE VECTOR ACCUMULATOR PIPELINE (BOTTOM HALF)
+  % ============================================================================
+
+  % ----------------------------------------------------------------------------
+  % Stage 1: Ingest, Normalization & Memory Coordination
+  % ----------------------------------------------------------------------------
+  \node[ctrlBlock, minimum width=4.4cm, minimum height=0.85cm] at (3.8, 5.6) (coord_tracker) {
+    \textbf{Matrix Coordinator FSM}\\[2pt]
+    \scriptsize \texttt{accum\_row\_q}, \texttt{accum\_col\_q}, \texttt{beat[5:0]}
+  };
+
+  \node[memBlock, minimum width=4.4cm, minimum height=0.85cm] at (3.8, 4.4) (ram_e_block) {
+    \textbf{Noise Error RAM (\texttt{ram\_e})}\\[2pt]
+    \scriptsize $256 \times 48\text{b}$ Dist-RAM
+  };
+
+  \node[ioBlock, minimum width=1.8cm, minimum height=1.1cm] at (2.2, 3.0) (mul_in_port) {
+    \textbf{Dual-PWM}\\[2pt]
+    \scriptsize \texttt{mul\_m\_c0..3}
+  };
+
+  \node[hwBlock, minimum width=2.4cm, minimum height=1.1cm] at (4.9, 3.0) (canon_unit) {
+    \textbf{\hspace*{0.3cm}canon12}\\[2pt]
+    \scriptsize \hspace*{0.3cm}$v[11] \;?\; v{+}Q : v$
+  };
+
+  \node[memBlock, minimum width=4.4cm, minimum height=0.85cm] at (3.8, 1.6) (ram_t_block) {
+    \textbf{\hspace*{0.4cm}Row Accumulator RAM}\\[2pt]
+    \scriptsize \hspace*{0.4cm}\texttt{ram\_t} ($64 \times 48\text{b}$ LUTRAM)
+  };
+
+  % Stage 1 Pipeline Register Barrier
+  \node[regBlock, minimum width=0.65cm, minimum height=5.4cm] at (7.1, 3.5) (P1_REG) {
+    \rotatebox{90}{\textbf{STAGE 1 REG (P1)}}
+  };
+
+  % ----------------------------------------------------------------------------
+  % Stage 2: Quad Modular Accumulation & Intermediate Writeback
+  % ----------------------------------------------------------------------------
+  \node[hwCore, minimum width=4.4cm, minimum height=1.35cm] at (10.8, 3.0) (stage2_alu) {
+    \textbf{\hspace*{0.4cm}Modular Accumulator}\\[2pt]
+    \scriptsize \hspace*{0.4cm}$4 \times \texttt{add\_q}(t_{\text{curr}}, \text{prod}) \bmod 3329$
+  };
+
+  \node[ctrlBlock, minimum width=4.4cm, minimum height=0.85cm] at (10.8, 1.5) (stage2_fb) {
+    \textbf{Intermediate Feedback}\\[2pt]
+    \scriptsize \texttt{ram\_t[beat] <= p2\_sum1} (!last\_col)
+  };
+
+  % Stage 2 Pipeline Register Barrier
+  \node[regBlock, minimum width=0.65cm, minimum height=5.4cm] at (14.5, 3.5) (P2_REG) {
+    \rotatebox{90}{\textbf{STAGE 2 REG (P2)}}
+  };
+
+  % ----------------------------------------------------------------------------
+  % Stage 3: Terminal Noise Addition & Bank Demux
+  % ----------------------------------------------------------------------------
+  \node[hwCore, minimum width=4.4cm, minimum height=1.35cm] at (18.25, 3.0) (stage3_alu) {
+    \textbf{\hspace*{0.4cm}Terminal Noise Adder}\\[2pt]
+    \scriptsize \hspace*{0.4cm}$4 \times \texttt{add\_q}(\text{sum1}, e_{\text{curr}}) \bmod 3329$
+  };
+
+  \node[ctrlBlock, minimum width=4.4cm, minimum height=0.85cm] at (18.25, 1.5) (pk_demux) {
+    \textbf{Public Key Bank Demux}\\[2pt]
+    \scriptsize Decodes bank $0..3$ and word addr $0..63$
+  };
+
+  % Stage 3 Pipeline Register Barrier
+  \node[regBlock, minimum width=0.65cm, minimum height=5.4cm] at (22.0, 3.5) (P3_REG) {
+    \rotatebox{90}{\textbf{STAGE 3 REG (P3)}}
+  };
+
+  % ----------------------------------------------------------------------------
+  % Stage 4: Storage Array, Commit & FSM Handshake
+  % ----------------------------------------------------------------------------
+  \node[ctrlBlock, minimum width=4.4cm, minimum height=1.1cm] at (25.6, 5.6) (stage4_commit) {
+    \textbf{\hspace*{0.5cm}Commit Logic}\\[2pt]
+    \scriptsize \hspace*{0.5cm}\texttt{p4\_is\_last\_mat\_beat} $\implies$ \texttt{accum\_done}
+  };
+
+  \node[memBlock, minimum width=4.4cm, minimum height=1.6cm] at (25.6, 2.3) (ram_pk_array) {
+    \textbf{Public Key RAM Array}\\[2pt]
+    \scriptsize \texttt{ram\_pk\_b0..b3} ($4 \times 64 \times 48\text{b}$)
+  };
+
+  \node[ioBlock, minimum width=1.8cm, minimum height=2.8cm] at (29.8, 3.8) (fsm_sync_io) {
+    \textbf{Top Sync}\\[2pt]
+    \scriptsize \texttt{accum\_done}\\[2pt]
+    \scriptsize \texttt{pk\_data [47:0]}
+  };
+
+  \coordinate (accum_bot_pad) at (3.8, -0.05);
+  \coordinate (accum_left_pad) at (-0.05, 3.5);
+
+  % Vector Accumulator Frame
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(coord_tracker)(ram_e_block)(mul_in_port)(canon_unit)(ram_t_block)(P1_REG)(stage2_alu)(stage2_fb)(P2_REG)(stage3_alu)(pk_demux)(P3_REG)(ram_pk_array)(stage4_commit)(fsm_sync_io)(accum_bot_pad)(accum_left_pad), inner sep=10pt] (frame_accum) {};
+    \node[subsystemLabel, anchor=north west] at (frame_accum.north west) {Subsystem 07C: 4-Stage Vector Dot-Product Accumulator Pipeline (\texttt{mlkem\_keygen\_top.sv} Section 7)};
+  \end{scope}
+
+  % ============================================================================
+  % MANHATTAN ROUTING: ZERO OVERLAPS & DEDICATED COORDINATE CHANNELS
+  % ============================================================================
+
+  % ----------------------------------------------------------------------------
+  % 1. Adder Datapath & Control Routes (Section 07A)
+  % ----------------------------------------------------------------------------
+  \coordinate (add_in_turn) at ($(add_in_io.east)+(0.35,0)$);
+  \draw[ieeeBus] (add_in_io.east) -- (add_in_turn) |- (add_chain1.west);
+  \buswidth{add_in_io.east}{add_in_turn}{0.5}{12}
+
+  \draw[ieeeBus] (add_in_turn) |- (add_chain2.west);
+
+  \coordinate (add_mux_in0) at ($(add_mux.west)+(0,0.28)$);
+  \coordinate (add_mux_in1) at ($(add_mux.west)+(0,-0.28)$);
+
+  % Chain 1 output to MUX in0
+  \coordinate (add_c1_turn) at ($(add_chain1.east)+(0.3,0)$);
+  \draw[ieeeBus] (add_chain1.east) -- (add_c1_turn) |- (add_mux_in0);
+  \buswidth{add_chain1.east}{add_c1_turn}{0.5}{13}
+
+  % Chain 2 output bus to MUX in1
+  \coordinate (add_c2_bus) at ($(add_chain2.east)+(0,0.2)$);
+  \coordinate (add_c2_turn) at ($(add_c2_bus)+(0.3,0)$);
+  \draw[ieeeBus] (add_c2_bus) -- (add_c2_turn) |- (add_mux_in1);
+  \buswidth{add_c2_bus}{add_c2_turn}{0.5}{14}
+
+  % Carry overflow select bit (Chain 2 bit 13 to MUX south)
+  % Dedicated lower Manhattan channel at y=8.30: horizontal to x=8.1, then straight UP to add_mux.south
+  \coordinate (add_sel_start) at ($(add_chain2.east)+(0,-0.25)$);
+  \coordinate (add_sel_turn1) at ($(add_sel_start)+(0.35,0)$);
+  \coordinate (add_sel_low) at ($(add_sel_turn1)+(0,-0.45)$);
+  \coordinate (add_sel_corner) at (8.1, 8.30);
+  \draw[ieeeControl] (add_sel_start) -- (add_sel_turn1) -- (add_sel_low) -- (add_sel_corner) -- (add_mux.south);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=west] at (8.15, 8.65) {$S_{\text{sub}}[13]$};
+
+  % MUX to Skid Buffer
+  \draw[ieeeBus] (add_mux.east) -- (add_skid.west);
+  \buswidth{add_mux.east}{add_skid.west}{0.5}{12}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(add_mux.east)!0.5!(add_skid.west)+(0,0.12)$) {\texttt{comp\_res}};
+
+  % Skid Buffer to Egress Port (Dedicated 1.0cm gap with clear vertical separation)
+  \draw[ieeeBus] (add_skid.east) -- (add_out_io.west);
+  \buswidth{add_skid.east}{add_out_io.west}{0.5}{12}
+
+  \draw[ieeeControl] ($(add_skid.east)+(0,0.4)$) -- node[midway, above, font=\sffamily\tiny, text=ieeeCoral] {\texttt{valid}} ($(add_out_io.west)+(0,0.4)$);
+  \draw[ieeeControl] ($(add_out_io.west)+(0,-0.4)$) -- node[midway, below, font=\sffamily\tiny, text=ieeeCoral] {\texttt{ready}} ($(add_skid.east)+(0,-0.4)$);
+
+  % Skid backpressure route to Ingest (Bottom clearance corridor at y=8.15)
+  \draw[ieeeControl] (add_skid.south) -- ++(0,-0.85) -| (add_in_io.south);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=north] at ($(add_in_io.south)+(4.5,-0.85)$) {\texttt{in\_ready = !skid\_valid\_q}};
+
+  % ----------------------------------------------------------------------------
+  % 2. Subtractor Datapath & Control Routes (Section 07B)
+  % ----------------------------------------------------------------------------
+  \coordinate (sub_in_turn) at ($(sub_in_io.east)+(0.35,0)$);
+  \draw[ieeeBus] (sub_in_io.east) -- (sub_in_turn) |- (sub_chain1.west);
+  \buswidth{sub_in_io.east}{sub_in_turn}{0.5}{12}
+
+  \draw[ieeeBus] (sub_in_turn) |- (sub_chain2.west);
+
+  \coordinate (sub_mux_in0) at ($(sub_mux.west)+(0,0.28)$);
+  \coordinate (sub_mux_in1) at ($(sub_mux.west)+(0,-0.28)$);
+
+  % Chain 1 output bus to MUX in0
+  \coordinate (sub_c1_bus) at ($(sub_chain1.east)+(0,-0.2)$);
+  \coordinate (sub_c1_turn) at ($(sub_c1_bus)+(0.3,0)$);
+  \draw[ieeeBus] (sub_c1_bus) -- (sub_c1_turn) |- (sub_mux_in0);
+  \buswidth{sub_c1_bus}{sub_c1_turn}{0.5}{13}
+
+  % Chain 2 output bus to MUX in1
+  \coordinate (sub_c2_turn) at ($(sub_chain2.east)+(0.3,0)$);
+  \draw[ieeeBus] (sub_chain2.east) -- (sub_c2_turn) |- (sub_mux_in1);
+  \buswidth{sub_chain2.east}{sub_c2_turn}{0.5}{13}
+
+  % Borrow sign select bit (Chain 1 bit 12 to MUX north)
+  % Dedicated upper Manhattan channel at y=11.20: horizontal to x=23.3, then straight DOWN to sub_mux.north
+  \coordinate (sub_sel_start) at ($(sub_chain1.east)+(0,0.25)$);
+  \coordinate (sub_sel_turn1) at ($(sub_sel_start)+(0.35,0)$);
+  \coordinate (sub_sel_high) at ($(sub_sel_turn1)+(0,0.45)$);
+  \coordinate (sub_sel_corner) at (23.3, 11.30);
+  \draw[ieeeControl] (sub_sel_start) -- (sub_sel_turn1) -- (sub_sel_high) -- (sub_sel_corner) -- (sub_mux.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=west] at (23.35, 10.8) {$D_{\text{raw}}[12]$};
+
+  % MUX to Skid Buffer
+  \draw[ieeeBus] (sub_mux.east) -- (sub_skid.west);
+  \buswidth{sub_mux.east}{sub_skid.west}{0.5}{12}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(sub_mux.east)!0.5!(sub_skid.west)+(0,0.12)$) {\texttt{comp\_res}};
+
+  % Skid Buffer to Egress Port (Dedicated 1.0cm gap with clear vertical separation)
+  \draw[ieeeBus] (sub_skid.east) -- (sub_out_io.west);
+  \buswidth{sub_skid.east}{sub_out_io.west}{0.5}{12}
+
+  \draw[ieeeControl] ($(sub_skid.east)+(0,0.4)$) -- node[midway, above, font=\sffamily\tiny, text=ieeeCoral] {\texttt{valid}} ($(sub_out_io.west)+(0,0.4)$);
+  \draw[ieeeControl] ($(sub_out_io.west)+(0,-0.4)$) -- node[midway, below, font=\sffamily\tiny, text=ieeeCoral] {\texttt{ready}} ($(sub_skid.east)+(0,-0.4)$);
+
+  % Skid backpressure route to Ingest (Bottom clearance corridor at y=8.15)
+  \draw[ieeeControl] (sub_skid.south) -- ++(0,-0.85) -| (sub_in_io.south);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=north] at ($(sub_in_io.south)+(4.5,-0.85)$) {\texttt{in\_ready = !skid\_valid\_q}};
+
+  % ----------------------------------------------------------------------------
+  % 3. Stage 1 Ingest, Normalization & Register Latching (Section 07C)
+  % ----------------------------------------------------------------------------
+  % Level 4 (y=5.6): coord_tracker control lines straight to P1_REG
+  \coordinate (p1_ctrl_in) at ($(P1_REG.west)+(0,2.1)$);
+  \draw[ieeeControl] (coord_tracker.east) -- node[midway, above, font=\sffamily\tiny, text=ieeeCoral] {\texttt{is\_last\_col, row}} (p1_ctrl_in);
+
+  % Coordinate tracker addressing lines down along left dedicated channel (x = 0.8)
+  \coordinate (coord_beat_turn) at ($(coord_tracker.west)+(-0.8,0)$);
+  \coordinate (ram_t_beat_in) at ($(ram_t_block.west)+(-0.8,0)$);
+  \draw[ieeeBus] (coord_tracker.west) -- (coord_beat_turn) -- (ram_t_beat_in) -- (ram_t_block.west);
+  \buswidth{coord_beat_turn}{ram_t_beat_in}{0.5}{6}
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=east] at ($(coord_tracker.west)+(-0.8,-0.7)$) {\texttt{beat[5:0]}};
+
+  % Level 3 (y=4.4): ram_e read data straight to P1_REG
+  \coordinate (p1_e_in) at ($(P1_REG.west)+(0,0.9)$);
+  \draw[ieeeBus] (ram_e_block.east) -- (p1_e_in);
+  \buswidth{ram_e_block.east}{p1_e_in}{0.5}{48}
+
+  % Level 2 (y=3.0): Dual-PWM Ingest to Quad canon12 to P1_REG
+  \draw[ieeeBus] (mul_in_port.east) -- (canon_unit.west);
+  \buswidth{mul_in_port.east}{canon_unit.west}{0.5}{48}
+
+  \coordinate (p1_prod_in) at ($(P1_REG.west)+(0,-0.5)$);
+  \draw[ieeeBus] (canon_unit.east) -- (p1_prod_in);
+  \buswidth{canon_unit.east}{p1_prod_in}{0.5}{48}
+
+  % Level 1 (y=1.6): ram_t read data straight to P1_REG
+  \coordinate (p1_t_in) at ($(P1_REG.west)+(0,-1.9)$);
+  \draw[ieeeBus] (ram_t_block.east) -- (p1_t_in);
+  \buswidth{ram_t_block.east}{p1_t_in}{0.5}{48}
+
+  % ----------------------------------------------------------------------------
+  % 4. Stage 2 Modular Accumulation & Intermediate Writeback
+  % ----------------------------------------------------------------------------
+  % Level 4 (y=5.6): Control pass-through straight to P2_REG
+  \coordinate (p1_ctrl_out) at ($(P1_REG.east)+(0,2.1)$);
+  \coordinate (p2_ctrl_in) at ($(P2_REG.west)+(0,2.1)$);
+  \draw[ieeeControl] (p1_ctrl_out) -- node[midway, above, font=\sffamily\tiny, text=ieeeCoral] {\texttt{ctrl}} (p2_ctrl_in);
+
+  % Level 3 (y=4.4): p1_e_curr bypass straight to P2_REG (with separated text and slash)
+  \coordinate (p1_e_out) at ($(P1_REG.east)+(0,0.9)$);
+  \coordinate (p2_e_in) at ($(P2_REG.west)+(0,0.9)$);
+  \draw[ieeeBus] (p1_e_out) -- (p2_e_in);
+  \buswidth{p1_e_out}{p2_e_in}{0.75}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(p1_e_out)!0.38!(p2_e_in)+(0,0.1)$) {\texttt{p1\_e\_curr bypass}};
+
+  % Level 2 (y=3.0): ALU Inputs and Output
+  \coordinate (p1_prod_out) at ($(P1_REG.east)+(0,-0.5)$);
+  \coordinate (alu2_in1) at ($(stage2_alu.west)+(0,0.25)$);
+  \draw[ieeeBus] (p1_prod_out) -- (alu2_in1);
+  \buswidth{p1_prod_out}{alu2_in1}{0.5}{48}
+
+  \coordinate (p1_t_out) at ($(P1_REG.east)+(0,-1.9)$);
+  \coordinate (p1_t_turn) at ($(p1_t_out)+(0.45,0)$);
+  \coordinate (alu2_in2) at ($(stage2_alu.west)+(0,-0.25)$);
+  \draw[ieeeBus] (p1_t_out) -- (p1_t_turn) |- (alu2_in2);
+  \buswidth{p1_t_out}{p1_t_turn}{0.5}{48}
+
+  \coordinate (p2_sum1_in) at ($(P2_REG.west)+(0,-0.5)$);
+  \draw[ieeeBus] (stage2_alu.east) -- (p2_sum1_in);
+  \buswidth{stage2_alu.east}{p2_sum1_in}{0.75}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(stage2_alu.east)!0.35!(p2_sum1_in)+(0,0.1)$) {\texttt{p2\_sum1}};
+
+  % Level 1 (y=1.5): ALU to Intermediate Writeback block
+  \draw[ieeeBus] (stage2_alu.south) -- (stage2_fb.north);
+  \buswidth{stage2_alu.south}{stage2_fb.north}{0.5}{48}
+
+  % Level 0 (y=0.25): Dedicated Intermediate Feedback Loop back to ram_t
+  % 0.55cm clearance beneath P1_REG.south (y=0.8); label positioned cleanly under ram_t
+  \coordinate (fb_drop) at ($(stage2_fb.south)+(0,-0.82)$);
+  \coordinate (fb_ram_t) at ($(ram_t_block.south)+(0,-0.82)$);
+  \draw[ieeeBus] (stage2_fb.south) -- (fb_drop) -- (fb_ram_t) -- (ram_t_block.south);
+  \buswidth{fb_drop}{fb_ram_t}{0.3}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(ram_t_block.south)+(0,-0.78)$) {\texttt{Intermediate Feedback [47:0]}};
+
+  % ----------------------------------------------------------------------------
+  % 5. Stage 3 Noise Injection & Public Key Bank Demux (ZERO OVERLAPS)
+  % ----------------------------------------------------------------------------
+  % Level 4 (y=5.6): Control bus continues from P2_REG to P3_REG.
+  % Branch drops vertically down to stage3_alu.north at x=19.1 (after e_curr has already dropped at x=17.4).
+  \coordinate (p2_ctrl_out) at ($(P2_REG.east)+(0,2.1)$);
+  \coordinate (p3_ctrl_in) at ($(P3_REG.west)+(0,2.1)$);
+  \coordinate (stage3_ctrl_drop) at ($(stage3_alu.north)+(0.85,0)$);
+  \coordinate (ctrl_branch_pt) at (19.1, 5.6);
+
+  \draw[ieeeControl] (p2_ctrl_out) -- (ctrl_branch_pt) |- (stage3_ctrl_drop);
+  \draw[ieeeControl] (ctrl_branch_pt) -- node[midway, above, font=\sffamily\tiny, text=ieeeCoral] {\texttt{last\_beat}} (p3_ctrl_in);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=west] at (19.15, 4.65) {\texttt{p2\_is\_last\_col}};
+
+  % Level 3 (y=4.4): P2_REG Error RAM bus drops down into stage3_alu.north at x=17.4.
+  % Since this bus runs at y=4.4 and turns down at x=17.4, it NEVER crosses the control bus at y=5.6!
+  \coordinate (p2_e_out) at ($(P2_REG.east)+(0,0.9)$);
+  \coordinate (stage3_e_drop) at ($(stage3_alu.north)+(-0.85,0)$);
+  \coordinate (p2_e_turn) at (17.4, 4.4);
+  \draw[ieeeBus] (p2_e_out) -- (p2_e_turn) |- (stage3_e_drop);
+  \buswidth{p2_e_out}{p2_e_turn}{0.75}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(p2_e_out)!0.35!(p2_e_turn)+(0,0.1)$) {\texttt{p2\_e\_curr}};
+
+  % Level 2 (y=3.0): ALU sum input and final output
+  \coordinate (p2_sum1_out) at ($(P2_REG.east)+(0,-0.5)$);
+  \draw[ieeeBus] (p2_sum1_out) -- (stage3_alu.west);
+  \buswidth{p2_sum1_out}{stage3_alu.west}{0.5}{48}
+
+  \coordinate (p3_final_in) at ($(P3_REG.west)+(0,-0.5)$);
+  \draw[ieeeBus] (stage3_alu.east) -- (p3_final_in);
+  \buswidth{stage3_alu.east}{p3_final_in}{0.75}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(stage3_alu.east)!0.35!(p3_final_in)+(0,0.1)$) {\texttt{p3\_final}};
+
+  % Level 1 (y=1.5): Coordinate bus to PK Demux and Demux to P3_REG
+  \coordinate (p2_coord_out) at ($(P2_REG.east)+(0,-2.0)$);
+  \draw[ieeeBus] (p2_coord_out) -- (pk_demux.west);
+  \buswidth{p2_coord_out}{pk_demux.west}{0.75}{8}
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=south] at ($(p2_coord_out)!0.35!(pk_demux.west)+(0,0.1)$) {\texttt{row, beat}};
+
+  \coordinate (p3_bank_in) at ($(P3_REG.west)+(0,-2.0)$);
+  \draw[ieeeBus] (pk_demux.east) -- (p3_bank_in);
+  \buswidth{pk_demux.east}{p3_bank_in}{0.75}{8}
+  \node[font=\sffamily\tiny, text=ieeeNavy, anchor=south] at ($(pk_demux.east)!0.35!(p3_bank_in)+(0,0.1)$) {\texttt{bank, addr}};
+
+  % ----------------------------------------------------------------------------
+  % 6. Stage 4 Storage Array, Commit & External Handshake
+  % ----------------------------------------------------------------------------
+  % Level 4 (y=5.6): Commit notification straight to stage4_commit.west
+  \coordinate (p3_ctrl_out) at ($(P3_REG.east)+(0,2.1)$);
+  \draw[ieeeControl] (p3_ctrl_out) -- node[midway, above, font=\sffamily\tiny, text=ieeeCoral] {\texttt{last\_beat}} (stage4_commit.west);
+
+  % Level 2 (y=2.7) & Level 1 (y=1.9): Data and Address to Public Key RAM Array
+  \coordinate (p3_final_out) at ($(P3_REG.east)+(0,-0.5)$);
+  \coordinate (p3_final_turn) at ($(p3_final_out)+(0.45,0)$);
+  \coordinate (ram_pk_in1) at ($(ram_pk_array.west)+(0,0.4)$);
+  \draw[ieeeBus] (p3_final_out) -- (p3_final_turn) |- (ram_pk_in1);
+  \buswidth{p3_final_out}{p3_final_turn}{0.5}{48}
+
+  \coordinate (p3_bank_out) at ($(P3_REG.east)+(0,-2.0)$);
+  \coordinate (p3_bank_turn) at ($(p3_bank_out)+(0.45,0)$);
+  \coordinate (ram_pk_in2) at ($(ram_pk_array.west)+(0,-0.4)$);
+  \draw[ieeeBus] (p3_bank_out) -- (p3_bank_turn) |- (ram_pk_in2);
+  \buswidth{p3_bank_out}{p3_bank_turn}{0.5}{8}
+
+  % Stage 4 Outputs to Top Sync IO
+  \coordinate (sync_done_in) at ($(fsm_sync_io.west)+(0,0.8)$);
+  \coordinate (commit_turn) at ($(stage4_commit.east)+(0.6,0)$);
+  \draw[ieeeControl] (stage4_commit.east) -- (commit_turn) |- (sync_done_in);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south west] at ($(commit_turn)+(-0.35,0.08)$) {\texttt{accum\_done}};
+
+  \coordinate (sync_pk_in) at ($(fsm_sync_io.west)+(0,-0.7)$);
+  \coordinate (sync_pk_turn) at ($(ram_pk_array.east)+(0.6,0)$);
+  \draw[ieeeBus] (ram_pk_array.east) -- (sync_pk_turn) |- (sync_pk_in);
+  \buswidth{ram_pk_array.east}{sync_pk_turn}{0.5}{48}
+
+  % ============================================================================
+  % CALLOUT IDENTIFIER BADGES (IDs 1 THROUGH 8)
+  % Strategically placed on top-left of blocks with clear separation from text
+  % ============================================================================
+  \node[calloutBadge] at ($(add_chain1.north west)+(0.35,-0.35)$) {1};
+  \node[calloutBadge] at ($(sub_chain1.north west)+(0.35,-0.35)$) {2};
+  \node[calloutBadge] at ($(add_skid.north west)+(0.35,-0.35)$) {3};
+  \node[calloutBadge] at ($(sub_skid.north west)+(0.35,-0.35)$) {3};
+  \node[calloutBadge] at ($(canon_unit.north west)+(0.35,-0.35)$) {4};
+  \node[calloutBadge] at ($(stage2_alu.north west)+(0.35,-0.35)$) {5};
+  \node[calloutBadge] at ($(ram_t_block.north west)+(0.35,-0.35)$) {6};
+  \node[calloutBadge] at ($(stage3_alu.north west)+(0.35,-0.35)$) {7};
+  \node[calloutBadge] at ($(stage4_commit.north east)+(-0.35,-0.32)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.4cm}
+% ==============================================================================
+% PUBLICATION-GRADE ARCHITECTURAL CALLOUT LEGEND TABLE
+% Schema: Exactly 4 columns (ID, Component / Signal, Width / Format, Description)
+% ==============================================================================
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{cllp{16.5cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Fast Dual Carry Adder & 12-bit / CARRY8 & Evaluates $S_{\text{raw}} = A + B$ and $S_{\text{sub}} = A + B + 4863$ in parallel; bit 13 selects final sum via 2:1 MUX. \\
+\textbf{2} & Fast Dual Borrow Subtractor & 12-bit / CARRY8 & Evaluates $D_{\text{raw}} = A - B$ and $D_{\text{add}} = A + 3329 - B$ in parallel; borrow bit 12 selects residue via 2:1 MUX. \\
+\textbf{3} & 2-Entry Elastic Skid Buffers & 12-bit / Boundary Regs & Decouples handshakes (\texttt{in\_ready = !skid\_valid\_q}); absorbs in-flight beats during stalls to maintain $II=1$ at 450 MHz. \\
+\textbf{4} & Quad Canonicalizer (\texttt{canon12}) & $4 \times 12\text{b}$ Bus & Normalizes multiplier quads from $[-1664, 1664]$ to $[0, 3328]$ via $v[11] \;?\; v+3329 : v$. \\
+\textbf{5} & Stage 2 Quad Accumulator & $4 \times 12\text{b}$ Parallel ALUs & Computes running dot-product sums $(t_{\text{curr}} + \text{prod}) \bmod 3329$ across $k$ matrix columns using parallel modular adders. \\
+\textbf{6} & Row Accumulator RAM (\texttt{ram\_t}) & $64 \times 48\text{b}$ LUTRAM & Distributed RAM holding intermediate polynomial vector sums; bypassed on col 0 and updated on non-final columns. \\
+\textbf{7} & Stage 3 Terminal Noise Adder & $4 \times 12\text{b}$ Parallel ALUs & Adds sampled CBD noise vector $\mathbf{e}$ on terminal column ($j = k-1$) and demultiplexes public key quads into 4 RAM banks. \\
+\textbf{8} & Stage 4 Commit \& Sync & Control Strobe & Registers final matrix beat (\texttt{p4\_is\_last\_mat\_beat}) and issues single-cycle \texttt{accum\_done} strobe to Top Master FSM. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
