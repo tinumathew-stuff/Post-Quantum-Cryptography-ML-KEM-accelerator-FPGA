@@ -628,3 +628,4 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-25 10:30:20**: `test(fpga): verify 100% routing completion with zero DRC violations`
 - **2026-07-25 14:15:00**: `docs(fpga): summarize FPGA implementation metrics across LUTs, FFs, DSPs, BRAMs`
 - **2026-07-25 16:50:30**: `refactor(fpga): clean up synthesis tcl script comments and options`
+- **2026-07-31 16:30:00**: `chore: finalize ML-KEM HPKA hardware accelerator release`
