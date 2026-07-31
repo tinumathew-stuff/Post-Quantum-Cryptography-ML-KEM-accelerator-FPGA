@@ -11,6 +11,7 @@
 [![BRAM Usage](https://img.shields.io/badge/Block%20RAM-0%20(Zero--BRAM)-success.svg)]()
 [![Verification](https://img.shields.io/badge/NIST%20KAT-100%25%20Verified-brightgreen.svg)]()
 [![HDL](https://img.shields.io/badge/HDL-SystemVerilog%20%2F%20Verilog-blueviolet.svg)]()
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE)
 
 </div>
 
@@ -219,4 +220,4 @@ A complete research paper formatted for IEEE Transactions is included in `paper/
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE) — see the LICENSE file for details.
+This project is licensed under the [GNU General Public License v2.0 (GPL-2.0)](LICENSE) — see the [LICENSE](LICENSE) file for details.
