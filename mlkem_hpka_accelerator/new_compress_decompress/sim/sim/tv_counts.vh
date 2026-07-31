@@ -1,0 +1,2 @@
+`define NUM_COMP_TESTS 4290
+`define NUM_DEC_TESTS 3122

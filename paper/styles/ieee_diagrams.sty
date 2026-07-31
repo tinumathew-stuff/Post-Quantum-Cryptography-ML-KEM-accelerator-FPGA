@@ -1,0 +1,224 @@
+%% ==============================================================================
+%% ieee_diagrams.sty
+%% Comprehensive TikZ style package for publication-grade IEEE research papers.
+%% Optimized for Hardware/FPGA/ASIC Architectures, Datapaths, and System Blocks.
+%% ==============================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ieee_diagrams}[2026/10/13 v1.0 IEEE Research Paper Diagram Styles]
+
+% Required TikZ libraries
+\RequirePackage{tikz}
+\RequirePackage{xcolor}
+\usetikzlibrary{
+  arrows.meta,
+  calc,
+  chains,
+  decorations.pathreplacing,
+  decorations.markings,
+  fit,
+  matrix,
+  positioning,
+  shapes.geometric,
+  shapes.misc,
+  shapes.symbols,
+  shadows,
+  backgrounds
+}
+
+% ------------------------------------------------------------------------------
+% 1. IEEE Publication Palette (High Contrast, Colorblind-Safe, B&W Print Safe)
+% ------------------------------------------------------------------------------
+\definecolor{ieeeNavy}{RGB}{27, 54, 93}         % #1B365D - Deep IEEE Navy
+\definecolor{ieeeBlue}{RGB}{43, 108, 176}       % #2B6CB0 - Primary Blue
+\definecolor{ieeeLightBlue}{RGB}{235, 244, 255} % #EBF4FF - Soft Blue Fill
+\definecolor{ieeeTeal}{RGB}{44, 122, 123}       % #2C7A7B - Datapath Teal
+\definecolor{ieeeLightTeal}{RGB}{230, 255, 250} % #E6FFFA - Soft Teal Fill
+\definecolor{ieeeCoral}{RGB}{197, 48, 48}       % #C53030 - Critical Path Accent
+\definecolor{ieeeLightCoral}{RGB}{255, 245, 245}% #FFF5F5 - Soft Red Accent Fill
+\definecolor{ieeeGold}{RGB}{183, 121, 31}       % #B7791F - Warning / Highlight Gold
+\definecolor{ieeeLightGold}{RGB}{254, 252, 191} % #FEFCBF - Soft Gold Fill
+\definecolor{ieeeSlate}{RGB}{74, 85, 104}       % #4A5568 - Neutral Structure Grey
+\definecolor{ieeeLightSlate}{RGB}{237, 242, 247}% #EDF2F7 - Neutral Light Fill
+\definecolor{ieeeBorder}{RGB}{45, 55, 72}       % #2D3748 - Crisp Dark Border
+\definecolor{ieeeDarkGreen}{RGB}{39, 103, 73}   % #276749 - Secondary Green Accent
+\definecolor{ieeeLightGreen}{RGB}{240, 255, 244}% #F0FFF4 - Soft Green Fill
+
+% ------------------------------------------------------------------------------
+% 2. Arrow Heads and Signal Styles
+% ------------------------------------------------------------------------------
+\tikzset{
+  >=Stealth,
+  ieeeArrow/.style={
+    ->,
+    >={Stealth[length=5pt, width=3.5pt]},
+    line width=0.7pt,
+    draw=ieeeBorder
+  },
+  ieeeDoubleArrow/.style={
+    <->,
+    >={Stealth[length=5pt, width=3.5pt]},
+    line width=0.7pt,
+    draw=ieeeBorder
+  },
+  ieeeBus/.style={
+    ->,
+    >={Stealth[length=6pt, width=4.5pt]},
+    line width=1.4pt,
+    draw=ieeeNavy
+  },
+  ieeeControl/.style={
+    ->,
+    >={Stealth[length=4.5pt, width=3pt]},
+    line width=0.6pt,
+    dashed,
+    draw=ieeeCoral
+  },
+  ieeeClock/.style={
+    ->,
+    >={Stealth[length=4pt, width=2.5pt]},
+    line width=0.6pt,
+    draw=ieeeTeal
+  }
+}
+
+% ------------------------------------------------------------------------------
+% 3. Core Architectural Node Styles
+% ------------------------------------------------------------------------------
+\tikzset{
+  % General Processing Core / Functional Unit Block
+  hwBlock/.style={
+    draw=ieeeBorder,
+    fill=ieeeLightBlue,
+    line width=0.75pt,
+    rounded corners=2pt,
+    align=center,
+    font=\sffamily\footnotesize,
+    inner sep=5pt,
+    drop shadow={opacity=0.10, shadow xshift=1pt, shadow yshift=-1pt}
+  },
+  % Critical Acceleration Core (e.g. NTT, Keccak, Field ALU)
+  hwCore/.style={
+    draw=ieeeNavy,
+    fill=ieeeLightBlue,
+    line width=1.0pt,
+    rounded corners=2pt,
+    align=center,
+    font=\sffamily\footnotesize\bfseries,
+    inner sep=6pt,
+    drop shadow={opacity=0.15, shadow xshift=1.2pt, shadow yshift=-1.2pt}
+  },
+  % Control & Orchestration Unit (e.g. FSM, Scheduler, Microcode)
+  ctrlBlock/.style={
+    draw=ieeeCoral,
+    fill=ieeeLightCoral,
+    line width=0.85pt,
+    rounded corners=2pt,
+    align=center,
+    font=\sffamily\footnotesize,
+    inner sep=5pt,
+    drop shadow={opacity=0.10, shadow xshift=1pt, shadow yshift=-1pt}
+  },
+  % Dedicated Memory / BRAM / Register File / FIFO Block
+  memBlock/.style={
+    draw=ieeeTeal,
+    fill=ieeeLightTeal,
+    line width=0.85pt,
+    rounded corners=1pt,
+    align=center,
+    font=\sffamily\footnotesize,
+    inner sep=5pt,
+    double,
+    double distance=0.8pt,
+    drop shadow={opacity=0.10, shadow xshift=1pt, shadow yshift=-1pt}
+  },
+  % Pipeline Register / Barrier
+  regBlock/.style={
+    draw=ieeeBorder,
+    fill=ieeeLightSlate,
+    line width=0.75pt,
+    align=center,
+    font=\sffamily\scriptsize\bfseries,
+    inner sep=3pt,
+    minimum width=0.55cm,
+    minimum height=1.4cm
+  },
+  % Arithmetic Logic Unit / Butterfly Unit (Trapezoidal ALU)
+  aluBlock/.style={
+    trapezium,
+    trapezium left angle=75,
+    trapezium right angle=75,
+    draw=ieeeNavy,
+    fill=ieeeLightBlue,
+    line width=0.85pt,
+    align=center,
+    font=\sffamily\footnotesize\bfseries,
+    inner sep=4pt
+  },
+  % Multiplexer Block (Narrow Trapezoid)
+  muxBlock/.style={
+    trapezium,
+    trapezium left angle=70,
+    trapezium right angle=70,
+    trapezium stretches=true,
+    shape border rotate=270,
+    draw=ieeeBorder,
+    fill=ieeeLightSlate,
+    line width=0.7pt,
+    align=center,
+    font=\sffamily\tiny\bfseries,
+    inner sep=2pt,
+    minimum width=0.5cm,
+    minimum height=1.0cm
+  },
+  % External Interface / Host Port (e.g. AXI4-Lite, PCIe, DMA)
+  ioBlock/.style={
+    draw=ieeeGold,
+    fill=ieeeLightGold,
+    line width=0.85pt,
+    rounded corners=1pt,
+    align=center,
+    font=\sffamily\footnotesize\bfseries,
+    inner sep=5pt
+  },
+  % Subsystem / Group Container Frame
+  subsystemFrame/.style={
+    draw=ieeeSlate,
+    fill=ieeeLightSlate!35,
+    line width=0.75pt,
+    dashed,
+    rounded corners=4pt,
+    inner sep=8pt
+  },
+  % Subsystem Label
+  subsystemLabel/.style={
+    font=\sffamily\bfseries\scriptsize,
+    text=ieeeNavy,
+    fill=white,
+    inner sep=2pt,
+    rounded corners=1pt,
+    draw=ieeeSlate!40,
+    line width=0.4pt
+  },
+  % Circular Identifier Callout Badge for Dense Diagrams
+  calloutBadge/.style={
+    circle,
+    draw=ieeeNavy,
+    fill=ieeeNavy,
+    text=white,
+    font=\sffamily\scriptsize\bfseries,
+    inner sep=1pt,
+    minimum size=13pt
+  }
+}
+
+% ------------------------------------------------------------------------------
+% 4. Bus Width Tick Annotation Macro
+% Usage: \buswidth{node1}{node2}{pos}{label}
+% ------------------------------------------------------------------------------
+\newcommand{\buswidth}[4]{
+  \path ($(#1)!#3!(#2)$) node[coordinate] (bwpt) {};
+  \draw[line width=0.6pt, draw=ieeeNavy] ($(bwpt)+(-2pt,-3pt)$) -- ($(bwpt)+(2pt,3pt)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south east, inner sep=1pt] at ($(bwpt)+(1pt,2pt)$) {#4};
+}
+
+\endinput

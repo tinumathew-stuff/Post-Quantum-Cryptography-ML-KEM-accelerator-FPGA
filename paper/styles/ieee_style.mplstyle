@@ -1,0 +1,81 @@
+# ==============================================================================
+# ieee_style.mplstyle
+# Matplotlib style specification adhering strictly to IEEE Transactions standards.
+# Suitable for both single-column (3.5 in) and double-column (7.16 in) figures.
+# ==============================================================================
+
+# Figure Dimensions & Layout
+figure.figsize: 3.5, 2.5
+figure.dpi: 300
+figure.autolayout: True
+
+# Typography (IEEE serif standard: Times, Nimbus Roman, or Computer Modern)
+font.family: serif
+font.serif: Times, Times New Roman, Nimbus Roman, DejaVu Serif, Computer Modern Roman
+font.size: 8.0
+
+# Axes & Titles
+axes.titlesize: 9.0
+axes.titleweight: bold
+axes.titlepad: 6.0
+axes.labelsize: 8.5
+axes.labelweight: normal
+axes.labelpad: 4.0
+axes.linewidth: 0.8
+axes.edgecolor: 2D3748
+axes.spines.top: False
+axes.spines.right: False
+
+# Ticks
+xtick.top: False
+xtick.bottom: True
+xtick.major.size: 3.5
+xtick.minor.size: 2.0
+xtick.major.width: 0.8
+xtick.minor.width: 0.6
+xtick.labelsize: 7.5
+xtick.direction: out
+
+ytick.left: True
+ytick.right: False
+ytick.major.size: 3.5
+ytick.minor.size: 2.0
+ytick.major.width: 0.8
+ytick.minor.width: 0.6
+ytick.labelsize: 7.5
+ytick.direction: out
+
+# Grid Lines (Clean, subtle structure)
+axes.grid: True
+grid.color: E2E8F0
+grid.linestyle: --
+grid.linewidth: 0.5
+grid.alpha: 0.7
+
+# Legend Styling
+legend.fontsize: 7.5
+legend.frameon: True
+legend.framealpha: 0.95
+legend.facecolor: white
+legend.edgecolor: CBD5E0
+legend.fancybox: False
+legend.borderaxespad: 0.5
+legend.handlelength: 1.6
+legend.handletextpad: 0.4
+legend.columnspacing: 1.0
+
+# Line Plots & Markers
+lines.linewidth: 1.4
+lines.markersize: 4.5
+lines.markeredgewidth: 0.8
+
+# Color Cycle: IEEE Publication High-Contrast / Colorblind-Safe Palette
+# [Deep Navy, Coral Red, Teal, Gold Amber, Royal Purple, Forest Green]
+axes.prop_cycle: cycler('color', ['1B365D', 'C53030', '2C7A7B', 'D69E2E', '6B46C1', '276749'])
+
+# Saving Figures
+savefig.dpi: 600
+savefig.format: pdf
+savefig.bbox: tight
+savefig.pad_inches: 0.03
+savefig.transparent: False
