@@ -1,0 +1,342 @@
+\documentclass[varwidth=36cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large ML-KEM HPKA: Encapsulation Datapath \& Micro-Scheduler Architecture} \\[4pt]
+{\sffamily\footnotesize Subsystem 02 Microarchitecture --- RTL Modules: \texttt{mlkem\_encap\_datapath.svh}, \texttt{mlkem\_keygen\_top.sv}}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}[node distance=1.1cm and 1.6cm]
+
+  % ============================================================================
+  % GROUP 1: EXTERNAL INGESTION & PUBLIC KEY EXTRACTION (COLUMN 1, x = 3.0)
+  % ============================================================================
+  \node[ioBlock, minimum width=4.6cm, minimum height=1.2cm] (host_in) at (3.0, 1.0) {
+    \textbf{Host Command / IO Port}\\[2pt]
+    \scriptsize \texttt{start, mode[1:0]=01, k[1:0]} $\mid$ \texttt{ek\_in[63:0]}
+  };
+
+  \node[hwBlock, minimum width=4.6cm, minimum height=1.1cm] (pk_decoder) at (3.0, -1.0) {
+    \textbf{PK Unpacker / Validator}\\[2pt]
+    \scriptsize \texttt{poly\_decode12\_lane} ($64\text{b} \rightarrow 4 \times 12\text{b}$) $\mid$ $c < 3329$
+  };
+
+  \node[regBlock, minimum width=4.6cm, minimum height=0.8cm] (h_reg) at (3.0, -2.6) {
+    \textbf{Digest Register} \texttt{enc\_h\_q[255:0]} ($H(ek)$)\\[2pt]
+    \scriptsize Public Key Digest for Confirmation Hash
+  };
+
+  \node[regBlock, minimum width=4.6cm, minimum height=0.8cm] (rho_reg) at (3.0, -4.4) {
+    \textbf{Seed Register} \texttt{enc\_rho\_q[255:0]} ($\rho$)\\[2pt]
+    \scriptsize Extracted Public Seed for Matrix Sampling
+  };
+
+  \node[memBlock, minimum width=4.6cm, minimum height=1.1cm] (ram_pk) at (3.0, -6.6) {
+    \textbf{Public Key LUTRAM Array}\\[2pt]
+    \scriptsize \texttt{ram\_pk\_b0..b3} ($4 \times 64 \times 48\text{b}$, 3 Decoupled Ports)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(host_in)(pk_decoder)(h_reg)(rho_reg)(ram_pk), inner sep=8pt] (frame_ingest) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_ingest.north west)+(0.25, -0.05)$) {External Ingestion \& PK Extraction};
+  \end{scope}
+
+  % ============================================================================
+  % GROUP 2: MICRO-SCHEDULER, KECCAK SPONGE & SAMPLER (COLUMN 2, x = 10.5)
+  % ============================================================================
+  \node[ctrlBlock, minimum width=5.4cm, minimum height=1.3cm] (enc_fsm) at (10.5, 1.0) {
+    \textbf{Encap Micro-Scheduler FSM}\\[2pt]
+    \scriptsize 18-State Controller (\texttt{EC\_IDLE} $\rightarrow$ \texttt{EC\_FINISH})
+  };
+
+  \node[hwCore, minimum width=5.4cm, minimum height=1.3cm] (keccak_core) at (10.5, -1.2) {
+    \textbf{Keccak-f[1600] / Sampler}\\[2pt]
+    \scriptsize SHA3-256 $H(ek)$ $\mid$ SHA3-512 $(\hat{K}, r)$ $\mid$ CBD / $\hat{\mathbf{A}}^T$ Sampler
+  };
+
+  \node[regBlock, text width=2.4cm, minimum width=2.5cm, minimum height=0.9cm] (coins_sec_reg) at (10.5, -3.4) {
+    \textbf{Coins / Secret}\\[1pt]
+    \scriptsize \texttt{coins\_q} ($r$) $\mid$ \texttt{secret\_q} ($\hat{K}$)
+  };
+
+  \node[memBlock, text width=2.3cm, minimum width=2.4cm, minimum height=1.1cm] (ram_e2) at (8.7, -5.4) {
+    \textbf{Error RAM $e_2$}\\[1pt]
+    \scriptsize $64 \times 48\text{b}$ $\mid$ $e_2 + m$
+  };
+
+  \node[memBlock, text width=2.3cm, minimum width=2.4cm, minimum height=1.1cm] (ram_e) at (12.3, -5.4) {
+    \textbf{Error RAM $\mathbf{e}_1$}\\[1pt]
+    \scriptsize $256 \times 48\text{b}$ $\mid$ CBD Error
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(enc_fsm)(keccak_core)(coins_sec_reg)(ram_e2)(ram_e), inner sep=8pt] (frame_sched) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_sched.north west)+(0.25, -0.05)$) {Micro-Scheduler \& Sponge};
+  \end{scope}
+
+  % ============================================================================
+  % GROUP 3: TRANSFORMS & DYADIC EVALUATION (COLUMN 3, x = 19.5)
+  % ============================================================================
+  \node[memBlock, minimum width=5.4cm, minimum height=1.1cm] (ram_r) at (19.5, 1.0) {
+    \textbf{Random Vector RAM ($\mathbf{r}$ / $\hat{\mathbf{r}}$)}\\[2pt]
+    \scriptsize \texttt{ram\_s\_b0..b3} ($4 \times 64 \times 48\text{b}$ LUTRAM)
+  };
+
+  \node[hwCore, minimum width=5.4cm, minimum height=1.2cm] (ntt_core) at (19.5, -1.2) {
+    \textbf{4-Butterfly NTT / INTT Core}\\[2pt]
+    \scriptsize Forward $\text{NTT}(\mathbf{r})$, Inverse $\text{INTT}(\mathbf{u}, v)$ (0 DSPs)
+  };
+
+  \node[hwCore, minimum width=5.4cm, minimum height=1.2cm] (mul_core) at (19.5, -3.4) {
+    \textbf{Dual-PWM Karatsuba Multiplier}\\[2pt]
+    \scriptsize 8x DSP48E2 Slices, 24-Cycle Latency $\mid$ $\hat{\mathbf{A}}^T \circ \hat{\mathbf{r}}$, $\hat{\mathbf{t}}^T \circ \hat{\mathbf{r}}$
+  };
+
+  \node[aluBlock, minimum width=5.4cm, minimum height=0.8cm] (acc_pipe) at (19.5, -5.2) {
+    \textbf{Modular Accumulator Pipeline}\\[2pt]
+    \scriptsize 4-Stage Adder Tree Modulo 3329 (\texttt{CARRY8})
+  };
+
+  \node[memBlock, minimum width=5.4cm, minimum height=1.0cm] (ram_prod) at (19.5, -7.0) {
+    \textbf{5-Bank Product RAM Array}\\[2pt]
+    \scriptsize $5 \times 64 \times 48\text{b}$ LUTRAM $\mid$ Banks 0..3: $\hat{\mathbf{u}}_{\text{prod}}$, Bank 4: $\hat{v}_{\text{prod}}$
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(ram_r)(ntt_core)(mul_core)(acc_pipe)(ram_prod), inner sep=8pt] (frame_trans) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_trans.north west)+(0.25, -0.05)$) {Transforms \& Dyadic Evaluation};
+  \end{scope}
+
+  % ============================================================================
+  % GROUP 4: POST-PROCESSING, COMPRESSION & CIPHERTEXT (COLUMN 4, x = 28.4)
+  % ============================================================================
+  \node[hwBlock, minimum width=5.2cm, minimum height=1.1cm] (post_add) at (28.4, 1.0) {
+    \textbf{Dual-Lane Noise Adder}\\[2pt]
+    \scriptsize $\mathbf{u} = \text{INTT}(\hat{\mathbf{u}}) + \mathbf{e}_1 \pmod q \mid v = \text{INTT}(\hat{v}) + (e_2 + m) \pmod q$
+  };
+
+  \node[hwBlock, minimum width=5.2cm, minimum height=1.0cm] (compressor) at (28.4, -1.2) {
+    \textbf{Dual-Lane Poly Compressor}\\[2pt]
+    \scriptsize $\mathbf{u} \rightarrow d_u \in \{10,11\}\text{b}, \quad v \rightarrow d_v \in \{4,5\}\text{b}$
+  };
+
+  \node[hwBlock, minimum width=5.2cm, minimum height=1.0cm] (encoder) at (28.4, -3.2) {
+    \textbf{Ciphertext Bit-Packer / Encoder}\\[2pt]
+    \scriptsize 8 coeffs $\rightarrow$ 88-bit word (\texttt{enc\_ct\_data[87:0]})
+  };
+
+  \node[memBlock, minimum width=5.2cm, minimum height=1.0cm] (ram_ct) at (28.4, -5.2) {
+    \textbf{Ciphertext Retention LUTRAM}\\[2pt]
+    \scriptsize \texttt{enc\_ct\_ram} ($160 \times 88\text{b}$ LUTRAM, 0 BRAM) $\mid$ Dual Read
+  };
+
+  \node[ioBlock, minimum width=5.2cm, minimum height=0.8cm] (ct_stream) at (28.4, -7.0) {
+    \textbf{Streaming Ciphertext Port}\\[2pt]
+    \scriptsize \texttt{ct\_out[87:0], ct\_out\_valid, ct\_out\_bytes}
+  };
+
+  \node[ioBlock, minimum width=5.2cm, minimum height=0.8cm] (ss_mux) at (28.4, -8.7) {
+    \textbf{Constant-Time Secret Output Mux}\\[2pt]
+    \scriptsize \texttt{shared\_secret[255:0]}: $\hat{K}$ vs. $K_{\text{reject}}$
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(post_add)(compressor)(encoder)(ram_ct)(ct_stream)(ss_mux), inner sep=8pt] (frame_ct) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_ct.north west)+(0.25, -0.05)$) {Ciphertext Synthesis \& Emission};
+  \end{scope}
+
+  % ============================================================================
+  % INTERCONNECT ROUTING: STRICT ORTHOGONAL ZERO-OVERLAP MANHATTAN CHANNELS
+  % ============================================================================
+
+  % 1. Host Control to Encap FSM (Pure Horizontal across Channel 1 at y = 1.0)
+  \draw[ieeeControl] (host_in.east) -- (enc_fsm.west);
+
+  % 2. Host ek_in to PK Unpacker (Direct Vertical Drop inside Col 1)
+  \draw[ieeeBus] (host_in.south) -- (pk_decoder.north);
+  \buswidth{host_in.south}{pk_decoder.north}{0.5}{64}
+
+  % 3. PK Unpacker to Public Key RAM (West Outer Track W2 at x = -0.7)
+  \coordinate (c_pk_w1) at ($(pk_decoder.west)+(0,0.1)$);
+  \coordinate (c_pk_w2) at (-0.7, -0.9);
+  \coordinate (c_pk_w3) at (-0.7, -6.6);
+  \draw[ieeeBus] (c_pk_w1) -- (c_pk_w2) -- (c_pk_w3) -- (ram_pk.west);
+  \buswidth{c_pk_w2}{c_pk_w3}{0.5}{48}
+
+  % 4. PK Unpacker to Public Seed Register (West Inner Track W1 at x = 0.0)
+  \coordinate (c_rho_w1) at ($(pk_decoder.west)+(0,-0.2)$);
+  \coordinate (c_rho_w2) at (0.0, -1.2);
+  \coordinate (c_rho_w3) at (0.0, -4.4);
+  \draw[ieeeBus] (c_rho_w1) -- (c_rho_w2) -- (c_rho_w3) -- (rho_reg.west);
+  \buswidth{c_rho_w2}{c_rho_w3}{0.5}{256}
+
+  % 5. PK Unpacker to Keccak SHA3-256 (Pure Horizontal across Channel 1 at y = -1.0)
+  \coordinate (c_pk_sha1) at ($(pk_decoder.east)+(0,0.1)$);
+  \coordinate (c_pk_sha2) at ($(keccak_core.west)+(0,0.2)$);
+  \draw[ieeeBus] (c_pk_sha1) -- (c_pk_sha2);
+  \buswidth{c_pk_sha1}{c_pk_sha2}{0.5}{64}
+
+  % 6. Keccak Digest Output to H(ek) Register (Channel 1, Track 1A at x = 6.0)
+  \coordinate (c_hek1) at (6.0, -1.2);
+  \coordinate (c_hek2) at (6.0, -2.6);
+  \draw[ieeeBus] ($(keccak_core.west)+(0,-0.1)$) -- (c_hek1) -- (c_hek2) -- (h_reg.east);
+  \buswidth{c_hek1}{c_hek2}{0.5}{256}
+
+  % 7. Public Seed rho to Keccak Matrix Sampler (Channel 1, Track 1B at x = 6.8)
+  % Concentric non-crossing: leaves at y = -4.4, rises along x = 6.8 (clear of x = 6.0) to y = -1.8
+  \coordinate (c_rho1) at (6.8, -4.4);
+  \coordinate (c_rho2) at (6.8, -1.8);
+  \draw[ieeeBus] (rho_reg.east) -- (c_rho1) -- (c_rho2) -- ($(keccak_core.west)+(0,-0.6)$);
+  \buswidth{c_rho1}{c_rho2}{0.5}{256}
+
+  % 8. Encap FSM to Keccak Control (Direct Vertical Drop inside Col 2)
+  \draw[ieeeControl] (enc_fsm.south) -- (keccak_core.north);
+
+  % 9. Keccak to Coins & Secret Latches (Direct Vertical Center Drop inside Col 2)
+  \draw[ieeeBus] (keccak_core.south) -- (coins_sec_reg.north);
+  \buswidth{keccak_core.south}{coins_sec_reg.north}{0.5}{512}
+
+  % 10. Keccak CBD Sampler to Error RAMs (Direct Symmetrical Drops outside coins_sec_reg)
+  \coordinate (c_e2_drop) at (8.7, -1.9);
+  \draw[ieeeBus] (c_e2_drop) -- (ram_e2.north);
+  \buswidth{c_e2_drop}{ram_e2.north}{0.5}{48}
+
+  \coordinate (c_e1_drop) at (12.3, -1.9);
+  \draw[ieeeBus] (c_e1_drop) -- (ram_e.north);
+  \buswidth{c_e1_drop}{ram_e.north}{0.5}{48}
+
+  % 11. Keccak CBD Sampler to Random Vector RAM r (Channel 2, Track 2A at x = 13.8)
+  \coordinate (c_r1) at (13.8, -0.9);
+  \coordinate (c_r2) at (13.8, 1.0);
+  \draw[ieeeBus] ($(keccak_core.east)+(0,0.3)$) -- (c_r1) -- (c_r2) -- (ram_r.west);
+  \buswidth{c_r1}{c_r2}{0.5}{48}
+
+  % 12. Keccak Matrix Sampler to Multiplier Input B (Channel 2, Track 2B at x = 14.4)
+  \coordinate (c_mat1) at (14.4, -1.5);
+  \coordinate (c_mat2) at (14.4, -3.4);
+  \draw[ieeeBus] ($(keccak_core.east)+(0,-0.3)$) -- (c_mat1) -- (c_mat2) -- ($(mul_core.west)+(0,0.0)$);
+  \buswidth{c_mat1}{c_mat2}{0.5}{48}
+
+  % 13. Forward NTT Transform Loop between ram_r and NTT Core (Direct Vertical Double-Arrow)
+  \coordinate (c_ntt_r1) at ($(ram_r.south)+(-0.9,0)$);
+  \coordinate (c_ntt_r2) at ($(ntt_core.north)+(-0.9,0)$);
+  \draw[ieeeDoubleArrow, line width=1.4pt, draw=ieeeNavy] (c_ntt_r1) -- (c_ntt_r2);
+  \buswidth{c_ntt_r1}{c_ntt_r2}{0.5}{48}
+
+  % 14. Transformed Vector r_hat from ram_r to Multiplier Input A (Channel 2, Track 2-rhat at x = 16.4)
+  \coordinate (c_rhat1) at (16.4, 0.7);
+  \coordinate (c_rhat2) at (16.4, -3.0);
+  \draw[ieeeBus] ($(ram_r.west)+(0,-0.3)$) -- (c_rhat1) -- (c_rhat2) -- ($(mul_core.west)+(0,0.4)$);
+  \buswidth{c_rhat1}{c_rhat2}{0.5}{48}
+
+  % 15. Multiplier to Accumulator Pipeline (Direct Vertical Drop inside Col 3)
+  \draw[ieeeBus] (mul_core.south) -- (acc_pipe.north);
+  \buswidth{mul_core.south}{acc_pipe.north}{0.5}{48}
+
+  % 16. Accumulator Pipeline to 5-Bank Product RAM (Direct Vertical Drop inside Col 3)
+  \draw[ieeeBus] (acc_pipe.south) -- (ram_prod.north);
+  \buswidth{acc_pipe.south}{ram_prod.north}{0.5}{48}
+
+  % 17. Product RAM to INTT Engine in ntt_core (Channel 3, Track 3A at x = 22.9)
+  \coordinate (c_prod1) at (22.9, -7.0);
+  \coordinate (c_prod2) at (22.9, -1.5);
+  \draw[ieeeBus] (ram_prod.east) -- (c_prod1) -- (c_prod2) -- ($(ntt_core.east)+(0,-0.3)$);
+  \buswidth{c_prod1}{c_prod2}{0.5}{48}
+
+  % 18. INTT Output to Post-Processing Noise Adder (Channel 3, Track 3B at x = 23.7)
+  \coordinate (c_intt1) at (23.7, -0.9);
+  \coordinate (c_intt2) at (23.7, 1.3);
+  \draw[ieeeBus] ($(ntt_core.east)+(0,0.3)$) -- (c_intt1) -- (c_intt2) -- ($(post_add.west)+(0,0.3)$);
+  \buswidth{c_intt1}{c_intt2}{0.5}{24}
+
+  % 19. Public Key t_hat from ram_pk to Multiplier Input B: Dedicated Underpass Track B1 at y = -8.5
+  % Leaves Col 1 at y = -6.6, drops in Channel 1 (x = 5.8) to y = -8.5, runs under Col 2 to x = 16.0, rises to mul_core.west at y = -3.8
+  \coordinate (c_t1) at (5.8, -6.6);
+  \coordinate (c_t2) at (5.8, -8.5);
+  \coordinate (c_t3) at (16.0, -8.5);
+  \coordinate (c_t4) at (16.0, -3.8);
+  \draw[ieeeBus] (ram_pk.east) -- (c_t1) -- (c_t2) -- (c_t3) -- (c_t4) -- ($(mul_core.west)+(0,-0.4)$);
+  \buswidth{c_t2}{c_t3}{0.28}{48}
+
+  % 20. Noise RAM e1 to Post-Processing Adder: Dedicated Corridor Track B2 at y = -9.2
+  % Leaves Col 2 at y = -5.4, runs to x = 15.2, vaults over Track B1 at y = -8.5, drops to y = -9.2, runs under Col 3 to x = 24.7, rises to post_add.west
+  \coordinate (c_noise1) at (15.2, -5.4);
+  \coordinate (c_noise2) at (15.2, -9.2);
+  \coordinate (c_noise3) at (24.7, -9.2);
+  \coordinate (c_noise4) at (24.7, 0.7);
+  \draw[ieeeBus] (ram_e.east) -- (c_noise1) -- (15.2, -8.32) arc(90:-90:0.18) -- (c_noise2) -- (c_noise3) -- (c_noise4) -- ($(post_add.west)+(0,-0.3)$);
+  \buswidth{c_noise2}{c_noise3}{0.5}{24}
+
+  % 21. Candidate Secret K_hat from Coins Reg to Secret Output Mux: Outermost Corridor Track B3 at y = -10.0
+  % Drops from coins_sec_reg.south (x = 10.5) through center gap to y = -6.3, runs under ram_e to x = 14.4, vaults over Track B1 at y = -8.5, drops to y = -10.0, runs under Col 3 & 4 to x = 28.4
+  \coordinate (c_sec1) at (10.5, -3.85);
+  \coordinate (c_sec2) at (10.5, -6.3);
+  \coordinate (c_sec3) at (14.4, -6.3);
+  \coordinate (c_sec4) at (14.4, -10.0);
+  \coordinate (c_sec5) at (28.4, -10.0);
+  \draw[ieeeBus] (c_sec1) -- (c_sec2) -- (c_sec3) -- (14.4, -8.32) arc(90:-90:0.18) -- (c_sec4) -- (c_sec5) -- (ss_mux.south);
+  \buswidth{c_sec4}{c_sec5}{0.5}{256}
+
+  % 22. Post-Add to Compressor to Encoder to CT RAM to Streaming CT (Direct Vertical Drops inside Col 4)
+  \draw[ieeeBus] (post_add.south) -- (compressor.north);
+  \buswidth{post_add.south}{compressor.north}{0.5}{24}
+
+  \draw[ieeeBus] (compressor.south) -- (encoder.north);
+  \buswidth{compressor.south}{encoder.north}{0.5}{22}
+
+  \draw[ieeeBus] (encoder.south) -- (ram_ct.north);
+  \buswidth{encoder.south}{ram_ct.north}{0.5}{88}
+
+  \draw[ieeeBus] (ram_ct.south) -- (ct_stream.north);
+  \buswidth{ram_ct.south}{ct_stream.north}{0.5}{88}
+
+  % ============================================================================
+  % CALLOUT IDENTIFIER BADGES (Cleanly positioned in top-right corners)
+  % ============================================================================
+  \node[calloutBadge] at ($(enc_fsm.north east)+(-0.35,-0.32)$) {1};
+  \node[calloutBadge] at ($(pk_decoder.north east)+(-0.35,-0.32)$) {2};
+  \node[calloutBadge] at ($(keccak_core.north east)+(-0.35,-0.32)$) {3};
+  \node[calloutBadge] at ($(ram_e2.north east)+(-0.30,-0.30)$) {4};
+  \node[calloutBadge] at ($(mul_core.north east)+(-0.35,-0.32)$) {5};
+  \node[calloutBadge] at ($(ram_prod.north east)+(-0.35,-0.32)$) {6};
+  \node[calloutBadge] at ($(post_add.north east)+(-0.35,-0.32)$) {7};
+  \node[calloutBadge] at ($(ram_ct.north east)+(-0.35,-0.32)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.45cm}
+% ==============================================================================
+% PUBLICATION-GRADE ARCHITECTURAL CALLOUT LEGEND TABLE (EXACTLY 4 COLUMNS)
+% ==============================================================================
+\begin{center}
+\footnotesize
+\begin{tabular}{@{} cllp{16.5cm} @{}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Encap Micro-Scheduler & 18-State FSM & Coordinates the 18-state encapsulation flow (\texttt{EC\_0} to \texttt{EC\_17}), polynomial loop counters, and coprocessor handshaking. \\
+\addlinespace[3pt]
+\textbf{2} & Public Key Decoder & 64b $\rightarrow$ 48b Stream & Deserializes 64-bit $ek$ stream into four 12-bit coefficients per clock, verifies $c < 3329$, and extracts seed $\rho$. \\
+\addlinespace[3pt]
+\textbf{3} & Keccak Sponge Core & 64b Lane Sponge & Computes SHA3-256 $H(ek)$, SHA3-512 $(\hat{K},r)$, CBD noise ($\mathbf{r}, \mathbf{e}_1, e_2$), and matrix rejection sampling $\hat{\mathbf{A}}^T$. \\
+\addlinespace[3pt]
+\textbf{4} & Pipelined Message Adder & $64 \times 48\text{b}$ LUTRAM & 3-stage adder pipeline computing $e_2 + \text{Decompress}_1(m) \cdot 1665 \pmod q$ concurrently with CBD sampling beats. \\
+\addlinespace[3pt]
+\textbf{5} & Pointwise Multiplier & 8x DSP48E2 Slices & Pipelined dual-channel Karatsuba multiplier executing $\hat{\mathbf{A}}^T \circ \hat{\mathbf{r}}$ and $\hat{\mathbf{t}}^T \circ \hat{\mathbf{r}}$ with fixed 24-cycle latency. \\
+\addlinespace[3pt]
+\textbf{6} & Product Accumulator RAM & $5 \times 64 \times 48\text{b}$ LUTRAM & 5-bank zero-BRAM storage buffering vector products $\hat{\mathbf{u}}_{\text{prod}}$ (banks 0--3) and scalar product $\hat{v}_{\text{prod}}$ (bank 4). \\
+\addlinespace[3pt]
+\textbf{7} & Dual-Lane Noise Adder & $2 \times 12\text{b}$ Coeffs & Computes $\mathbf{u} = \text{INTT}(\hat{\mathbf{u}}) + \mathbf{e}_1 \pmod q$ and $v = \text{INTT}(\hat{v}) + (e_2 + m) \pmod q$ before poly compression. \\
+\addlinespace[3pt]
+\textbf{8} & Ciphertext Retention RAM & $160 \times 88\text{b}$ LUTRAM & Holds compressed ciphertext with dual read ports for decapsulation lockstep comparison and host readout. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

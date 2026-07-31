@@ -1,0 +1,489 @@
+\documentclass[varwidth=36.0cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large ML-KEM HPKA: Dual-Channel 8-DSP Karatsuba Pointwise Multiplier} \\[3pt]
+{\sffamily\footnotesize Subsystem 06 Microarchitecture --- Streaming Arithmetic \& Modular Reduction Datapath (\texttt{mlkem\_mul\_stream.sv} \& \texttt{mlkem\_reduce25.sv})}
+\end{center}
+\vspace{0.25cm}
+
+\begin{tikzpicture}[node distance=1.0cm and 1.2cm]
+
+  % ============================================================================
+  % TOP PIPELINE CYCLE TIMELINE BANNER (24-Cycle Latency Tracking)
+  % ============================================================================
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightBlue!85, rounded corners=2pt, draw=ieeeNavy!50, inner sep=2.5pt] at (2.0, 15.4) {CC 0--1: In-Norm};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightBlue!85, rounded corners=2pt, draw=ieeeNavy!50, inner sep=2.5pt] at (10.2, 15.4) {CC 2--5: Primary DSPs (4 Cyc)};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightCoral!85, rounded corners=2pt, draw=ieeeCoral!50, inner sep=2.5pt] at (15.4, 15.4) {CC 6--10: Barrett 1 (5 Cyc)};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightBlue!85, rounded corners=2pt, draw=ieeeNavy!50, inner sep=2.5pt] at (20.4, 15.4) {CC 11--14: Twiddle DSP (4 Cyc)};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightSlate!85, rounded corners=2pt, draw=ieeeBorder!50, inner sep=2.5pt] at (24.2, 15.4) {CC 15: Add};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightCoral!85, rounded corners=2pt, draw=ieeeCoral!50, inner sep=2.5pt] at (27.2, 15.4) {CC 16--20: Final Barrett (5 Cyc)};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, fill=ieeeLightTeal!85, rounded corners=2pt, draw=ieeeTeal!50, inner sep=2.5pt] at (32.4, 15.4) {CC 21--24: Acc, Norm, FIFO};
+
+  % ============================================================================
+  % GROUP 1: STREAMING INPUT & CREDIT FLOW CONTROLLER (Left Column, X=2.0)
+  % ============================================================================
+  \node[ioBlock, minimum width=3.4cm, minimum height=1.5cm] (in_port) at (2.0, 12.6) {
+    \textbf{Streaming Input}\\[2pt]
+    \scriptsize Signed \texttt{s\_a, s\_b [12:0]}\\
+    \scriptsize Ready/Valid Handshake
+  };
+
+  \node[hwBlock, minimum width=3.4cm, minimum height=1.4cm] (norm_unit) at (2.0, 9.8) {
+    \textbf{Input Normalizer (8x)}\\[2pt]
+    \scriptsize $[-3328, 3328] \to [0, 3328]$\\
+    \scriptsize Canonical 12b Unsigned
+  };
+
+  \node[ctrlBlock, minimum width=3.4cm, minimum height=1.3cm] (credit_unit) at (2.0, 6.2) {
+    \textbf{Credit Flow Tracker}\\[2pt]
+    \scriptsize 32-Entry Pipeline Credit Counter\\
+    \scriptsize Skid Backpressure (\texttt{s\_ready})
+  };
+
+  \node[ctrlBlock, minimum width=3.4cm, minimum height=1.3cm] (fsm_unit) at (2.0, 3.4) {
+    \textbf{Sequencer \& Control}\\[2pt]
+    \scriptsize Term \& Row Index Tracking\\
+    \scriptsize Address \& Pipeline Control
+  };
+
+  \coordinate (frame_in_w) at (-0.45, 8.0);
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(in_port)(norm_unit)(credit_unit)(fsm_unit)(frame_in_w), inner sep=7pt] (frame_in) {};
+    \node[subsystemLabel, anchor=north west] at (frame_in.north west) {Streaming Input Interface \& Credit Control};
+  \end{scope}
+
+  % ============================================================================
+  % GROUP 2: CHANNEL 0 (PWM0: Pair 0, Indices 4j, 4j+1)
+  % Level 1 (Y=13.4, Cross), Level 2 (Y=11.2, P0), Level 3 (Y=9.0, P1+Twiddle)
+  % ============================================================================
+  % Level 1 (Y=13.4): Karatsuba Subtraction & Delay Line
+  \node[hwBlock, minimum width=2.2cm, minimum height=1.1cm] (preadd0) at (6.4, 13.4) {
+    \textbf{Pre-Add}\\[1pt]
+    \scriptsize $a_{01} = a_0 + a_1$\\
+    \scriptsize $b_{01} = b_0 + b_1$
+  };
+
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp2) at (10.2, 13.4) {
+    \textbf{DSP 2 (\texttt{u\_msum0})}\\[2pt]
+    \scriptsize $M_{\text{sum}0} = a_{01} \cdot b_{01}$ (26b)
+  };
+
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.1cm] (sub_karat0) at (15.4, 13.4) {
+    \textbf{Karatsuba Subtractor}\\[2pt]
+    \scriptsize $\text{cross}_0 = M_{\text{sum}0} - M_0 - M_1$ (26b)
+  };
+
+  \node[regBlock, minimum width=2.8cm, minimum height=0.65cm] (srl_cross0) at (20.4, 13.4) {
+    \scriptsize \texttt{cross\_delay0} (9-cyc SRL16E)
+  };
+
+  \node[hwBlock, minimum width=2.2cm, minimum height=1.1cm] (ur1) at (27.2, 13.4) {
+    \textbf{Barrett (\texttt{ur1})}\\[2pt]
+    \scriptsize $r_1 = \text{cross}_0 \bmod q$ (12b)
+  };
+
+  % Level 2 (Y=11.2): Direct Product M0 & Delay Line
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp0) at (10.2, 11.2) {
+    \textbf{DSP 0 (\texttt{u\_m0})}\\[2pt]
+    \scriptsize $M_0 = a_0 \cdot b_0$ (24b)
+  };
+
+  \node[regBlock, minimum width=2.8cm, minimum height=0.65cm] (srl_p0) at (20.4, 11.2) {
+    \scriptsize \texttt{p00\_delay} (9-cyc SRL16E)
+  };
+
+  \node[hwBlock, minimum width=2.0cm, minimum height=1.2cm] (add_post0) at (24.2, 11.2) {
+    \textbf{Post Add}\\[1pt]
+    \scriptsize $\text{sum}_0 = M_0 + M_{z0}$\\
+    \tiny 25-bit unsigned
+  };
+
+  \node[hwBlock, minimum width=2.2cm, minimum height=1.1cm] (ur0) at (27.2, 11.2) {
+    \textbf{Barrett (\texttt{ur0})}\\[2pt]
+    \scriptsize $r_0 = \text{sum}_0 \bmod q$ (12b)
+  };
+
+  % Level 3 (Y=9.0): Product M1, Barrett Reduce, Twiddle DSP
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp1) at (10.2, 9.0) {
+    \textbf{DSP 1 (\texttt{u\_m1})}\\[2pt]
+    \scriptsize $M_1 = a_1 \cdot b_1$ (24b)
+  };
+
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.1cm] (ur11) at (15.4, 9.0) {
+    \textbf{Barrett Reducer (\texttt{ur11})}\\[2pt]
+    \scriptsize $r_{11} = M_1 \bmod 3329$ (12b)
+  };
+
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp3) at (20.4, 9.0) {
+    \textbf{DSP 3 (\texttt{u\_mz0})}\\[2pt]
+    \scriptsize $M_{z0} = r_{11} \cdot \zeta_0$ (24b)
+  };
+
+  % ============================================================================
+  % GROUP 3: SHARED 24-LUT6 TWIDDLE FACTOR BIT-PLANE GENERATOR (Midline, Y=6.8)
+  % ============================================================================
+  \node[memBlock, minimum width=6.2cm, minimum height=1.1cm] (zeta_rom) at (14.0, 6.8) {
+    \textbf{24-LUT6 Twiddle Bit-Plane ROM}\\[2pt]
+    \scriptsize 12 Bit-Planes $\times$ 128b Tables $\to$ 24x LUT6 (0 BRAM)
+  };
+
+  \node[regBlock, minimum width=2.8cm, minimum height=0.85cm] (zeta_srl) at (20.4, 6.8) {
+    \textbf{10-Cycle Delay Line}\\[1pt]
+    \scriptsize $2 \times 12\text{b}$ SRL16E Pipelines
+  };
+
+  % ============================================================================
+  % GROUP 4: CHANNEL 1 (PWM1: Pair 1, Indices 4j+2, 4j+3)
+  % Level -3 (Y=4.6, P3+Twiddle), Level -2 (Y=2.4, P2), Level -1 (Y=0.2, Cross)
+  % ============================================================================
+  % Level -3 (Y=4.6): Product M3, Barrett Reduce, Twiddle DSP
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp5) at (10.2, 4.6) {
+    \textbf{DSP 5 (\texttt{u\_m3})}\\[2pt]
+    \scriptsize $M_3 = a_3 \cdot b_3$ (24b)
+  };
+
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.1cm] (ur33) at (15.4, 4.6) {
+    \textbf{Barrett Reducer (\texttt{ur33})}\\[2pt]
+    \scriptsize $r_{33} = M_3 \bmod 3329$ (12b)
+  };
+
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp7) at (20.4, 4.6) {
+    \textbf{DSP 7 (\texttt{u\_mz1})}\\[2pt]
+    \scriptsize $M_{z1} = r_{33} \cdot \zeta_1$ (24b)
+  };
+
+  % Level -2 (Y=2.4): Direct Product M2 & Delay Line, Post-Add
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp4) at (10.2, 2.4) {
+    \textbf{DSP 4 (\texttt{u\_m2})}\\[2pt]
+    \scriptsize $M_2 = a_2 \cdot b_2$ (24b)
+  };
+
+  \node[regBlock, minimum width=2.8cm, minimum height=0.65cm] (srl_p2) at (20.4, 2.4) {
+    \scriptsize \texttt{p22\_delay} (9-cyc SRL16E)
+  };
+
+  \node[hwBlock, minimum width=2.0cm, minimum height=1.2cm] (add_post1) at (24.2, 2.4) {
+    \textbf{Post Add}\\[1pt]
+    \scriptsize $\text{sum}_2 = M_2 + M_{z1}$\\
+    \tiny 25-bit unsigned
+  };
+
+  \node[hwBlock, minimum width=2.2cm, minimum height=1.1cm] (ur2) at (27.2, 2.4) {
+    \textbf{Barrett (\texttt{ur2})}\\[2pt]
+    \scriptsize $r_2 = \text{sum}_2 \bmod q$ (12b)
+  };
+
+  % Level -1 (Y=0.2): Karatsuba Subtraction & Delay Line
+  \node[hwBlock, minimum width=2.2cm, minimum height=1.1cm] (preadd1) at (6.4, 0.2) {
+    \textbf{Pre-Add}\\[1pt]
+    \scriptsize $a_{23} = a_2 + a_3$\\
+    \scriptsize $b_{23} = b_2 + b_3$
+  };
+
+  \node[hwCore, minimum width=2.8cm, minimum height=1.1cm] (dsp6) at (10.2, 0.2) {
+    \textbf{DSP 6 (\texttt{u\_msum1})}\\[2pt]
+    \scriptsize $M_{\text{sum}1} = a_{23} \cdot b_{23}$ (26b)
+  };
+
+  \node[hwBlock, minimum width=2.8cm, minimum height=1.1cm] (sub_karat1) at (15.4, 0.2) {
+    \textbf{Karatsuba Subtractor}\\[2pt]
+    \scriptsize $\text{cross}_1 = M_{\text{sum}1} - M_2 - M_3$ (26b)
+  };
+
+  \node[regBlock, minimum width=2.8cm, minimum height=0.65cm] (srl_cross1) at (20.4, 0.2) {
+    \scriptsize \texttt{cross\_delay1} (9-cyc SRL16E)
+  };
+
+  \node[hwBlock, minimum width=2.2cm, minimum height=1.1cm] (ur3) at (27.2, 0.2) {
+    \textbf{Barrett (\texttt{ur3})}\\[2pt]
+    \scriptsize $r_3 = \text{cross}_1 \bmod q$ (12b)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(preadd0)(dsp2)(sub_karat0)(ur1)(zeta_rom)(zeta_srl)(preadd1)(dsp6)(sub_karat1)(ur3), inner sep=8pt] (frame_karatsuba) {};
+    \node[subsystemLabel, anchor=north west] at (frame_karatsuba.north west) {Dual-Channel Symmetric 8-DSP Karatsuba Multiplier ($h_{2j} = f_{2j}g_{2j} + f_{2j+1}g_{2j+1}\zeta_j, \; h_{2j+1} = f_{2j}g_{2j+1} + f_{2j+1}g_{2j} \pmod q$)};
+  \end{scope}
+
+  % ============================================================================
+  % GROUP 5: VECTOR ACCUMULATION, CENTERING & OUTPUT BUFFER (Right Column, X=32.4)
+  % ============================================================================
+  \node[hwCore, minimum width=3.2cm, minimum height=1.4cm] (acc_unit) at (32.4, 10.6) {
+    \textbf{Row Accumulator}\\[2pt]
+    \scriptsize \texttt{acc0..3 [13:0]} ($k \le 4$)
+  };
+
+  \node[hwBlock, minimum width=3.2cm, minimum height=1.4cm] (norm_unit_out) at (32.4, 8.2) {
+    \textbf{Modulo Normalizer}\\[2pt]
+    \scriptsize Dual Subtraction ($\ge 6658, \, \ge 3329$)
+  };
+
+  \node[hwBlock, minimum width=3.2cm, minimum height=1.3cm] (center_unit) at (32.4, 6.0) {
+    \textbf{Residue Centering}\\[2pt]
+    \scriptsize Canonical Signed $[-1664, +1664]$
+  };
+
+  \node[memBlock, minimum width=3.2cm, minimum height=1.6cm] (out_fifo) at (32.4, 3.6) {
+    \textbf{Distributed RAM FIFO}\\[2pt]
+    \scriptsize $32 \times 57\text{b}$ \texttt{RAM32M} (Skid-Buffered)
+  };
+
+  \node[ioBlock, minimum width=3.2cm, minimum height=1.2cm] (out_port) at (32.4, 1.2) {
+    \textbf{Streaming Output Port}\\[2pt]
+    \scriptsize \texttt{m\_c0..3 [11:0]}, \texttt{m\_valid}, \texttt{m\_ready}
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(acc_unit)(norm_unit_out)(center_unit)(out_fifo)(out_port), inner sep=8pt] (frame_out) {};
+    \node[subsystemLabel, anchor=south] at (frame_out.north) {Accumulation, Centering \& Output Buffer};
+  \end{scope}
+
+  % ============================================================================
+  % GROUP 6: MICROARCHITECTURAL INSET: 5-CYCLE BARRETT REDUCTION (Y=-3.0)
+  % ============================================================================
+  \node[ioBlock, minimum width=2.0cm, minimum height=1.4cm] (bar_in) at (1.6, -3.0) {
+    \textbf{Input Product}\\[1pt]
+    \scriptsize $x \in [0, 2^{25}-1]$ (25b)
+  };
+
+  \node[hwBlock, minimum width=4.2cm, minimum height=1.5cm] (bar_s1) at (5.8, -3.0) {
+    \textbf{Stage 1: Shift-Sub (CC 1)}\\[2pt]
+    \scriptsize $\text{times63} = (x \ll 6) - x$ (31b)\\
+    \scriptsize $xd_0 = x[12:0]$ (13b)
+  };
+
+  \node[hwBlock, minimum width=4.2cm, minimum height=1.5cm] (bar_s2) at (11.8, -3.0) {
+    \textbf{Stage 2: Shift-Add (CC 2)}\\[2pt]
+    \scriptsize $\text{times315} = (\text{times63} \ll 2) + \text{times63}$ (33b)\\
+    \scriptsize $xd_1 = xd_0$ (13b)
+  };
+
+  \node[hwCore, minimum width=5.6cm, minimum height=1.7cm] (bar_s3) at (18.6, -3.0) {
+    \textbf{Stage 3: Modulo Product (CC 3)}\\[2pt]
+    \scriptsize $\hat{q} = \text{times315}[32:20]$ (13b), 32-Entry LUT\\
+    \scriptsize $q_{\text{mul}} = \hat{q} + (\text{low13} \ll 8) \equiv \hat{q} \cdot 3329 \bmod 8192$
+  };
+
+  \node[hwBlock, minimum width=4.2cm, minimum height=1.5cm] (bar_s4) at (25.2, -3.0) {
+    \textbf{Stage 4: Remainder (CC 4)}\\[2pt]
+    \scriptsize $\text{rem} = \$signed(xd_2 - q_{\text{mul}})$ (13b signed)
+  };
+
+  \node[hwBlock, minimum width=3.0cm, minimum height=1.5cm] (bar_s5) at (30.2, -3.0) {
+    \textbf{Stage 5: Correct (CC 5)}\\[2pt]
+    \scriptsize $r = \text{rem}[12] \;?\; (\text{rem} + 3329) : \text{rem}$ (12b)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(bar_in)(bar_s1)(bar_s2)(bar_s3)(bar_s4)(bar_s5), inner sep=8pt] (frame_barrett) {};
+    \node[subsystemLabel, anchor=north west] at (frame_barrett.north west) {Dedicated Microarchitecture Inset: 5-Cycle Division-Free Modulo 3329 Barrett Reduction Tree (\texttt{mlkem\_reduce25.sv}) --- 0 DSPs (Soft CLB Logic)};
+  \end{scope}
+
+  % ============================================================================
+  % DEDICATED MANHATTAN ROUTING: STRICT ZERO OVERLAPS & 0.6CM CLEARANCE CHANNELS
+  % ============================================================================
+
+  % 1. Input Port to Normalizer (Direct Vertical Bus)
+  \draw[ieeeBus] (in_port.south) -- (norm_unit.north);
+  \buswidth{in_port.south}{norm_unit.north}{0.5}{104b}
+
+  % 2. Handshaking & Credit Control inside Group 1 (Dedicated Western Channels, Zero Block Piercing)
+  \draw[ieeeControl] (credit_unit.south) -- (fsm_unit.north);
+  % Valid down to credit tracker (dedicated corridor at X = -0.05, clear of norm_unit)
+  \draw[ieeeControl] ($(in_port.west)+(0,-0.25)$) -- (-0.05, 12.35) -- (-0.05, 6.45) -- ($(credit_unit.west)+(0,0.25)$);
+  % Backpressure ready up to in_port (dedicated corridor at X = -0.30, clear of norm_unit)
+  \draw[ieeeControl] ($(credit_unit.west)+(0,-0.25)$) -- (-0.30, 5.95) -- (-0.30, 12.85) -- ($(in_port.west)+(0,0.25)$);
+
+  % 3. Normalizer to Multiplier Channels (Trunk at X=4.6, 0.7cm clearance from frame_in)
+  \coordinate (ch_trunk) at (4.6, 9.8);
+  \draw[ieeeBus] (norm_unit.east) -- (ch_trunk);
+  \coordinate (nume) at (norm_unit.east);
+  \buswidth{nume}{ch_trunk}{0.5}{48b}
+
+  % Trunk North Branch: Channel 0 Operands
+  \draw[ieeeBus] (ch_trunk) |- (preadd0.west);
+  \draw[ieeeBus] (ch_trunk) |- (dsp0.west);
+  \draw[ieeeBus] (ch_trunk) |- (dsp1.west);
+
+  % Trunk South Branch: Channel 1 Operands
+  \coordinate (ch_trunk_bot) at (4.6, 0.2);
+  \draw[ieeeBus] (ch_trunk) -- (ch_trunk_bot);
+  \draw[ieeeBus] (ch_trunk_bot) -- (preadd1.west);
+  \draw[ieeeBus] (ch_trunk_bot) |- (dsp4.west);
+  \draw[ieeeBus] (ch_trunk_bot) |- (dsp5.west);
+
+  % 4. Channel 0 Interconnects
+  % Level 1: Pre-Add to DSP 2 at Y=13.4
+  \draw[ieeeBus] (preadd0.east) -- (dsp2.west);
+  \buswidth{preadd0.east}{dsp2.west}{0.5}{26b}
+
+  % Level 1 (Y=13.4): DSP 2 -> Karatsuba -> SRL -> ur1 (Pure Horizontal Datapath)
+  \draw[ieeeBus] (dsp2.east) -- (sub_karat0.west);
+  \buswidth{dsp2.east}{sub_karat0.west}{0.5}{26b}
+
+  \draw[ieeeBus] (sub_karat0.east) -- (srl_cross0.west);
+  \buswidth{sub_karat0.east}{srl_cross0.west}{0.5}{25b}
+
+  \draw[ieeeBus] (srl_cross0.east) -- (ur1.west);
+  \buswidth{srl_cross0.east}{ur1.west}{0.5}{25b}
+
+  % Level 2 (Y=11.2): DSP 0 -> SRL -> Post-Add -> ur0
+  % DSP 0 cross-term tap feeds sub_karat0 south face (clean nested Manhattan routing)
+  \coordinate (dsp0_tap) at (13.2, 11.2);
+  \fill[ieeeNavy] (dsp0_tap) circle (1.8pt);
+  \draw[ieeeBus] (dsp0_tap) -- (13.2, 12.0) -- (15.4, 12.0) -- ($(sub_karat0.south)+(0.0,0)$);
+
+  \draw[ieeeBus] (dsp0.east) -- (srl_p0.west);
+  \coordinate (d0e) at (dsp0.east);
+  \coordinate (s0w) at (srl_p0.west);
+  \buswidth{d0e}{s0w}{0.75}{24b}
+
+  \draw[ieeeBus] (srl_p0.east) -- (add_post0.west);
+  \draw[ieeeBus] (add_post0.east) -- (ur0.west);
+
+  % Level 3 (Y=9.0): DSP 1 -> ur11 -> DSP 3 -> Post-Add
+  % DSP 1 cross-term tap uses dedicated non-contact vault arch over Level 2 bus to sub_karat0 south face
+  \coordinate (dsp1_tap) at (12.4, 9.0);
+  \fill[ieeeNavy] (dsp1_tap) circle (1.8pt);
+  \draw[ieeeBus] (dsp1_tap) -- (12.4, 11.02) arc(-90:90:0.18) -- (12.4, 12.4) -- (14.6, 12.4) -- ($(sub_karat0.south)+(-0.8,0)$);
+
+  \draw[ieeeBus] (dsp1.east) -- (ur11.west);
+  \buswidth{dsp1.east}{ur11.west}{0.5}{24b}
+
+  \draw[ieeeBus] (ur11.east) -- (dsp3.west);
+  \buswidth{ur11.east}{dsp3.west}{0.5}{12b}
+
+  \draw[ieeeBus] (dsp3.east) -- (22.5, 9.0) |- ($(add_post0.west)+(0,-0.25)$);
+
+  % 5. Shared Twiddle Factor Generator & Clean Radial Distribution (Midline Y=6.8)
+  % FSM twiddle index route with dedicated vault arch over 48b bus trunk
+  \draw[ieeeControl] (fsm_unit.east) -- (4.0, 3.4) -- (4.0, 6.8) -- (4.42, 6.8) arc(180:0:0.18) -- (zeta_rom.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at (7.8, 6.85) {\texttt{zidx[5:0]}};
+
+  \draw[ieeeBus] (zeta_rom.east) -- (zeta_srl.west);
+  \buswidth{zeta_rom.east}{zeta_srl.west}{0.5}{24b}
+
+  % Twiddle Factor to Channel 0 (Direct Vertical to dsp3.south, Zero Bends)
+  \draw[ieeeBus] (zeta_srl.north) -- (dsp3.south);
+  \buswidth{zeta_srl.north}{dsp3.south}{0.5}{12b ($\zeta_0$)}
+
+  % Twiddle Factor to Channel 1 (Direct Vertical to dsp7.north, Zero Bends)
+  \draw[ieeeBus] (zeta_srl.south) -- (dsp7.north);
+  \buswidth{zeta_srl.south}{dsp7.north}{0.5}{12b ($\zeta_1$)}
+
+  % 6. Channel 1 Interconnects (Symmetric Datapath)
+  % Level -3 (Y=4.6): DSP 5 -> ur33 -> DSP 7 -> Post-Add -> ur2
+  % DSP 5 cross-term tap uses dedicated non-contact vault arch over Level -2 bus to sub_karat1 north face
+  \coordinate (dsp5_tap) at (12.4, 4.6);
+  \fill[ieeeNavy] (dsp5_tap) circle (1.8pt);
+  \draw[ieeeBus] (dsp5_tap) -- (12.4, 2.58) arc(90:-90:0.18) -- (12.4, 1.2) -- (14.6, 1.2) -- ($(sub_karat1.north)+(-0.8,0)$);
+
+  \draw[ieeeBus] (dsp5.east) -- (ur33.west);
+  \buswidth{dsp5.east}{ur33.west}{0.5}{24b}
+
+  \draw[ieeeBus] (ur33.east) -- (dsp7.west);
+  \buswidth{ur33.east}{dsp7.west}{0.5}{12b}
+
+  \draw[ieeeBus] (dsp7.east) -- (22.5, 4.6) |- ($(add_post1.west)+(0,0.25)$);
+
+  % Level -2 (Y=2.4): DSP 4 -> SRL -> Post-Add
+  % DSP 4 cross-term tap feeds sub_karat1 north face (clean nested Manhattan routing)
+  \coordinate (dsp4_tap) at (13.2, 2.4);
+  \fill[ieeeNavy] (dsp4_tap) circle (1.8pt);
+  \draw[ieeeBus] (dsp4_tap) -- (13.2, 1.6) -- (15.4, 1.6) -- ($(sub_karat1.north)+(0.0,0)$);
+
+  \draw[ieeeBus] (dsp4.east) -- (srl_p2.west);
+  \coordinate (d4e) at (dsp4.east);
+  \coordinate (s2w) at (srl_p2.west);
+  \buswidth{d4e}{s2w}{0.75}{24b}
+
+  \draw[ieeeBus] (srl_p2.east) -- (add_post1.west);
+  \draw[ieeeBus] (add_post1.east) -- (ur2.west);
+
+  % Level -1 (Y=0.2): Pre-Add -> DSP 6 -> Karatsuba -> SRL -> ur3
+  \draw[ieeeBus] (preadd1.east) -- (dsp6.west);
+  \buswidth{preadd1.east}{dsp6.west}{0.5}{26b}
+
+  \draw[ieeeBus] (dsp6.east) -- (sub_karat1.west);
+  \buswidth{dsp6.east}{sub_karat1.west}{0.5}{26b}
+
+  \draw[ieeeBus] (sub_karat1.east) -- (srl_cross1.west);
+  \buswidth{sub_karat1.east}{srl_cross1.west}{0.5}{25b}
+
+  \draw[ieeeBus] (srl_cross1.east) -- (ur3.west);
+  \buswidth{srl_cross1.east}{ur3.west}{0.5}{25b}
+
+  % 7. Channels 0 & 1 Reduced Residues to Accumulator (Strict Planar Non-Crossing Geometry)
+  % Track 1 (Inner, X=29.2): Carries inner signals r0 (Y=11.2) and r2 (Y=2.4)
+  \draw[ieeeBus] (ur0.east) -- (29.2, 11.2) |- ($(acc_unit.west)+(0,0.25)$);
+  \draw[ieeeBus] (ur2.east) -- (29.2, 2.4)  |- ($(acc_unit.west)+(0,-0.25)$);
+  % Track 2 (Outer, X=29.9): Carries outer signals r1 (Y=13.4) and r3 (Y=0.2)
+  \draw[ieeeBus] (ur1.east) -- (29.9, 13.4) |- ($(acc_unit.west)+(0,0.55)$);
+  \draw[ieeeBus] (ur3.east) -- (29.9, 0.2)  |- ($(acc_unit.west)+(0,-0.55)$);
+
+  % 8. Output Column Downstream Interconnects
+  \draw[ieeeBus] (acc_unit.south) -- (norm_unit_out.north);
+  \buswidth{acc_unit.south}{norm_unit_out.north}{0.5}{56b ($4\times 14\text{b}$)}
+
+  \draw[ieeeBus] (norm_unit_out.south) -- (center_unit.north);
+  \buswidth{norm_unit_out.south}{center_unit.north}{0.5}{52b ($4\times 13\text{b}$)}
+
+  \draw[ieeeBus] (center_unit.south) -- (out_fifo.north);
+  \buswidth{center_unit.south}{out_fifo.north}{0.5}{48b ($4\times 12\text{b}$)}
+
+  \draw[ieeeBus] (out_fifo.south) -- (out_port.north);
+  \buswidth{out_fifo.south}{out_port.north}{0.5}{57b}
+
+  % 9. Credit Return Loop (Dedicated Clearance Corridor at Y=-1.2 and Left Clearance at X=-0.85)
+  \draw[ieeeControl] (out_fifo.west) -- (30.1, 3.6) -- (30.1, -1.2) -- (-0.85, -1.2) -- (-0.85, 6.2) -- (credit_unit.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at (16.0, -1.15) {credit return loop: \texttt{pop = m\_valid \&\& m\_ready}};
+
+  % 10. Barrett Inset Internal Pipeline Buses
+  \draw[ieeeBus] (bar_in.east) -- (bar_s1.west);
+  \draw[ieeeBus] (bar_s1.east) -- (bar_s2.west);
+  \draw[ieeeBus] (bar_s2.east) -- (bar_s3.west);
+  \draw[ieeeBus] (bar_s3.east) -- (bar_s4.west);
+  \draw[ieeeBus] (bar_s4.east) -- (bar_s5.west);
+
+  % ============================================================================
+  % CIRCULAR IDENTIFIER CALLOUT BADGES (IDs 1 through 8) - CLEAR CORNER ANCHORS
+  % ============================================================================
+  \node[calloutBadge] at ($(in_port.north east)+(-0.35,-0.35)$) {1};
+  \node[calloutBadge] at ($(dsp0.north east)+(-0.35,-0.35)$) {2};
+  \node[calloutBadge] at ($(sub_karat0.north east)+(-0.35,-0.35)$) {3};
+  \node[calloutBadge] at ($(zeta_rom.north east)+(-0.35,-0.35)$) {4};
+  \node[calloutBadge] at ($(bar_s3.north east)+(-0.35,-0.35)$) {5};
+  \node[calloutBadge] at ($(dsp3.north east)+(-0.35,-0.35)$) {6};
+  \node[calloutBadge] at ($(acc_unit.north east)+(-0.35,-0.35)$) {7};
+  \node[calloutBadge] at ($(out_fifo.north east)+(-0.35,-0.35)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.4cm}
+% ==============================================================================
+% PUBLICATION-GRADE ARCHITECTURAL CALLOUT LEGEND TABLE (4-COLUMN COMPACT SCHEMA)
+% ==============================================================================
+\begin{center}
+\footnotesize
+\begin{tabular}{cllp{15.8cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Streaming Input \& Credit Control & $8 \times 13\text{b}$ In, 6b Credit & Converts signed $[-3328, 3328]$ inputs to canonical $[0, 3328]$; tracks 32-entry pipeline credits to assert \texttt{s\_ready}. \\
+\textbf{2} & Primary Multiplier DSP Bank & $6 \times \text{DSP48E2}$ Slices & Dual 3-slice banks evaluating $a_0 b_0, a_1 b_1, (a_0+a_1)(b_0+b_1)$ with 4 internal pipeline registers at 450 MHz. \\
+\textbf{3} & Karatsuba Exact Integer Subtractor & 26-bit Soft Carry Logic & Single-cycle subtractor evaluating cross terms $\text{cross} = M_{\text{sum}} - M_0 - M_1$, eliminating 2 DSP slices per pair. \\
+\textbf{4} & Twiddle Bit-Plane ROM \& Pipeline & 24x LUT6 Logic (0 BRAM) & Evaluates 12 bit-planes of 128-bit truth tables mapped to 24 LUT6 primitives with 10-cycle SRL delay matching. \\
+\textbf{5} & Modulo 3329 Barrett Reduction Tree & 25-bit to 12-bit Soft CLB & 5-cycle division-free Barrett reduction exploiting $q = 13 \times 2^8 + 1$ with $M=315$ and 32-entry LUT, consuming 0 DSPs. \\
+\textbf{6} & Twiddle Multiplier DSP Slices & $2 \times \text{DSP48E2}$ Slices & Multiplies quadratic products by aligned twiddles: $M_{z0} = r_{11} \zeta_0$ (DSP 3) and $M_{z1} = r_{33} \zeta_1$ (DSP 7). \\
+\textbf{7} & Row Accumulator \& Centering Unit & 14-bit / 12-bit Soft CLB & Accumulates 4 coefficient residues for $k \in \{2,3,4\}$, applies dual modulo subtraction, and centers to $[-1664, 1664]$. \\
+\textbf{8} & Elastic Distributed RAM FIFO & $32 \times 57\text{b}$ RAM32M & 32-entry distributed LUTRAM buffer storing 4 centered coefficients and tags with skid-buffered output flow control. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

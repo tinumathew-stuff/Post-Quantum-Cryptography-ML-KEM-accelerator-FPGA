@@ -1,0 +1,520 @@
+\documentclass[varwidth=38cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+% Custom styles for butterfly microarchitecture
+\tikzset{
+  stageBadge/.style={
+    draw=ieeeSlate!70,
+    fill=ieeeLightSlate,
+    line width=0.6pt,
+    rounded corners=2pt,
+    align=center,
+    font=\sffamily\tiny\bfseries,
+    inner sep=2pt,
+    minimum width=2.2cm,
+    minimum height=0.52cm
+  },
+  stageDivider/.style={
+    dashed,
+    draw=ieeeSlate!25,
+    line width=0.5pt
+  }
+}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large FIPS 203 ML-KEM Architecture: 10-Cycle Zero-DSP Pipelined Butterfly Unit \& Barrett Reducer} \\[3pt]
+{\sffamily\footnotesize Subsystem 05 Microarchitecture --- RTL Modules: \texttt{mlkem\_butterfly.sv}, \texttt{mlkem\_twiddle.svh} --- Kintex UltraScale 450~MHz}
+\end{center}
+\vspace{0.35cm}
+
+\begin{tikzpicture}[node distance=0.8cm and 1.2cm]
+
+  % ----------------------------------------------------------------------------
+  % Pipeline Stage Demarcation Headers (T0 through T9)
+  % ----------------------------------------------------------------------------
+  \node[stageBadge] (stg0) at (1.2,  10.4) {Stage 1 ($T_0$)\\[1pt]\tiny Input Latch};
+  \node[stageBadge] (stg1) at (4.5,  10.4) {Stage 2 ($T_1$)\\[1pt]\tiny CT/GS Topology Mux};
+  \node[stageBadge] (stg2) at (8.0,  10.4) {Stage 3 ($T_2$)\\[1pt]\tiny 3x 12x4 Soft Mul};
+  \node[stageBadge] (stg3) at (11.4, 10.4) {Stage 4 ($T_3$)\\[1pt]\tiny Partial Sum $s_{01}$};
+  \node[stageBadge] (stg4) at (14.8, 10.4) {Stage 5 ($T_4$)\\[1pt]\tiny Product Assembly};
+  \node[stageBadge] (stg5) at (18.2, 10.4) {Stage 6 ($T_5$)\\[1pt]\tiny Barrett $\times 63$};
+  \node[stageBadge] (stg6) at (21.6, 10.4) {Stage 7 ($T_6$)\\[1pt]\tiny Barrett $\times 5$};
+  \node[stageBadge] (stg7) at (25.2, 10.4) {Stage 8 ($T_7$)\\[1pt]\tiny Barrett Remainder};
+  \node[stageBadge] (stg8) at (29.8, 10.4) {Stage 9 ($T_8$)\\[1pt]\tiny Butterfly Combine};
+  \node[stageBadge] (stg9) at (34.4, 10.4) {Stage 10 ($T_9$)\\[1pt]\tiny Output Reduction};
+
+  % Vertical Stage Boundary Guide Lines
+  \draw[stageDivider] (2.85,  10.0) -- (2.85,  -1.1);
+  \draw[stageDivider] (6.25,  10.0) -- (6.25,  -1.1);
+  \draw[stageDivider] (9.70,  10.0) -- (9.70,  -1.1);
+  \draw[stageDivider] (13.10, 10.0) -- (13.10, -1.1);
+  \draw[stageDivider] (16.50, 10.0) -- (16.50, -1.1);
+  \draw[stageDivider] (19.90, 10.0) -- (19.90, -1.1);
+  \draw[stageDivider] (23.40, 10.0) -- (23.40, -1.1);
+  \draw[stageDivider] (27.50, 10.0) -- (27.50, -1.1);
+  \draw[stageDivider] (32.10, 10.0) -- (32.10, -1.1);
+
+  % ============================================================================
+  % Upper Track: 7-Cycle Delay Lines (Spanning Stages T2 to T8, 21.1cm)
+  % ============================================================================
+  \node[ctrlBlock, minimum width=21.1cm, minimum height=0.45cm] (ctrl_srl) at (16.95, 9.30) {
+    \scriptsize \textbf{Mode Delay Registers (7 Cycles)}: \texttt{inverse\_q[6:0]} \& \texttt{normalize\_q[6:0]} (7-bit Shift Registers)
+  };
+
+  \node[memBlock, minimum width=21.1cm, minimum height=0.72cm] (srl_line) at (16.95, 8.25) {
+    \hspace{0.8cm}\textbf{7-Cycle SRL Bypass Delay Line (\texttt{bypass\_q[0:6]})} --- $7 \times 13\text{-bit}$ \texttt{SRL16E} LUTs (0 DSPs, 0 BRAMs)
+  };
+
+  % ============================================================================
+  % Stage 1 (T0): Input Registration & Latch
+  % ============================================================================
+  \node[ioBlock, minimum width=1.20cm, minimum height=0.80cm] (in_a) at (0.8, 6.2) {
+    \textbf{Input $a$}\\[1pt]
+    \scriptsize \texttt{a[11:0]}
+  };
+
+  \node[ioBlock, minimum width=1.20cm, minimum height=0.80cm] (in_b) at (0.8, 4.2) {
+    \textbf{Input $b$}\\[1pt]
+    \scriptsize \texttt{b[11:0]}
+  };
+
+  \node[ioBlock, minimum width=1.20cm, minimum height=0.80cm] (in_zeta) at (0.8, 2.2) {
+    \textbf{Twiddle $\zeta$}\\[1pt]
+    \scriptsize \texttt{zeta[11:0]}
+  };
+
+  \node[ctrlBlock, minimum width=1.20cm, minimum height=0.75cm] (in_ctrl) at (0.8, 0.2) {
+    \textbf{Mode Flags}\\[1pt]
+    \scriptsize \texttt{inv, norm}
+  };
+
+  \node[regBlock, minimum width=0.55cm, minimum height=0.80cm] (reg_a) at (2.00, 6.2) {\tiny $a_q$};
+  \node[regBlock, minimum width=0.55cm, minimum height=0.80cm] (reg_b) at (2.00, 4.2) {\tiny $b_q$};
+  \node[regBlock, minimum width=0.55cm, minimum height=0.80cm] (reg_zeta) at (2.00, 2.2) {\tiny $\zeta_q$};
+  \node[regBlock, minimum width=0.55cm, minimum height=0.75cm] (reg_ctrl) at (2.00, 0.2) {\tiny $\text{ctrl}_q$};
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(in_a)(in_b)(in_zeta)(in_ctrl)(reg_a)(reg_b)(reg_zeta)(reg_ctrl), inner sep=7pt] (frame_stage1) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_stage1.north west)+(0.1,0)$) {Stage 1: Input Latch};
+  \end{scope}
+
+  % ============================================================================
+  % Stage 2 (T1): CT/GS Topology Selector & DIF Pre-Arithmetic
+  % ============================================================================
+  % Bypass MUX (selects between a_q for CT and dif_add for GS)
+  \node[muxBlock, minimum width=0.45cm, minimum height=0.85cm] (mux_bypass) at (5.2, 7.30) {\tiny MUX};
+
+  % DIF Adder ALU (a_q + b_q)
+  \node[aluBlock, minimum width=1.85cm, minimum height=0.80cm] (dif_add) at (4.5, 6.2) {
+    \textbf{DIF Adder}\\[1pt]
+    \scriptsize $a_q + b_q$ (13b)
+  };
+
+  % DIF Subtractor ALU with modular correction (sub_pos)
+  \node[aluBlock, minimum width=1.85cm, minimum height=0.85cm] (dif_sub) at (4.5, 4.2) {
+    \textbf{DIF Subtractor}\\[1pt]
+    \scriptsize \texttt{sub\_pos} (12b)
+  };
+
+  % Multiplier Operand x MUX & Register
+  \node[muxBlock, minimum width=0.45cm, minimum height=0.90cm] (mux_x) at (3.9, 2.2) {\tiny MUX};
+  \node[regBlock, minimum width=0.55cm, minimum height=0.80cm, right=0.35cm of mux_x] (reg_x) {
+    \tiny $x_q$\\[1pt]\tiny 12b
+  };
+
+  % Multiplier Twiddle w MUX & Register
+  \node[muxBlock, minimum width=0.45cm, minimum height=0.85cm] (mux_w) at (3.9, 0.4) {\tiny MUX};
+  \node[regBlock, minimum width=0.55cm, minimum height=0.80cm, right=0.35cm of mux_w] (reg_w) {
+    \tiny $w_q$\\[1pt]\tiny 12b
+  };
+
+  % Normalization Constant input cleanly inside frame
+  \node[font=\sffamily\tiny, text=ieeeNavy, below=0.25cm of mux_w.south] (c3303) {\texttt{12'd3303}};
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(dif_add)(dif_sub)(mux_bypass)(mux_x)(reg_x)(mux_w)(reg_w)(c3303), inner sep=7pt] (frame_stage2) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_stage2.north west)+(0.1,0)$) {Stage 2: Topology Mux};
+  \end{scope}
+
+  % ============================================================================
+  % Stages 3, 4, 5: 3-Chunk Soft Multiplier Tree (0 DSPs, 450 MHz)
+  % ============================================================================
+  % Stage 3: Three 12x4 Soft Multipliers (T2)
+  \node[hwBlock, minimum width=2.2cm, minimum height=0.82cm] (mul0) at (8.0, 6.2) {
+    \textbf{12$\times$4 Soft Mul 0}\\[1pt]
+    \scriptsize $x_q \times w_q[3:0] \to p_0$
+  };
+
+  \node[hwBlock, minimum width=2.2cm, minimum height=0.82cm] (mul1) at (8.0, 4.2) {
+    \textbf{12$\times$4 Soft Mul 1}\\[1pt]
+    \scriptsize $x_q \times w_q[7:4] \to p_1$
+  };
+
+  \node[hwBlock, minimum width=2.2cm, minimum height=0.82cm] (mul2) at (8.0, 2.2) {
+    \textbf{12$\times$4 Soft Mul 2}\\[1pt]
+    \scriptsize $x_q \times w_q[11:8] \to p_2$
+  };
+
+  % Stage 4: Partial Sum Adder s01 & Delay Register p2_d (T3)
+  \node[aluBlock, minimum width=2.2cm, minimum height=0.90cm] (adder_s01) at (11.4, 5.2) {
+    \textbf{Partial Sum Tree}\\[1pt]
+    \scriptsize $s_{01} = p_0 + (p_1 \ll 4)$
+  };
+
+  \node[regBlock, minimum width=1.6cm, minimum height=0.80cm] (reg_p2d) at (11.4, 2.2) {
+    \textbf{Delay Reg}\\[1pt]
+    \scriptsize $p_{2\_d} = p_2$ (16b)
+  };
+
+  % Stage 5: Product Assembly Adder prod_q (T4)
+  \node[hwCore, minimum width=2.4cm, minimum height=0.95cm] (adder_prod) at (14.8, 3.7) {
+    \textbf{Product Assembly}\\[1pt]
+    \scriptsize $s_{01} + (p_{2\_d} \ll 8)$ (24b)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(mul0)(mul1)(mul2)(adder_s01)(reg_p2d)(adder_prod), inner sep=7pt] (frame_mult) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_mult.north west)+(0.1,0)$) {3-Chunk Multiplier Tree (0 DSPs)};
+  \end{scope}
+
+  % ============================================================================
+  % Stages 6, 7, 8: Custom Modulo-3329 Barrett Reducer (0 DSPs)
+  % ============================================================================
+  % Stage 6: Scaler x63 & Delay Register xd[0] (T5)
+  \node[hwBlock, minimum width=2.2cm, minimum height=0.85cm] (barrett_x63) at (18.2, 4.5) {
+    \textbf{Barrett Scaler $\times 63$}\\[1pt]
+    \scriptsize $(prod \ll 6) - prod$
+  };
+
+  \node[regBlock, minimum width=1.6cm, minimum height=0.80cm] (reg_xd0) at (18.2, 2.2) {
+    \textbf{Low-13 Reg}\\[1pt]
+    \scriptsize $xd_0 = prod[12:0]$
+  };
+
+  % Stage 7: Scaler x5 & Delay Register xd[1] (T6)
+  \node[hwBlock, minimum width=2.1cm, minimum height=0.85cm] (barrett_x5) at (21.6, 4.5) {
+    \textbf{Barrett Scaler $\times 5$}\\[1pt]
+    \scriptsize $(t_{63} \ll 2) + t_{63}$
+  };
+
+  \node[regBlock, minimum width=1.6cm, minimum height=0.80cm] (reg_xd1) at (21.6, 2.2) {
+    \textbf{Low-13 Reg}\\[1pt]
+    \scriptsize $xd_1 = xd_0$ (13b)
+  };
+
+  % Stage 8: Quotient Extractor, 32-Entry LUT, Assembler, Remainder Reducer (T7)
+  \node[hwBlock, minimum width=2.3cm, minimum height=0.75cm] (extract_qhat) at (25.2, 6.2) {
+    \textbf{Quotient Extractor}\\[1pt]
+    \scriptsize $\hat{q} = t_{315}[31:20]$ (12b)
+  };
+
+  \node[memBlock, minimum width=2.3cm, minimum height=0.85cm] (lut_low13) at (25.2, 4.4) {
+    \textbf{32-Entry Look-Up Table}\\[1pt]
+    \scriptsize $(13\hat{q}) \bmod 32$ (5b)
+  };
+
+  \node[aluBlock, minimum width=2.3cm, minimum height=0.80cm] (asm_qmul) at (25.2, 2.6) {
+    \textbf{Mod-$2^{13}$ Assembler}\\[1pt]
+    \scriptsize $\hat{q} + (low13 \ll 8)$ (13b)
+  };
+
+  \node[hwCore, minimum width=2.4cm, minimum height=0.92cm] (barrett_rem) at (25.2, 0.6) {
+    \textbf{Remainder Reducer}\\[1pt]
+    \scriptsize $p_q = (xd_1 - q_{mul}) \bmod 3329$
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(barrett_x63)(reg_xd0)(barrett_x5)(reg_xd1)(extract_qhat)(lut_low13)(asm_qmul)(barrett_rem), inner sep=7pt] (frame_barrett) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_barrett.north west)+(0.1,0)$) {Modulo-3329 Barrett Reducer (0 DSPs)};
+  \end{scope}
+
+  % ============================================================================
+  % Stages 9 & 10: Butterfly Recombination & Modular Output Reduction
+  % ============================================================================
+  % Stage 9: Recombination ALUs (T8)
+  \node[aluBlock, minimum width=2.2cm, minimum height=0.90cm] (add_combine) at (29.8, 6.2) {
+    \textbf{Recomb Adder}\\[2pt]
+    \scriptsize $bypass + p_q$
+  };
+
+  \node[aluBlock, minimum width=2.2cm, minimum height=0.90cm] (sub_combine) at (29.8, 2.2) {
+    \textbf{Recomb Sub}\\[2pt]
+    \scriptsize $bypass - p_q$
+  };
+
+  % Stage 10: Canonical Output Reducers & Output Ports (T9)
+  \node[hwBlock, minimum width=1.85cm, minimum height=0.88cm] (redux_a) at (33.2, 6.2) {
+    \textbf{\texttt{reduce\_once}}\\[1pt]
+    \scriptsize Mod-3329 Reducer
+  };
+
+  \node[hwBlock, minimum width=1.85cm, minimum height=0.88cm] (redux_b) at (33.2, 2.2) {
+    \textbf{\texttt{sub\_pos} Correct}\\[1pt]
+    \scriptsize Residue Normalizer
+  };
+
+  \node[ioBlock, minimum width=1.30cm, minimum height=0.88cm] (out_a) at (35.3, 6.2) {
+    \textbf{result\_a}\\[1pt]
+    \scriptsize [11:0]
+  };
+
+  \node[ioBlock, minimum width=1.30cm, minimum height=0.88cm] (out_b) at (35.3, 2.2) {
+    \textbf{result\_b}\\[1pt]
+    \scriptsize [11:0]
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(add_combine)(sub_combine)(redux_a)(redux_b)(out_a)(out_b), inner sep=7pt] (frame_recomb) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_recomb.north west)+(0.1,0)$) {Recombination \& Output Reducers};
+  \end{scope}
+
+  % ============================================================================
+  % Strict Orthogonal Manhattan Signal Routing (Dedicated Coordinate Channels)
+  % ZERO Wire Overlaps across the entire datapath!
+  % ============================================================================
+
+  % --- 1. Stage 1 Inputs to Stage 1 Latches ---
+  \draw[ieeeBus] (in_a.east) -- (reg_a.west);
+  \buswidth{in_a.east}{reg_a.west}{0.5}{12}
+
+  \draw[ieeeBus] (in_b.east) -- (reg_b.west);
+  \buswidth{in_b.east}{reg_b.west}{0.5}{12}
+
+  \draw[ieeeBus] (in_zeta.east) -- (reg_zeta.west);
+  \buswidth{in_zeta.east}{reg_zeta.west}{0.5}{12}
+
+  \draw[ieeeControl] (in_ctrl.east) -- (reg_ctrl.west);
+
+  % --- 2. Stage 1 Latches to Stage 2 Logic ---
+  % Dedicated Channels:
+  % X = 0.35 : Control bus routing outside on left margin (Zero intersection with datapath)
+  % X = 2.40 : Twiddle zeta_q drop to mux_w
+  % X = 2.50 : a_q rise to mux_bypass
+  % X = 2.70 : a_q drop to dif_sub
+  % X = 3.10 : b_q rise to dif_add
+  % X = 3.30 : b_q drop to mux_x
+
+  % Control signal from reg_ctrl around left perimeter to ctrl_srl
+  \draw[ieeeControl] (reg_ctrl.south) -- ++(0,-0.40) -| ($(in_ctrl.west)+(-0.45,0)$) |- (ctrl_srl.west);
+
+  % a_q connections
+  \draw[ieeeBus] (reg_a.east) -- (dif_add.west);
+  \buswidth{reg_a.east}{dif_add.west}{0.82}{12}
+
+  \draw[ieeeBus] ($(reg_a.east)+(0.275,0)$) |- ($(mux_bypass.west)+(0,-0.15)$);
+  \draw[ieeeBus] ($(reg_a.east)+(0.475,0)$) |- ($(dif_sub.west)+(0,0.18)$);
+
+  % b_q connections
+  \draw[ieeeBus] (reg_b.east) -- (dif_sub.west);
+  \buswidth{reg_b.east}{dif_sub.west}{0.24}{12}
+
+  \draw[ieeeBus] ($(reg_b.east)+(0.875,0)$) |- ($(dif_add.west)+(0,-0.20)$);
+  \draw[ieeeBus] ($(reg_b.east)+(1.075,0)$) |- ($(mux_x.west)+(0,0.20)$);
+
+  % DIF Adder to Bypass MUX
+  \draw[ieeeBus] (dif_add.north) |- ($(mux_bypass.west)+(0,0.15)$);
+  \buswidth{dif_add.north}{$(dif_add.north)+(0,0.5)$}{0.5}{13}
+
+  % DIF Subtractor to Operand x MUX
+  \draw[ieeeBus] (dif_sub.south) -- ++(0,-0.40) -| (mux_x.north);
+  \buswidth{dif_sub.south}{$(dif_sub.south)+(0,-0.40)$}{0.5}{12}
+
+  % zeta_q to Twiddle w MUX (Channel X = 2.40, fully connected from reg_zeta.east)
+  \draw[ieeeBus] (reg_zeta.east) -- (2.40, 2.2) |- ($(mux_w.west)+(0,0.15)$);
+  \buswidth{2.40, 0.55}{$(mux_w.west)+(0,0.15)$}{0.5}{12}
+
+  % Normalization Constant entering Twiddle w MUX from below
+  \draw[ieeeBus] (c3303.north) -- (mux_w.south);
+
+  % Bypass MUX to SRL Line (Channel cleanly forward into srl_line.west)
+  \coordinate (bypass_srl_corner) at (5.905, 8.25);
+  \draw[ieeeBus] (mux_bypass.east) -- ++(0.48,0) |- (srl_line.west);
+  \buswidth{bypass_srl_corner}{srl_line.west}{0.5}{13}
+
+  % Multiplexers to Registers x_q and w_q
+  \draw[ieeeBus] (mux_x.east) -- (reg_x.west);
+  \buswidth{mux_x.east}{reg_x.west}{0.5}{12}
+
+  \draw[ieeeBus] (mux_w.east) -- (reg_w.west);
+  \buswidth{mux_w.east}{reg_w.west}{0.5}{12}
+
+  % --- 3. Stage 2 to Stage 3 (Soft Multiplier Tree) ---
+  % Multiplier operand bus merge: x_q and w_q unite at X = 5.75 into a 24b trunk
+  % and tap cleanly into Mul 0, Mul 1, Mul 2 with ZERO wire overlaps.
+  \coordinate (mul_trunk_base) at (5.75, 1.30);
+  \coordinate (mul_trunk_top)  at (5.75, 6.20);
+
+  \draw[ieeeBus] (reg_x.east) -- ++(0.35,0) |- (mul_trunk_base);
+  \buswidth{reg_x.east}{$(reg_x.east)+(0.35,0)$}{0.5}{12}
+
+  \draw[ieeeBus] (reg_w.east) -- ++(0.35,0) |- (mul_trunk_base);
+  \buswidth{reg_w.east}{$(reg_w.east)+(0.35,0)$}{0.5}{12}
+
+  % Vertical Multiplier Operand Distribution Trunk
+  \draw[line width=1.6pt, draw=ieeeNavy] (mul_trunk_base) -- (mul_trunk_top);
+  \buswidth{mul_trunk_base}{$(mul_trunk_base)+(0,0.85)$}{0.5}{24}
+
+  % Horizontal Taps into Mul 2, Mul 1, Mul 0 with ticks placed clear of stage boundary
+  \draw[ieeeBus] (5.75, 2.20) -- (mul2.west);
+  \buswidth{5.75, 2.20}{mul2.west}{0.72}{16}
+
+  \draw[ieeeBus] (5.75, 4.20) -- (mul1.west);
+  \buswidth{5.75, 4.20}{mul1.west}{0.72}{16}
+
+  \draw[ieeeBus] (mul_trunk_top) -- (mul0.west);
+  \buswidth{mul_trunk_top}{mul0.west}{0.72}{16}
+
+  % --- 4. Stage 3 to Stage 4 (Partial Sums) ---
+  % Combiner trunk at X = 9.95 (clean 2.5mm clearance past stageDivider at X = 9.70)
+  \coordinate (mul0_corner) at (9.95, 6.20);
+  \coordinate (mul1_corner) at (9.95, 4.20);
+  \draw[ieeeBus] (mul0.east) -- (mul0_corner) |- ($(adder_s01.west)+(0,0.20)$);
+  \buswidth{mul0.east}{mul0_corner}{0.35}{16}
+
+  \draw[ieeeBus] (mul1.east) -- (mul1_corner) |- ($(adder_s01.west)+(0,-0.20)$);
+  \buswidth{mul1.east}{mul1_corner}{0.35}{16}
+
+  \draw[ieeeBus] (mul2.east) -- (reg_p2d.west);
+  \buswidth{mul2.east}{reg_p2d.west}{0.5}{16}
+
+  % --- 5. Stage 4 to Stage 5 (Product Assembly) ---
+  % Combiner trunk at X = 13.35 (clean 2.5mm clearance past stageDivider at X = 13.10)
+  \coordinate (s01_corner) at (13.35, 5.20);
+  \coordinate (p2d_corner) at (13.35, 2.20);
+  \draw[ieeeBus] (adder_s01.east) -- (s01_corner) |- ($(adder_prod.west)+(0,0.20)$);
+  \buswidth{adder_s01.east}{s01_corner}{0.35}{20}
+
+  \draw[ieeeBus] (reg_p2d.east) -- (p2d_corner) |- ($(adder_prod.west)+(0,-0.20)$);
+  \buswidth{reg_p2d.east}{p2d_corner}{0.40}{16}
+
+  % --- 6. Stage 5 to Stage 6 (Barrett Scaler Stage 1) ---
+  % Split trunk at X = 16.80 (clean 3mm clearance past stageDivider at X = 16.50)
+  \coordinate (prod_split) at (16.80, 3.70);
+  \draw[ieeeBus] (adder_prod.east) -- (prod_split);
+  \buswidth{adder_prod.east}{prod_split}{0.35}{24}
+
+  \draw[ieeeBus] (prod_split) |- (barrett_x63.west);
+  \draw[ieeeBus] (prod_split) |- (reg_xd0.west);
+  \buswidth{16.80, 2.20}{reg_xd0.west}{0.50}{13}
+
+  % --- 7. Stage 6 to Stage 7 (Barrett Scaler Stage 2) ---
+  \draw[ieeeBus] (barrett_x63.east) -- (barrett_x5.west);
+  \buswidth{barrett_x63.east}{barrett_x5.west}{0.25}{30}
+
+  \draw[ieeeBus] (reg_xd0.east) -- (reg_xd1.west);
+  \buswidth{reg_xd0.east}{reg_xd1.west}{0.25}{13}
+
+  % --- 8. Stage 7 to Stage 8 (Barrett Quotient & Remainder) ---
+  % Dedicated Channels:
+  % X = 23.00 : barrett_x5 rise to extract_qhat (inside Stage 7, 4mm clear of divider at 23.40)
+  % X = 23.75 : reg_xd1 drop to barrett_rem (inside Stage 8, 3.5mm clear of divider at 23.40)
+  \coordinate (x5_turn) at (23.00, 4.50);
+  \draw[ieeeBus] (barrett_x5.east) -- (x5_turn) |- (extract_qhat.west);
+  \buswidth{23.00, 6.20}{extract_qhat.west}{0.40}{32}
+
+  \coordinate (xd1_turn) at (23.75, 2.20);
+  \draw[ieeeBus] (reg_xd1.east) -- (xd1_turn) |- ($(barrett_rem.west)+(0,0.20)$);
+  \buswidth{reg_xd1.east}{xd1_turn}{0.40}{13}
+
+  % qhat distribution to LUT low13 and Assembler (clean right corridor at X = 26.75)
+  \draw[ieeeBus] (extract_qhat.south) -- (lut_low13.north);
+  \buswidth{extract_qhat.south}{lut_low13.north}{0.5}{5}
+
+  \draw[ieeeBus] (extract_qhat.east) -- ++(0.40,0) |- (asm_qmul.east);
+  \buswidth{extract_qhat.east}{$(extract_qhat.east)+(0.40,0)$}{0.5}{12}
+
+  % LUT to Assembler
+  \draw[ieeeBus] (lut_low13.south) -- (asm_qmul.north);
+  \buswidth{lut_low13.south}{asm_qmul.north}{0.5}{5}
+
+  % Assembler to Remainder Subtractor
+  \draw[ieeeBus] (asm_qmul.south) -- (barrett_rem.north);
+  \buswidth{asm_qmul.south}{barrett_rem.north}{0.5}{13}
+
+  % --- 9. Stage 8 & SRL to Stage 9 Recombination ---
+  % TOPOLOGY PLANARITY (ZERO CROSSINGS):
+  % bypass (13b) enters ALUs from the WEST via dedicated vertical trunk at X = 28.30.
+  % p_q (12b) enters ALUs from the SOUTH via vertical trunk at X = 29.80.
+  % They operate in completely disjoint coordinate spaces: 28.30 < 29.80.
+
+  % Bypass Line bypass_q[6] down to Recombination ALUs (Track X = 28.30)
+  \coordinate (bypass_trunk_top) at (28.30, 8.25);
+  \coordinate (bypass_trunk_bot) at (28.30, 2.20);
+
+  \draw[line width=1.4pt, draw=ieeeNavy] (srl_line.east) -- (bypass_trunk_top) -- (bypass_trunk_bot);
+  \buswidth{srl_line.east}{bypass_trunk_top}{0.5}{13}
+
+  % Horizontal branches into Recomb Adder and Recomb Sub West ports
+  \draw[ieeeBus] (28.30, 6.20) -- (add_combine.west);
+  \draw[ieeeBus] (bypass_trunk_bot) -- (sub_combine.west);
+
+  % Remainder p_q entering Recomb Sub and Recomb Adder South ports (Track X = 29.80)
+  \coordinate (rem_corner) at (29.80, 0.60);
+  \draw[ieeeBus] (barrett_rem.east) -- (rem_corner) -- (sub_combine.south);
+  \buswidth{barrett_rem.east}{rem_corner}{0.22}{12}
+
+  % p_q continuation upwards from sub_combine to add_combine South port
+  \draw[ieeeBus] (sub_combine.north) -- (add_combine.south);
+  \buswidth{sub_combine.north}{add_combine.south}{0.5}{12}
+
+  % Control delay line to Stage 10 Output Reducers (Track X = 33.20)
+  \draw[ieeeControl] (ctrl_srl.east) -| (redux_a.north);
+  \draw[ieeeControl] (redux_a.south) -- (redux_b.north);
+
+  % --- 10. Stage 9 to Stage 10 Output Reduction ---
+  \draw[ieeeBus] (add_combine.east) -- (redux_a.west);
+  \buswidth{add_combine.east}{redux_a.west}{0.5}{13}
+
+  \draw[ieeeBus] (sub_combine.east) -- (redux_b.west);
+  \buswidth{sub_combine.east}{redux_b.west}{0.5}{13}
+
+  \draw[ieeeBus] (redux_a.east) -- (out_a.west);
+  \buswidth{redux_a.east}{out_a.west}{0.5}{12}
+
+  \draw[ieeeBus] (redux_b.east) -- (out_b.west);
+  \buswidth{redux_b.east}{out_b.west}{0.5}{12}
+
+  % ============================================================================
+  % Numbered Callout Badges (IDs 1 through 8) - In Dedicated Non-Overlapping Spots
+  % ============================================================================
+  \node[calloutBadge] at ($(frame_stage1.north west)+(0.45,-0.45)$) {1};
+  \node[calloutBadge] at ($(frame_stage2.north west)+(0.45,-0.45)$) {2};
+  \node[calloutBadge] at ($(srl_line.west)+(0.65,0)$) {3};
+  \node[calloutBadge] at ($(frame_mult.north west)+(0.45,-0.45)$) {4};
+  \node[calloutBadge] at ($(adder_prod.north)+(0,0.55)$) {5};
+  \node[calloutBadge] at ($(barrett_x63.north)+(0,0.55)$) {6};
+  \node[calloutBadge] at ($(extract_qhat.north)+(0,0.55)$) {7};
+  \node[calloutBadge] at ($(frame_recomb.north west)+(0.45,-0.45)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.45cm}
+% ==============================================================================
+% Publication-Grade Architectural Callout Legend Table
+% Exactly 4 columns: ID, Component / Signal, Width / Format, Description
+% ==============================================================================
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{cllp{22.0cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Input Operands \& Latch & $3 \times 12\text{b} + 2 \times 1\text{b}$ & Captures operands $a, b$, twiddle factor $\zeta$, and control flags (\texttt{inv, norm}) into pipeline registers at clock edge $T_0$. \\
+\textbf{2} & CT/GS Topology Selector & $13\text{b Add} \ / \ 12\text{b Sub}$ & Muxes forward CT ($A \pm \omega B$) and inverse GS ($A+B, \omega(A-B)$) paths, computing sum $a+b$ and difference \texttt{sub\_pos}. \\
+\textbf{3} & 7-Cycle SRL Bypass Line & $13\text{-bit} \times 7\text{ Deep}$ & Implements delay line for upper butterfly operand using AMD UltraScale \texttt{SRL16E} primitives, eliminating 91 flip-flops. \\
+\textbf{4} & 3-Chunk Soft Multiplier & $3 \times 16\text{-bit Partial}$ & Decomposes $12\text{b} \times 12\text{b}$ multiplication into three parallel $12\text{b} \times 4\text{b}$ soft multipliers ($p_0, p_1, p_2$) in CLB logic at 450~MHz. \\
+\textbf{5} & Product Assembly Adder & $20\text{b} \to 24\text{b Product}$ & Two-stage carry-lookahead adder tree assembling partial sum $s_{01} = p_0 + (p_1 \ll 4)$ and full 24-bit product $prod = x \cdot w$. \\
+\textbf{6} & Multiplier-Free Barrett Scaler & $30\text{b} \to 32\text{b Shift-Add}$ & Evaluates $prod \times 315$ via two shift-add stages ($\times 63$ and $\times 5$), where $315 = \lfloor 2^{20}/3329 \rfloor$, avoiding DSP blocks. \\
+\textbf{7} & Barrett Mod-3329 Remainder Unit & $32 \times 5\text{b ROM} \ / \ 12\text{b}$ & Exploits $q = 13 \cdot 2^8 + 1$; indexes 32-entry LUT with $\hat{q}[4:0]$ to reconstruct $q_{\text{mul}} \bmod 2^{13}$, emitting residue $p_q \in [0, 3328]$. \\
+\textbf{8} & Butterfly Recombination \& Reducers & $2 \times 13\text{b} \to 2 \times 12\text{b}$ & Recombines bypass operand with product residue $p_q$, followed by \texttt{reduce\_once} subtraction and normalizer correction for $result\_a, result\_b$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

@@ -1,0 +1,256 @@
+\documentclass[varwidth=34cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{../styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large Unified FIPS 203 ML-KEM Architecture: Top-Level System Controller and Datapath} \\[4pt]
+{\sffamily\footnotesize Subsystem 01 Microarchitecture --- Unified FIPS 203 KeyGen / Encapsulation / Decapsulation Core --- RTL: \texttt{mlkem\_keygen\_top.sv}}
+\end{center}
+\vspace{0.4cm}
+
+\begin{tikzpicture}
+
+  % ============================================================================
+  % SUBSYSTEM 1: EXTERNAL HOST & STREAMING INTERFACE (Column 1: Center x = -11.5)
+  % ============================================================================
+  \node[ioBlock, text width=4.4cm, minimum width=4.6cm, minimum height=1.3cm] (cmd_port) at (-11.5, 6.4) {
+    \hspace*{-0.3cm}\textbf{Host Command Interface}\\[2pt]
+    \scriptsize \texttt{start}, \texttt{mode[1:0]}, \texttt{k[2:0]} $\mid$ \texttt{ready}, \texttt{done}
+  };
+
+  \node[ioBlock, text width=4.4cm, minimum width=4.6cm, minimum height=1.3cm] (seed_port) at (-11.5, 3.8) {
+    \textbf{Seed Ingestion Registers}\\[2pt]
+    \scriptsize \texttt{seed\_d}, \texttt{seed\_z[255:0]} $\rightarrow \rho, \sigma, K_{\text{reject}}$ $\mid$ Plaintext $m$
+  };
+
+  \node[ioBlock, text width=4.4cm, minimum width=4.6cm, minimum height=1.3cm] (stream_io) at (-11.5, 0.0) {
+    \textbf{Streaming Cryptographic I/O}\\[2pt]
+    \scriptsize \texttt{ek\_in / dk\_in [64b]} $\mid$ \texttt{ct\_in / ct\_out [88b]}
+  };
+
+  \node[ioBlock, text width=4.4cm, minimum width=4.6cm, minimum height=1.3cm] (mem_secret_io) at (-11.5, -2.6) {
+    \textbf{Shared Secret \& Readout}\\[2pt]
+    \scriptsize \texttt{shared\_secret[255:0]} $\mid$ 1-Cycle Sync Readout
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(cmd_port)(seed_port)(stream_io)(mem_secret_io), inner sep=12pt] (frame_io) {};
+    \node[subsystemLabel, anchor=north west] at ($(frame_io.north west)+(0.15, -0.12)$) {External Host \& Streaming Interface};
+  \end{scope}
+
+  % ============================================================================
+  % SUBSYSTEM 2: UNIFIED MULTI-MODE CONTROLLER & SEQUENCER (Column 2 Top)
+  % ============================================================================
+  \node[ctrlBlock, text width=8.2cm, minimum width=8.4cm, minimum height=1.3cm] (master_fsm) at (-1.6, 6.4) {
+    \hspace*{-0.3cm}\textbf{Master Orchestration FSM (\texttt{fsm\_state\_t})}\\[2pt]
+    \scriptsize 10-State Master Controller: ST\_0 to ST\_9 Sequencing (KeyGen, Encap, Decap)
+  };
+
+  \node[regBlock, text width=3.7cm, minimum width=3.9cm, minimum height=1.3cm] (mode_decoder) at (-3.85, 3.8) {
+    \textbf{Mode \& Rank Decoder}\\[2pt]
+    \scriptsize Mode: KG (00), Enc (01), Dec (10) $\mid$ Rank $k \in \{2,3,4\}$
+  };
+
+  \node[ctrlBlock, text width=3.7cm, minimum width=3.9cm, minimum height=1.3cm] (sub_fsms) at (0.65, 3.8) {
+    \textbf{Subordinate FO FSMs}\\[2pt]
+    \scriptsize Encap FSM (\texttt{EC\_0..17}) $\&$ Decap FSMs (\texttt{DC\_0..5}, \texttt{DH\_0..4})
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(master_fsm)(mode_decoder)(sub_fsms), inner sep=10pt] (frame_ctrl) {};
+    \node[subsystemLabel, anchor=north west] at ($(frame_ctrl.north west)+(0.15, -0.12)$) {Unified Multi-Mode Controller \& FO Sequencer};
+  \end{scope}
+
+  % ============================================================================
+  % SUBSYSTEM 3: ZERO-BRAM DISTRIBUTED MEMORY SUBSYSTEM (Column 2 Bottom)
+  % ============================================================================
+  \node[memBlock, text width=3.7cm, minimum width=3.9cm, minimum height=1.3cm] (ram_s) at (-3.85, 0.0) {
+    \textbf{Secret Vector RAM (\texttt{ram\_s})}\\[2pt]
+    \scriptsize $4 \times 64 \times 48\text{b}$ LUTRAM $\mid$ Secret $\hat{\mathbf{s}}$, Coins $\hat{\mathbf{r}}$, CT $\hat{\mathbf{u}}'$
+  };
+
+  \node[memBlock, text width=3.7cm, minimum width=3.9cm, minimum height=1.3cm] (ram_pk) at (0.65, 0.0) {
+    \hspace*{-0.3cm}\textbf{Public Key RAM (\texttt{ram\_pk})}\\[2pt]
+    \scriptsize $4 \times 64 \times 48\text{b}$ LUTRAM $\mid$ 3 Decoupled Read Ports
+  };
+
+  \node[memBlock, text width=3.7cm, minimum width=3.9cm, minimum height=1.3cm] (ram_e) at (-3.85, -2.6) {
+    \textbf{Noise Error RAM (\texttt{ram\_e})}\\[2pt]
+    \scriptsize $256 \times 48\text{b}$ LUTRAM $\mid$ Noise $\mathbf{e}, \mathbf{e}_1$, Secret $\hat{\mathbf{s}}$
+  };
+
+  \node[memBlock, text width=3.7cm, minimum width=3.9cm, minimum height=1.3cm] (ram_t) at (0.65, -2.6) {
+    \textbf{Row Accumulator (\texttt{ram\_t})}\\[2pt]
+    \scriptsize $64 \times 48\text{b}$ LUTRAM $\mid$ Acc $\sum_j \hat{\mathbf{A}}_{ij} \circ \hat{\mathbf{s}}_j$
+  };
+
+  \node[regBlock, text width=8.2cm, minimum width=8.4cm, minimum height=1.05cm] (ram_aux) at (-1.6, -4.4) {
+    \scriptsize \textbf{Auxiliary Scratchpads:} \texttt{enc\_product\_ram} ($5 \times 64 \times 48\text{b}$), \texttt{enc\_ct\_ram} ($160 \times 88\text{b}$), \texttt{dec\_ct\_lanes} ($196 \times 64\text{b}$)\\
+    \scriptsize Aggregate Storage: $\mathbf{84,992\text{ bits}}$ CLB Distributed RAM (Strictly $\mathbf{0\text{ Block RAMs}}$)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(ram_s)(ram_pk)(ram_e)(ram_t)(ram_aux), inner sep=12pt] (frame_mem) {};
+    \node[subsystemLabel, anchor=north west] at ($(frame_mem.north west)+(0.15, -0.12)$) {Zero-BRAM Memory Subsystem};
+  \end{scope}
+
+  % ============================================================================
+  % SUBSYSTEM 4: SHARED COMPUTATIONAL ENGINES & FO DATAPATH (Column 3: Center x = 11.2)
+  % ============================================================================
+  \node[hwCore, text width=8.0cm, minimum width=8.2cm, minimum height=1.3cm] (keccak_core) at (11.2, 6.4) {
+    \textbf{Keccak-f[1600] / Sampler Subsystem}\\[2pt]
+    \scriptsize SHA3-256/512 Sponge $\mid$ Rejection $\hat{\mathbf{A}}/\hat{\mathbf{A}}^T$ $\&$ CBD Sampler
+  };
+
+  \node[hwCore, text width=8.0cm, minimum width=8.2cm, minimum height=1.3cm] (ntt_core) at (11.2, 3.8) {
+    \hspace*{-0.3cm}\textbf{Shared 4-Butterfly NTT/INTT Core}\\[2pt]
+    \scriptsize 4 Parallel Radix-2 ALUs (0 DSPs) $\mid$ Invariant 224 Cycles
+  };
+
+  \node[hwCore, text width=8.0cm, minimum width=8.2cm, minimum height=1.3cm] (mul_acc_core) at (11.2, 0.0) {
+    \hspace*{-0.3cm}\textbf{Dual-PWM Multiplier \& ACC Pipeline}\\[2pt]
+    \scriptsize Dual Karatsuba Multiplier (8x DSP48E2) $\mid$ Single-Cycle Commit
+  };
+
+  \node[hwBlock, text width=8.0cm, minimum width=8.2cm, minimum height=1.3cm] (fo_codec_core) at (11.2, -2.6) {
+    \hspace*{-0.3cm}\textbf{Poly Codecs \& FO Rejection Datapath}\\[2pt]
+    \scriptsize Byte Codecs ($d_u, d_v$) $\mid$ 88b Lockstep Check $\mid$ Branchless Mux
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(keccak_core)(ntt_core)(mul_acc_core)(fo_codec_core), inner sep=14pt] (frame_engines) {};
+    \node[subsystemLabel, anchor=north west] at ($(frame_engines.north west)+(0.15, -0.12)$) {Shared Hardware Coprocessors (Zero-BRAM, 8 DSPs)};
+  \end{scope}
+
+  % ============================================================================
+  % INTERCONNECT ROUTING: STRICT ORTHOGONAL MANHATTAN (ZERO OVERLAPS)
+  % ============================================================================
+
+  % 1. Host Command to Master FSM (Pure horizontal along y = 6.4)
+  \draw[ieeeControl] (cmd_port.east) -- (master_fsm.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at (-7.5, 6.45) {start, mode, k};
+
+  % 2. Master FSM to Mode Decoder (Internal vertical drop at x = -3.85)
+  \draw[ieeeControl] ($(master_fsm.south)+(-2.25, 0)$) -- (mode_decoder.north);
+
+  % 3. Mode Decoder to Sub-FSMs (Internal horizontal at y = 3.8)
+  \draw[ieeeControl] (mode_decoder.east) -- (sub_fsms.west);
+
+  % 4. Master FSM to Sub-FSMs (Internal vertical drop at x = 0.65)
+  \draw[ieeeControl] ($(master_fsm.south)+(2.25, 0)$) -- (sub_fsms.north);
+
+  % 5. Seed Ingestion Bus to Keccak Core: Dedicated Outer Perimeter at x = -14.6 and y = 8.4
+  % Enters Keccak North at x = 13.8 (well clear of the frame label)
+  \coordinate (seed_w1) at (-14.6, 3.8);
+  \coordinate (seed_top_w) at (-14.6, 8.4);
+  \coordinate (seed_top_e) at (13.8, 8.4);
+  \draw[ieeeBus] (seed_port.west) -- (seed_w1) -- (seed_top_w) -- (seed_top_e) -- ($(keccak_core.north)+(2.6, 0)$);
+  \buswidth{seed_top_w}{seed_top_e}{0.22}{256}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at ($(seed_top_w)!0.62!(seed_top_e)$) {256-bit Seeds $d, z \parallel k$ (Direct Ingestion)};
+
+  % 6. Master FSM to Keccak Core (Pure horizontal at y = 6.4)
+  \draw[ieeeControl] (master_fsm.east) -- (keccak_core.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at (4.85, 6.45) {sampler\_cmd};
+
+  % 7. Sub-FSMs to NTT Core (Pure horizontal at y = 3.8)
+  \draw[ieeeControl] (sub_fsms.east) -- (ntt_core.west);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at (4.85, 3.85) {ntt\_cmd};
+
+  % 8. Pipelined Inter-Coprocessor Trigger: NTT Core to Multiplier (Direct Vertical Drop inside Col 3)
+  \draw[ieeeControl] ($(ntt_core.south)+(-1.0, 0)$) -- ($(mul_acc_core.north)+(-1.0, 0)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=east] at (10.15, 1.9) {ntt\_done / mul\_start};
+
+  % 9. Memory to NTT Core: Secret / NTT Stream
+  % Routes through Memory gap at x = -1.6, along y = 2.0, rises at x = 5.2 to y = 3.4
+  \coordinate (rams_gap) at (-1.6, 0.0);
+  \coordinate (rams_up) at (-1.6, 2.0);
+  \coordinate (rams_trk) at (5.2, 2.0);
+  \coordinate (rams_ntt) at (5.2, 3.4);
+  \draw[ieeeBus] (ram_s.east) -- (rams_gap) -- (rams_up) -- (rams_trk) -- (rams_ntt) -- ($(ntt_core.west)+(0, -0.4)$);
+  \buswidth{rams_up}{rams_trk}{0.75}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (1.8, 2.05) {Secret / NTT Stream (24b $\times$ 2)};
+
+  % 10. Public Key RAM to Multiplier Core (Pure horizontal at y = 0.0)
+  \draw[ieeeBus] (ram_pk.east) -- (mul_acc_core.west);
+  \buswidth{ram_pk.east}{mul_acc_core.west}{0.4}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (4.85, 0.05) {pk\_word};
+
+  % 11. Row Accumulator RAM to Multiplier Core (Track at x = 6.0 in Corridor 2)
+  \coordinate (ramt_c1) at (6.0, -2.6);
+  \coordinate (ramt_c2) at (6.0, -0.5);
+  \draw[ieeeBus] (ram_t.east) -- (ramt_c1) -- (ramt_c2) -- ($(mul_acc_core.west)+(0, -0.5)$);
+  \buswidth{ramt_c1}{ramt_c2}{0.5}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (4.3, -2.55) {t\_accum};
+
+  % 12. Keccak Matrix A Stream to Multiplier: Dedicated Eastern Corridor at x = 16.4
+  \coordinate (mat_e1) at (16.4, 6.4);
+  \coordinate (mat_e2) at (16.4, 0.0);
+  \draw[ieeeBus] (keccak_core.east) -- (mat_e1) -- (mat_e2) -- (mul_acc_core.east);
+  \buswidth{mat_e1}{mat_e2}{0.28}{48}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=west] at ($(mat_e1)!0.55!(mat_e2)$) {Matrix $\hat{\mathbf{A}} / \hat{\mathbf{A}}^T$ Stream};
+
+  % 13. Streaming I/O to Poly Codecs: Dedicated Bottom Corridor Track B1 at y = -5.8 (Non-crossing)
+  \coordinate (str_c1) at (-7.2, 0.0);
+  \coordinate (str_c2) at (-7.2, -5.8);
+  \coordinate (str_c3) at (10.2, -5.8);
+  \draw[ieeeBus] (stream_io.east) -- (str_c1) -- (str_c2) -- (str_c3) -- ($(fo_codec_core.south)+(-1.0, 0)$);
+  \buswidth{str_c2}{str_c3}{0.84}{64/88}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=north] at (1.5, -5.85) {Stream Lanes: \texttt{ek\_in}, \texttt{dk\_in} [64b] / \texttt{ct\_in}, \texttt{ct\_out} [88b Groups]};
+
+  % 14. FO Datapath to Shared Secret Output: Dedicated Bottom Corridor Track B2 at y = -6.8 (Non-crossing)
+  \coordinate (ss_c1) at (12.2, -3.3);
+  \coordinate (ss_c2) at (12.2, -6.8);
+  \coordinate (ss_c3) at (-8.2, -6.8);
+  \coordinate (ss_c4) at (-8.2, -2.6);
+  \draw[ieeeBus] ($(fo_codec_core.south)+(1.0, 0)$) -- (ss_c1) -- (ss_c2) -- (ss_c3) -- (ss_c4) -- (mem_secret_io.east);
+  \buswidth{ss_c2}{ss_c3}{0.5}{256}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=north] at (-2.0, -6.85) {FO Verified \texttt{shared\_secret[255:0]} (Constant-Time Single-Cycle Mux Output)};
+
+  % ============================================================================
+  % CALLOUT IDENTIFIER BADGES (Cleanly positioned in top-right corners)
+  % ============================================================================
+  \node[calloutBadge] at ($(cmd_port.north east)+(-0.35, -0.32)$) {1};
+  \node[calloutBadge] at ($(master_fsm.north east)+(-0.35, -0.32)$) {2};
+  \node[calloutBadge] at ($(sub_fsms.north east)+(-0.35, -0.32)$) {3};
+  \node[calloutBadge] at ($(ram_pk.north east)+(-0.35, -0.32)$) {4};
+  \node[calloutBadge] at ($(keccak_core.north east)+(-0.35, -0.32)$) {5};
+  \node[calloutBadge] at ($(ntt_core.north east)+(-0.35, -0.32)$) {6};
+  \node[calloutBadge] at ($(mul_acc_core.north east)+(-0.35, -0.32)$) {7};
+  \node[calloutBadge] at ($(fo_codec_core.north east)+(-0.35, -0.32)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.45cm}
+% ==============================================================================
+% PUBLICATION-GRADE MICROARCHITECTURAL CALLOUT LEGEND TABLE (EXACTLY 4 COLUMNS)
+% ==============================================================================
+\begin{center}
+\footnotesize
+\begin{tabular}{@{} cllp{15.0cm} @{}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & Host Command Interface & Control / Handshake & Latches start trigger, operating mode (KeyGen, Encap, Decap), and rank $k$; exposes status flags and cycle profiler. \\
+\addlinespace[3pt]
+\textbf{2} & Master Orchestration FSM & 10-State Master FSM & Top-level controller executing states ST\_0 through ST\_9; manages mode branching and synchronization across all engines. \\
+\addlinespace[3pt]
+\textbf{3} & Subordinate FO Controllers & Hierarchical FSMs & Encap datapath FSM (EC\_0..17) and Decap FSMs (DC\_0..5, DH\_0..4) driving PKE encryption, message recovery, and re-encryption. \\
+\addlinespace[3pt]
+\textbf{4} & Zero-BRAM Distributed RAM & 84,992b LUTRAM & CLB Distributed RAM storing secret vectors, public keys, noise polynomials, and intermediate row sums with strictly 0 BRAMs. \\
+\addlinespace[3pt]
+\textbf{5} & Keccak-f[1600] / Sampler & 64b Lane Streaming & Shared cryptographic sponge computing SHA3-256/512 digests, SHAKE-128 matrix sampling, and SHAKE-256 CBD error sampling. \\
+\addlinespace[3pt]
+\textbf{6} & 4-Butterfly NTT/INTT Core & 4x Radix-2 ALUs (0 DSP) & Soft-logic transform engine computing forward NTT and inverse INTT in an invariant 224 cycles per polynomial. \\
+\addlinespace[3pt]
+\textbf{7} & Dual-PWM Multiplier \& ACC & 8x DSP48E2 Slices & Pipelined Karatsuba multiplier and 4-stage modular accumulator computing $\hat{\mathbf{A}} \circ \hat{\mathbf{s}} + \hat{\mathbf{e}}$ with single-cycle row commits. \\
+\addlinespace[3pt]
+\textbf{8} & Poly Codecs \& FO Logic & Codecs + CT Mux & Handles coefficient compression/decompression, lockstep ciphertext comparison, and single-cycle branchless implicit rejection. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

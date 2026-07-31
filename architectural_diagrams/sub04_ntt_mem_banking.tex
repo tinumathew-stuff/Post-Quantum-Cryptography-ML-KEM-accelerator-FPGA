@@ -1,0 +1,377 @@
+\documentclass[varwidth=38.0cm,border=15pt]{standalone}
+\usepackage{tikz}
+\usepackage{styles/ieee_diagrams}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+\begin{document}
+\begin{center}
+{\sffamily\bfseries\Large ML-KEM HPKA: Subsystem 04 --- NTT/INTT 8-Bank Memory Architecture \& Address Sequencer} \\[3pt]
+{\sffamily\footnotesize Conflict-Free Distributed LUTRAM Matrix, Dual-Mode 7-Stage Sequencer, \& Pipelined Butterfly Interconnect --- Module: \texttt{mlkem\_ntt\_intt.sv}}
+\end{center}
+\vspace{0.35cm}
+
+\begin{tikzpicture}[node distance=1.0cm and 1.2cm]
+
+  % ============================================================================
+  % COORDINATE SYSTEM ANCHORS & GRID ALIGNMENT (EXPANDED VARWIDTH = 38.0cm)
+  % Col 1 (IO & 3-Slot Manager):    Center X = 2.4,  Width = 3.8cm, Extent = [0.5, 4.3]
+  % Channel 1 (Control Channel):     X = 4.3 .. 7.0   (Width = 2.7cm)
+  % Col 2 (Sequencer & AGU Core):    Center X = 9.8,  Width = 5.6cm, Extent = [7.0, 12.6]
+  % Channel 2 (Address Trunk):       X = 12.6 .. 15.1 (Width = 2.5cm, Trunk at X = 13.8)
+  % Col 3 (8-Bank LUTRAM Array):     Center X = 17.5, Width = 4.8cm, Extent = [15.1, 19.9]
+  % Channel 3 (Bank Read Buses):     X = 19.9 .. 22.2 (Width = 2.3cm)
+  % Col 4A (Read Crossbar):          Center X = 23.1, Width = 1.8cm, Extent = [22.2, 24.0]
+  % Channel 4 (Operands & Twiddle):  X = 24.0 .. 27.5 (Width = 3.5cm, Twiddle Trunk at X = 25.8)
+  % Col 4B (Quad Butterfly Array):   Center X = 30.0, Width = 4.8cm, Extent = [27.5, 32.5]
+  % Channel 5 (Writeback Trunk):     X = 32.5 .. 34.8 (Width = 2.3cm, Trunk at X = 33.7)
+  % Col 5 (Tag Pipeline Tracker):    Center X = 35.7, Width = 1.8cm, Extent = [34.8, 36.6]
+  % ============================================================================
+
+  % ----------------------------------------------------------------------------
+  % Group 1: External Host / Streaming IO & Decoupled 3-Slot Manager (Column 1)
+  % ----------------------------------------------------------------------------
+  \node[ioBlock, text width=3.8cm, minimum height=1.2cm] (cmd_port) at (2.4, 10.6) {
+    \textbf{Host Command Port}\\[1pt]
+    \scriptsize \texttt{cmd\_valid, cmd\_ready, mode, k[2:0]}
+  };
+
+  \node[ctrlBlock, text width=3.8cm, minimum height=1.5cm] (slot_ring) at (2.4, 7.2) {
+    \textbf{3-Slot Concurrency Ring}\\[2pt]
+    \scriptsize Triple-Buffer FSM (Slots 0, 1, 2)
+  };
+
+  \node[ioBlock, text width=3.8cm, minimum height=1.2cm] (in_buffer) at (2.4, 3.6) {
+    \textbf{Streaming Ingestion Buffer}\\[1pt]
+    \scriptsize \texttt{in\_data[23:0]} (2/4 coeffs/beat)
+  };
+
+  \node[ioBlock, text width=3.8cm, minimum height=1.2cm] (out_buffer) at (2.4, 1.2) {
+    \textbf{Streaming Drain Buffer}\\[1pt]
+    \scriptsize \texttt{out\_data[23:0]} Skid Register
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(cmd_port)(slot_ring)(in_buffer)(out_buffer), inner sep=9pt] (frame_slot) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_slot.north west)+(0.1, 0.08)$) {Decoupled 3-Slot Asynchronous Memory Controller};
+  \end{scope}
+
+  % ----------------------------------------------------------------------------
+  % Group 2: Dual-Mode 7-Stage Sequencer & Conflict-Free AGU Core (Column 2)
+  % ----------------------------------------------------------------------------
+  \node[ctrlBlock, text width=5.6cm, minimum height=1.3cm] (seq_fsm) at (9.8, 10.4) {
+    \textbf{7-Stage Address Sequencer FSM}\\[2pt]
+    \scriptsize Dual-Mode DIT/DIF \& Normalization Pass
+  };
+
+  \node[regBlock, text width=5.6cm, minimum height=1.2cm] (guard_gen) at (9.8, 7.2) {
+    \textbf{Hazard Guard Generator}\\[2pt]
+    \scriptsize 16 Issues + 6 Guard Clocks (Zero RAW Hazards)
+  };
+
+  \node[hwCore, text width=5.6cm, minimum height=1.4cm] (conflict_agu) at (9.8, 3.4) {
+    \textbf{Conflict-Free Permutation AGU}\\[2pt]
+    \scriptsize XOR Hash Bank \& Row Address Mapping
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(seq_fsm)(guard_gen)(conflict_agu), inner sep=9pt] (frame_seq) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_seq.north west)+(0.1, 0.08)$) {Dual-Mode 7-Stage Sequencer \& Conflict-Free AGU};
+  \end{scope}
+
+  % ----------------------------------------------------------------------------
+  % Group 3: 8-Bank Zero-BRAM Distributed LUTRAM Matrix (Column 3)
+  % ----------------------------------------------------------------------------
+  \node[ctrlBlock, text width=4.8cm, minimum height=1.1cm] (wr_dist) at (17.5, 11.8) {
+    \textbf{In-Place Writeback Distributor}\\[1pt]
+    \scriptsize Write Steering \& Bank Enables ($8 \times 24\text{b}$)
+  };
+
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank0) at (17.5, 9.6) {
+    \textbf{Bank 0}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank1) at (17.5, 8.4) {
+    \textbf{Bank 1}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank2) at (17.5, 7.2) {
+    \textbf{Bank 2}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank3) at (17.5, 6.0) {
+    \textbf{Bank 3}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank4) at (17.5, 4.8) {
+    \textbf{Bank 4}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank5) at (17.5, 3.6) {
+    \textbf{Bank 5}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank6) at (17.5, 2.4) {
+    \textbf{Bank 6}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+  \node[memBlock, text width=4.8cm, minimum height=0.65cm] (bank7) at (17.5, 1.2) {
+    \textbf{Bank 7}: $16 \times 24\text{b}$ RAM32M (LUTRAM)
+  };
+
+  \node[ioBlock, text width=4.8cm, minimum height=0.70cm] (drain_mux) at (17.5, -0.1) {
+    \textbf{Output Drain Unload Mux}\\[1pt]
+    \scriptsize 8-to-1 Mux: \texttt{output\_addr[6:3]} $\to$ 24b/Beat
+  };
+
+  \node[regBlock, text width=4.8cm, minimum height=0.70cm] (load_port) at (17.5, -1.1) {
+    \textbf{Streaming Ingestion Load Port}\\[1pt]
+    \scriptsize Demux $\to$ Bank Write Ports ($8 \times 24\text{b}$)
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(wr_dist)(bank0)(bank1)(bank2)(bank3)(bank4)(bank5)(bank6)(bank7)(drain_mux)(load_port), inner sep=9pt] (frame_banks) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_banks.north west)+(0.1, 0.08)$) {8-Bank Zero-BRAM Distributed LUTRAM Matrix (RAM32M)};
+  \end{scope}
+
+  % ----------------------------------------------------------------------------
+  % Group 4: Read Crossbar, Quad Butterfly Array & Twiddle Core (Columns 4 & 5)
+  % ----------------------------------------------------------------------------
+  \node[memBlock, text width=4.8cm, minimum height=1.1cm] (twiddle_agu) at (30.0, 11.2) {
+    \textbf{Twiddle Factor AGU \& ROM Unit}\\[1pt]
+    \scriptsize $256 \times 12\text{b}$ Unified $\zeta$ ROM \& Dynamic Index
+  };
+
+  \node[hwBlock, text width=1.8cm, minimum height=11.2cm] (read_xbar) at (23.1, 5.4) {
+    \vspace{0.5cm}
+    \textbf{Read}\\[2pt]
+    \textbf{Perm}\\[2pt]
+    \textbf{Crossbar}\\[10pt]
+    \scriptsize Unpack \&\\[2pt]
+    \scriptsize Permute\\[2pt]
+    \scriptsize $8 \times 24\text{b}$ Words\\[8pt]
+    \scriptsize $\Downarrow$\\[8pt]
+    \scriptsize Route to\\[2pt]
+    \scriptsize 4 Groups\\[2pt]
+    \scriptsize $W_A, W_B$
+  };
+
+  \node[hwCore, text width=4.8cm, minimum height=1.3cm] (bf_grp0) at (30.0, 9.0) {
+    \textbf{Butterfly Group $g = 0$}\\[2pt]
+    \scriptsize Dual-Lane 10-Stage 0-DSP Barrett Core
+  };
+
+  \node[hwCore, text width=4.8cm, minimum height=1.3cm] (bf_grp1) at (30.0, 6.6) {
+    \textbf{Butterfly Group $g = 1$}\\[2pt]
+    \scriptsize Dual-Lane 10-Stage 0-DSP Barrett Core
+  };
+
+  \node[hwCore, text width=4.8cm, minimum height=1.3cm] (bf_grp2) at (30.0, 4.2) {
+    \textbf{Butterfly Group $g = 2$}\\[2pt]
+    \scriptsize Dual-Lane 10-Stage 0-DSP Barrett Core
+  };
+
+  \node[hwCore, text width=4.8cm, minimum height=1.3cm] (bf_grp3) at (30.0, 1.8) {
+    \textbf{Butterfly Group $g = 3$}\\[2pt]
+    \scriptsize Dual-Lane 10-Stage 0-DSP Barrett Core
+  };
+
+  \node[ctrlBlock, text width=1.8cm, minimum height=11.2cm] (tag_tracker) at (35.7, 5.4) {
+    \vspace{0.6cm}
+    \textbf{14-Cycle}\\[2pt]
+    \textbf{Tag}\\[2pt]
+    \textbf{Tracker}\\[12pt]
+    \scriptsize 14-Stage\\[2pt]
+    \scriptsize Shift Reg\\[2pt]
+    \scriptsize Pipeline\\[12pt]
+    \scriptsize Bank/Row\\[2pt]
+    \scriptsize Tag Delay\\[12pt]
+    \scriptsize Commit\\[2pt]
+    \scriptsize Stage 13
+  };
+
+  \begin{scope}[on background layer]
+    \node[subsystemFrame, fit=(read_xbar)(twiddle_agu)(bf_grp0)(bf_grp1)(bf_grp2)(bf_grp3)(tag_tracker), inner sep=9pt] (frame_datapath) {};
+    \node[subsystemLabel, anchor=south west] at ($(frame_datapath.north west)+(0.1, 0.08)$) {Quad Butterfly Vector Engine, Crossbar \& Twiddle Core};
+  \end{scope}
+
+  % ============================================================================
+  % INTERCONNECT SIGNAL ROUTING (STRICT ORTHOGONAL MANHATTAN ROUTING)
+  % ZERO OVERLAPS VIA DEDICATED COORDINATE CHANNELS
+  % ============================================================================
+
+  % --- 1. Command port to 3-Slot Concurrency Ring ---
+  \draw[ieeeControl] (cmd_port.south) -- (slot_ring.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=east] at ($(cmd_port.south)!0.5!(slot_ring.north)$) {\texttt{cmd\_start}};
+
+  % --- 2. 3-Slot Concurrency Ring to 7-Stage Address Sequencer ---
+  % Dedicated route in Channel 1 at X = 5.4
+  \draw[ieeeControl] ($(slot_ring.east)+(0,0.4)$) -- (5.4, 7.6) |- ($(seq_fsm.west)+(0,-0.2)$);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south, align=center] at (5.4, 8.8) {\texttt{slot\_run\_start}\\\texttt{compute\_slot\_q}};
+
+  % --- 3. Sequencer FSM to Guard Cycle Generator ---
+  \draw[ieeeControl] (seq_fsm.south) -- (guard_gen.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=east] at ($(seq_fsm.south)!0.5!(guard_gen.north)$) {\texttt{issue\_tick}};
+
+  % --- 4. Guard Cycle Generator to Conflict-Free AGU ---
+  \draw[ieeeControl] (guard_gen.south) -- (conflict_agu.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=east] at ($(guard_gen.south)!0.5!(conflict_agu.north)$) {\texttt{issue\_index, half\_bit}};
+
+  % --- 5. Conflict-Free AGU to 8 Memory Banks: Read Row Addresses read_row_q[0:7] ---
+  % Vertical address trunk line in Channel 2 at X = 13.8 (Spans Y = 1.2 to Y = 9.6)
+  \coordinate (addr_trunk_top) at (13.8, 9.6);
+  \coordinate (addr_trunk_bot) at (13.8, 1.2);
+  \coordinate (addr_entry)     at (13.8, 3.4);
+
+  \draw[ieeeBus] (conflict_agu.east) -- (addr_entry);
+  \draw[line width=1.4pt, draw=ieeeNavy] (addr_trunk_bot) -- (addr_trunk_top);
+
+  \draw[ieeeBus] (13.8, 9.6) -- (bank0.west);
+  \draw[ieeeBus] (13.8, 8.4) -- (bank1.west);
+  \draw[ieeeBus] (13.8, 7.2) -- (bank2.west);
+  \draw[ieeeBus] (13.8, 6.0) -- (bank3.west);
+  \draw[ieeeBus] (13.8, 4.8) -- (bank4.west);
+  \draw[ieeeBus] (13.8, 3.6) -- (bank5.west);
+  \draw[ieeeBus] (13.8, 2.4) -- (bank6.west);
+  \draw[ieeeBus] (13.8, 1.2) -- (bank7.west);
+
+  \coordinate (p_agu_e) at (conflict_agu.east);
+  \buswidth{p_agu_e}{addr_entry}{0.5}{8x4b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (13.2, 3.55) {\texttt{read\_row\_q[0:7]}};
+
+  % --- 6. 8 Memory Banks to Read Permutation Crossbar ---
+  % Dedicated parallel horizontal buses in Channel 3 (X = 19.9 to 22.2)
+  \draw[ieeeBus] (bank0.east) -- (22.2, 9.6);
+  \draw[ieeeBus] (bank1.east) -- (22.2, 8.4);
+  \draw[ieeeBus] (bank2.east) -- (22.2, 7.2);
+  \draw[ieeeBus] (bank3.east) -- (22.2, 6.0);
+  \draw[ieeeBus] (bank4.east) -- (22.2, 4.8);
+  \draw[ieeeBus] (bank5.east) -- (22.2, 3.6);
+  \draw[ieeeBus] (bank6.east) -- (22.2, 2.4);
+  \draw[ieeeBus] (bank7.east) -- (22.2, 1.2);
+
+  \coordinate (b0e) at (bank0.east);
+  \coordinate (b0_dest) at (22.2, 9.6);
+  \buswidth{b0e}{b0_dest}{0.5}{24b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (21.05, 9.75) {\texttt{bank\_read[0:7]}};
+
+  % --- 7. Read Permutation Crossbar to 4 Butterfly Groups ---
+  % Unpacked aligned operand pairs WA, WB in Channel 4 (X = 24.0 to 27.5)
+  % Enters butterfly units cleanly at north-offset (+0.25cm)
+  \draw[ieeeBus] (24.0, 9.25) -- ($(bf_grp0.west)+(0,0.25)$);
+  \draw[ieeeBus] (24.0, 6.85) -- ($(bf_grp1.west)+(0,0.25)$);
+  \draw[ieeeBus] (24.0, 4.45) -- ($(bf_grp2.west)+(0,0.25)$);
+  \draw[ieeeBus] (24.0, 2.05) -- ($(bf_grp3.west)+(0,0.25)$);
+
+  \coordinate (xb0) at (24.0, 9.25);
+  \coordinate (xb0_mid) at (25.5, 9.25);
+  \buswidth{xb0}{xb0_mid}{0.5}{$2\times 24\text{b}$}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (24.75, 9.40) {\texttt{bf\_a, bf\_b}};
+
+  % --- 8. Twiddle Factor Bus zeta[0:3] into 4 Butterfly Groups ---
+  % Dedicated vertical distribution trunk at X = 25.8 in Channel 4 (Clearance >= 1.7cm)
+  % Enters butterfly units cleanly at south-offset (-0.25cm) pointing forward!
+  \coordinate (twiddle_trunk_top) at (25.8, 10.3);
+  \coordinate (twiddle_trunk_bot) at (25.8, 1.55);
+
+  \draw[ieeeBus] ($(twiddle_agu.south)+(-1.8,0)$) |- (twiddle_trunk_top);
+  \draw[line width=1.4pt, draw=ieeeNavy] (twiddle_trunk_top) -- (twiddle_trunk_bot);
+
+  \draw[ieeeBus] (25.8, 8.75) -- ($(bf_grp0.west)+(0,-0.25)$);
+  \draw[ieeeBus] (25.8, 6.35) -- ($(bf_grp1.west)+(0,-0.25)$);
+  \draw[ieeeBus] (25.8, 3.95) -- ($(bf_grp2.west)+(0,-0.25)$);
+  \draw[ieeeBus] (25.8, 1.55) -- ($(bf_grp3.west)+(0,-0.25)$);
+
+  \coordinate (tw_h1) at (28.0, 10.3);
+  \coordinate (tw_h2) at (26.0, 10.3);
+  \buswidth{tw_h1}{tw_h2}{0.5}{4x12b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (27.0, 10.45) {$\zeta[0..3]$};
+
+  % --- 9. 4 Butterfly Groups to Writeback Trunk in Channel 5 ---
+  % Dedicated vertical collector trunk at X = 33.7 (Spans Y = 1.8 to Y = 13.5)
+  \coordinate (wb_col_bot) at (33.7, 1.8);
+  \coordinate (wb_col_top) at (33.7, 13.5);
+
+  \draw[ieeeBus] (bf_grp0.east) -- (33.7, 9.0);
+  \draw[ieeeBus] (bf_grp1.east) -- (33.7, 6.6);
+  \draw[ieeeBus] (bf_grp2.east) -- (33.7, 4.2);
+  \draw[ieeeBus] (bf_grp3.east) -- (33.7, 1.8);
+
+  \draw[line width=1.4pt, draw=ieeeNavy] (wb_col_bot) -- (wb_col_top);
+
+  \coordinate (bf0e) at (bf_grp0.east);
+  \coordinate (wb0) at (33.7, 9.0);
+  \buswidth{bf0e}{wb0}{0.5}{2x24b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (33.1, 9.15) {\texttt{write\_data}};
+
+  % --- 10. Pipeline Tag Control Bus: Sequencer to Tag Tracker & Twiddle Unit ---
+  % Strictly orthogonal top highway at Y = 14.8 (Zero Slant)
+  \draw[ieeeControl] (seq_fsm.north) -- (9.8, 14.8) -- (36.0, 14.8) -- ($(tag_tracker.north)+(0.3,0)$);
+  \draw[ieeeControl] (30.0, 14.8) -- (twiddle_agu.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=south] at (20.0, 14.95) {\texttt{tag\_bank, tag\_row, tag\_slot, tag\_valid[0:13], tag\_norm, tag\_last}};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeCoral, anchor=west] at (30.15, 12.4) {\texttt{stage, inv, norm}};
+
+  % --- 11. In-Place Writeback Bus: Writeback Trunk & Tag Tracker to Writeback Distributor ---
+  % Dedicated top highway at Y = 13.5 (1.3cm clearance below Tag Control Bus)
+  \draw[ieeeBus] (wb_col_top) -- (17.5, 13.5) -- (wr_dist.north);
+  \draw[ieeeControl] ($(tag_tracker.north)+(-0.3,0)$) |- (33.7, 13.5);
+
+  \coordinate (wb_src) at (32.0, 13.5);
+  \coordinate (wb_dst) at (21.0, 13.5);
+  \buswidth{wb_src}{wb_dst}{0.5}{8x24b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (25.0, 13.65) {\texttt{write\_data\_q[7:0], wr\_row[7:0], write\_en[7:0]}};
+
+  % Distributor to Bank Array Write Port
+  \draw[ieeeBus] (wr_dist.south) -- (bank0.north);
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=west] at ($(wr_dist.south)!0.5!(bank0.north)$) {\texttt{wr\_port[0:7]}};
+
+  % --- 12. Streaming Output Drain Bus: Inner Bottom Channel (Y = -0.1) ---
+  % Direct connection from Bank 7 to Drain Mux, and Drain Mux West to Out Buffer East
+  \draw[ieeeBus] (bank7.south) -- (drain_mux.north);
+  \draw[ieeeBus] (drain_mux.west) -- (4.3, -0.1) |- (out_buffer.east);
+  \coordinate (dm_w) at (drain_mux.west);
+  \coordinate (dm_mid) at (10.0, -0.1);
+  \buswidth{dm_w}{dm_mid}{0.5}{24b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (9.5, 0.05) {\texttt{output\_mem\_out[7:0]}};
+
+  % --- 13. Streaming Input Ingestion Bus: Outer Bottom Channel (Y = -1.8) ---
+  % Concentric outer loop with 1.7cm clearance below Drain Bus
+  \draw[ieeeBus] (in_buffer.west) -- (-0.3, 3.6) -- (-0.3, -1.8) -- (17.5, -1.8) -- (load_port.south);
+  \coordinate (in_b_a) at (-0.3, -1.8);
+  \coordinate (in_b_b) at (4.0, -1.8);
+  \buswidth{in_b_a}{in_b_b}{0.5}{24b/48b}
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south] at (8.5, -1.65) {\texttt{load\_data\_pipe\_q, load\_bank, load\_row}};
+  \node[font=\sffamily\tiny\bfseries, text=ieeeNavy, anchor=south west] at (17.5, -1.60) {Load Port};
+
+  % ============================================================================
+  % CALLOUT IDENTIFIER BADGES (IDs 1 THROUGH 8) - IN DEDICATED EMPTY CORNERS
+  % ============================================================================
+  \node[calloutBadge] at ($(slot_ring.north east)+(-0.35, -0.35)$) {1};
+  \node[calloutBadge] at ($(seq_fsm.north east)+(-0.35, -0.35)$) {2};
+  \node[calloutBadge] at ($(twiddle_agu.north east)+(-0.35, -0.35)$) {3};
+  \node[calloutBadge] at ($(conflict_agu.north west)+(0.35, -0.35)$) {4};
+  \node[calloutBadge] at ($(wr_dist.north east)+(-0.35, -0.35)$) {5};
+  \node[calloutBadge] at ($(read_xbar.north)+(0, -0.45)$) {6};
+  \node[calloutBadge] at ($(bf_grp0.north east)+(-0.35, -0.35)$) {7};
+  \node[calloutBadge] at ($(tag_tracker.north)+(-0.35, -0.45)$) {8};
+
+\end{tikzpicture}
+
+\vspace{0.4cm}
+% ==============================================================================
+% PUBLICATION-GRADE ARCHITECTURAL CALLOUT LEGEND TABLE
+% Schema: ID | Component / Signal | Width / Format | Description
+% ==============================================================================
+\begin{center}
+\footnotesize
+\begin{tabular}{cllp{19.0cm}}
+\toprule
+\textbf{ID} & \textbf{Component / Signal} & \textbf{Width / Format} & \textbf{Description} \\
+\midrule
+\textbf{1} & 3-Slot Concurrency Ring & Control / 3-State FSMs & Manages concurrent loading, compute, and output draining across 3 polynomial slots without bubbles. \\
+\textbf{2} & 7-Stage Address Sequencer & 9-bit Counter / Control & Schedules forward DIT ($h=6-s$), inverse DIF ($h=s$), and normalization, inserting 6 guard clocks per stage. \\
+\textbf{3} & Twiddle AGU \& ROM Unit & 7-bit Addr / $4 \times 12\text{b}$ Data & Generates bit-reversed twiddle addresses for the 256-entry $\zeta$ ROM and forces $\zeta=3303$ during normalization. \\
+\textbf{4} & Conflict-Free Permutation AGU & Combinational / 3-bit Bank & Maps addresses via XOR-folded hashing $\{(\bigoplus_{k=2}^6 \text{addr}[k]), \text{addr}[1:0]\}$ to guarantee 8 contention-free reads per clock. \\
+\textbf{5} & In-Place Writeback Distributor & 8-bit Enables / 24-bit Words & Steers 8-word butterfly results and commit addresses back to destination banks without memory hazards. \\
+\textbf{6} & Read Permutation Crossbar & $8 \times 24\text{b} \to 8 \times 12\text{b}$ Operands & Permutes bank outputs and unpacks 24-bit words into 16 coefficients bundled with twiddles for the 4 butterfly groups. \\
+\textbf{7} & Quad Butterfly Processing Array & 8 Scalar ALUs ($8 \times 12\text{b}$) & Four dual-lane vector groups executing 10-stage zero-DSP Cooley-Tukey/Gentleman-Sande transforms with Barrett mod 3329. \\
+\textbf{8} & 14-Cycle Tag Pipeline Tracker & 14-Stage Shift Register & Tracks bank/row tags in lockstep with the 14-cycle datapath to steer in-place writebacks without memory hazards. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

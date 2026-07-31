@@ -1,0 +1,97 @@
+\documentclass[journal]{IEEEtran}
+
+% ==============================================================================
+% Required Packages for High-Class IEEE Research Papers
+% ==============================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+% IEEE Diagram & Architectural Styles
+\usepackage{styles/ieee_diagrams}
+
+% Hyphenation exceptions
+\hyphenation{op-ti-cal net-works semi-conduc-tor}
+
+\begin{document}
+
+% ------------------------------------------------------------------------------
+% Paper Title & Authors
+% ------------------------------------------------------------------------------
+\title{A 413.7~MHz Zero-BRAM 8-DSP All-Security-Level Hardware Accelerator for NIST FIPS 203 (ML-KEM) Post-Quantum Cryptography}
+
+\author{First~Author,~\IEEEmembership{Member,~IEEE,}
+        Second~Author,~\IEEEmembership{Member,~IEEE,}
+        and~Third~Author,~\IEEEmembership{Senior~Member,~IEEE}%
+\thanks{Manuscript received August 15, 2026; revised October 12, 2026. (Corresponding author: First Author.)}%
+\thanks{The authors are with the Department of Electrical and Computer Engineering and the High-Assurance Computing Laboratory (e-mail: \{first.author, second.author, third.author\}@institution.edu).}%
+}
+
+% Header marks
+\markboth{IEEE Transactions on Very Large Scale Integration (VLSI) Systems,~Vol.~XX, No.~XX, October~2026}%
+{Author \MakeLowercase{\textit{et al.}}: A 413.7~MHz Zero-BRAM 8-DSP All-Security-Level Hardware Accelerator for NIST FIPS 203}
+
+\maketitle
+
+% ------------------------------------------------------------------------------
+% Abstract & Keywords
+% ------------------------------------------------------------------------------
+\begin{abstract}
+With the formal ratification of NIST FIPS 203 in August 2024, transitioning public-key infrastructures to lattice-based post-quantum cryptography (PQC) has become critical to defend against quantum cryptanalysis enabled by Shor's algorithm. However, existing FPGA and ASIC hardware implementations of the Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM) suffer from prohibitive Block RAM (BRAM) consumption that induces routing bottlenecks, excessive digital signal processing (DSP) slice usage that restricts deployment on resource-constrained edge platforms, and an inability to dynamically support multiple security levels. This paper presents a unified, high-performance, all-security-level cryptographic accelerator for NIST FIPS 203 supporting ML-KEM-512, ML-KEM-768, and ML-KEM-1024. The proposed architecture establishes an ultra-constrained physical resource budget featuring: 1)~a strictly zero-BRAM storage architecture utilizing distributed CLB LUTRAM, shift registers, and flip-flops; 2)~a streaming dual-channel Karatsuba pointwise multiplier restricted to strictly 8 DSP48E2 slices; 3)~a 4-butterfly parallel Number Theoretic Transform (NTT) engine achieving 8 coefficients per cycle with strictly 0 DSPs via soft-logic Barrett modular reduction; 4)~a 24-cycle $\text{Keccak-}f[1600]$ engine with a 64-bit lane absorb interface; 5)~division-free Canonical Signed Digit (CSD) compression codecs; and 6)~a constant-time Fujisaki-Okamoto transform datapath with implicit rejection. Implemented and verified on an AMD Kintex UltraScale FPGA, the accelerator operates at 413.7~MHz while consuming only 29,063 LUTs, 17,666 registers, 8 DSPs, and 0 BRAMs. Execution latencies are 1,369 / 2,104 / 3,032 cycles (3.31 / 5.09 / 7.33~$\mu$s) for KeyGen, 1,665 / 2,411 / 3,412 cycles (4.02 / 5.83 / 8.25~$\mu$s) for Encapsulation, and 2,497 / 3,287 / 4,358 cycles (6.04 / 7.95 / 10.53~$\mu$s) for Decapsulation across Categories 1, 3, and 5, demonstrating superior area-time-hardware efficiency.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Post-Quantum Cryptography (PQC), NIST FIPS 203, Module-Lattice-Based Key-Encapsulation Mechanism (ML-KEM), Hardware Accelerator, Field-Programmable Gate Array (FPGA), Zero-BRAM Architecture, Number Theoretic Transform (NTT), Keccak-$f[1600]$, Fujisaki-Okamoto Transform, Constant-Time Implementation.
+\end{IEEEkeywords}
+
+\IEEEpeerreviewmaketitle
+
+% ==============================================================================
+% Master Document Structure - Input Pipeline Sections
+% ==============================================================================
+
+% Section I: Introduction
+\input{sections/sec01_intro.tex}
+
+% Section II: Preliminaries and FIPS 203 Mathematical Formulation
+\input{sections/sec02_prelims.tex}
+
+% Section III: Unified Multi-Mode Architecture & Top-Level Controller
+\input{sections/sec03_top_controller.tex}
+
+% Section IV: Zero-BRAM Memory Hierarchy & Conflict-Free Bank Scheduling
+\input{sections/sec04_zero_bram_memory.tex}
+
+% Section V: Arithmetic Microarchitecture & Zero-DSP Transform Engines
+\input{sections/sec05a_zero_dsp_ntt.tex}
+\input{sections/sec05b_karatsuba_multiplier_alu.tex}
+
+% Section VI: Unified Cryptographic Sponge & Sampling Subsystem
+\input{sections/sec06_keccak_sampler_cbd.tex}
+
+% Section VII: Multiplier-Free Polynomial Codecs & Serialization Architecture
+\input{sections/sec07_poly_codecs_serialization.tex}
+
+% Section VIII: FPGA Implementation Results, Performance Analysis & State-of-the-Art Comparison
+% Section IX: Conclusion & Future Directions
+\input{sections/sec08_09_results_conclusion.tex}
+
+% ==============================================================================
+% References
+% ==============================================================================
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
