@@ -11,6 +11,12 @@ xsim_*.log
 xvlog.log
 xvlog_test.log
 .Xil/
+clockInfo.txt
+*.dcp
+
+# Post-synthesis and post-implementation simulation workspaces
+post_synth_impl_verification/build_post_synth_sim/
+post_synth_impl_verification/build_post_impl_sim/
 
 # Antigravity policy/internal
 .tofollow/

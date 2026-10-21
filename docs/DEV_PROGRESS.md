@@ -629,3 +629,10 @@ Engineering activity and milestone tracking for the FIPS 203 Cryptographic Hardw
 - **2026-07-25 14:15:00**: `docs(fpga): summarize FPGA implementation metrics across LUTs, FFs, DSPs, BRAMs`
 - **2026-07-25 16:50:30**: `refactor(fpga): clean up synthesis tcl script comments and options`
 - **2026-07-31 16:30:00**: `chore: finalize ML-KEM HPKA hardware accelerator release`
+- **2026-10-21 18:30:15**: `feat(sim): establish post-synthesis and post-implementation gate-level verification flow in post_synth_impl_verification`
+- **2026-10-21 19:10:40**: `fix(netlist): sanitize write_verilog unescaped host metadata corruption in netlist headers`
+- **2026-10-21 19:28:50**: `fix(sim): resolve testbench simulation timeout by adding 150 ns delay for Xilinx glbl.GSR release`
+- **2026-10-21 19:35:00**: `fix(sim): adjust decapsulation memory query strobe timing to compensate for gate-level netlist propagation delays`
+- **2026-10-21 19:54:14**: `test(sim): achieve 100% bit-exact pass on all 9 post-synthesis testbenches (KeyGen, Encap, Decap)`
+- **2026-10-21 20:02:46**: `test(sim): achieve 100% bit-exact pass on all 9 post-implementation testbenches (KeyGen, Encap, Decap)`
+- **2026-10-21 20:07:00**: `docs: add comprehensive README and workflow documentation for post-synth and post-impl verification`

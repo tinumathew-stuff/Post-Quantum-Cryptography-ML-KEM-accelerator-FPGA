@@ -10,6 +10,7 @@
 [![DSP Usage](https://img.shields.io/badge/DSP48E2-Strictly%208%20Slices-green.svg)]()
 [![BRAM Usage](https://img.shields.io/badge/Block%20RAM-0%20(Zero--BRAM)-success.svg)]()
 [![Verification](https://img.shields.io/badge/NIST%20KAT-100%25%20Verified-brightgreen.svg)]()
+[![Gate-Level Verification](https://img.shields.io/badge/Post--Synth%20%26%20Post--Impl-18%2F18%20Passed-brightgreen.svg)]()
 [![HDL](https://img.shields.io/badge/HDL-SystemVerilog%20%2F%20Verilog-blueviolet.svg)]()
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE)
 
@@ -152,8 +153,17 @@ mlkem_hpka_accelerator/
 │   ├── sections/               # LaTeX section files
 │   ├── figures/                # TikZ figures and diagrams
 │   └── main.pdf                # Compiled IEEE research paper
+├── post_synth_impl_verification/ # Gate-level post-synthesis & post-implementation verification suite
+│   ├── build/                  # Generated gate-level netlists (post-synth & post-impl)
+│   ├── logs/                   # Simulation logs for all 18 runs
+│   ├── reports/                # Utilization, timing, and route status reports
+│   ├── tb/                     # 9 self-checking SystemVerilog testbenches
+│   ├── vectors/                # NIST KAT hex test vectors
+│   ├── run_post_synth_sim.sh   # Post-synthesis simulation runner
+│   ├── run_post_impl_sim.sh    # Post-implementation simulation runner
+│   └── run_full_verification.sh # End-to-end synthesis, impl & gate-level verification runner
 ├── scripts/                    # Python analysis and synthesis log parser scripts
-└── usertest/                   # Comprehensive testbenches & NIST FIPS 203 KAT vectors
+└── usertest/                   # Comprehensive RTL testbenches & NIST FIPS 203 KAT vectors
     ├── c_ref/                  # C golden reference model and harness
     ├── vectors/                # Known Answer Test (KAT) hex vectors (512, 768, 1024)
     ├── compile_rtl.sh          # Vivado xelab compilation script
@@ -170,13 +180,27 @@ mlkem_hpka_accelerator/
 - **GCC / Clang** (for compiling the C reference verification model)
 - **Python 3.8+** (for log parsing and analysis scripts)
 
-### Running the End-to-End Test Suite
+### Running the End-to-End RTL Test Suite
 To compile the RTL and run the full suite of **9 testbenches** across all security levels (KeyGen, Encap, Decap for ML-KEM-512, 768, and 1024) against NIST Known Answer Tests:
 
 ```bash
 cd usertest
 chmod +x verify_all.sh compile_rtl.sh run_sim.sh
 ./verify_all.sh
+```
+
+### Running Gate-Level Verification (Post-Synthesis & Post-Implementation)
+To run gate-level functional simulation against the synthesized and placed/routed netlists:
+
+```bash
+# Run 9 post-synthesis testbenches
+bash post_synth_impl_verification/run_post_synth_sim.sh
+
+# Run 9 post-implementation testbenches
+bash post_synth_impl_verification/run_post_impl_sim.sh
+
+# Run complete flow (Synthesis + Implementation + All 18 Simulations)
+bash post_synth_impl_verification/run_full_verification.sh
 ```
 
 ### Running the C Golden Reference Model
